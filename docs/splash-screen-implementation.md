@@ -122,37 +122,36 @@ const styles = StyleSheet.create({
 });
 ```
 
-### 2. Asset Detection in Practa Bundle
+### 2. Asset Detection from build.json
 
-When loading a Practa bundle, check for splash image:
+Community Practas use CDN URLs defined in `build.json`, not bundled `require()` imports. Check the practa's asset map at runtime:
 
 ```typescript
-// In your Practa loader/assets resolver
-let splashImageSource: number | null = null;
+// When loading a community practa, check build.json assets
+const splashUrl = currentPracta.assets?.splash 
+  ? { uri: currentPracta.assets.splash } 
+  : null;
 
-try {
-  // Try root folder first
-  splashImageSource = require("./splash.png");
-} catch {
-  try {
-    // Fall back to assets folder
-    splashImageSource = require("./assets/splash.png");
-  } catch {
-    splashImageSource = null;
+const hasSplashImage = splashUrl !== null;
+```
+
+**build.json structure:**
+```json
+{
+  "assets": {
+    "splash": "https://cdn.example.com/practa-name/splash.png"
   }
 }
-
-export const splashImage = splashImageSource;
-export const hasSplashImage = splashImageSource !== null;
 ```
+
+This fits the existing pattern where assets are resolved at runtime from CDN rather than bundled with require().
 
 ### 3. Integration in Flow/Practa Screen
 
-Modify your flow screen to conditionally render the splash:
+Modify your flow screen to conditionally render the splash using the CDN URL:
 
 ```typescript
 import PractaSplashScreen from "@/components/PractaSplashScreen";
-import { hasSplashImage, splashImage } from "@/practa/assets";
 
 export default function FlowScreen() {
   const [showSplash, setShowSplash] = useState(true);
@@ -167,14 +166,20 @@ export default function FlowScreen() {
     setShowSplash(false);
   }, []);
 
+  // Get splash from practa's build.json assets
+  const splashUrl = currentPracta.assets?.splash 
+    ? { uri: currentPracta.assets.splash } 
+    : null;
+  const hasSplashImage = splashUrl !== null;
+
   // Only show splash on first practa in flow
   const shouldShowSplash = showSplash && hasSplashImage && currentIndex === 0;
 
   return (
     <View style={styles.container}>
-      {shouldShowSplash && splashImage ? (
+      {shouldShowSplash && splashUrl ? (
         <PractaSplashScreen
-          splashImage={splashImage}
+          splashImage={splashUrl}
           onComplete={handleSplashComplete}
         />
       ) : null}
@@ -191,18 +196,17 @@ export default function FlowScreen() {
 |--------|--------|
 | Image dimensions | 1:2 aspect ratio recommended (e.g., 1080x2160) |
 | Display mode | Full-screen edge-to-edge with `resizeMode="cover"` |
-| File locations | `splash.png` in Practa root or `assets/` folder |
+| Asset source | CDN URL from `build.json` → `assets.splash` |
 | Animation timing | 300ms white fade + 400ms image fade + 2000ms display + 400ms fade out |
 | Z-index | 1000 (renders above all other content) |
 
 ## Checklist
 
 - [ ] Add `PractaSplashScreen` component
-- [ ] Update Practa asset loader to detect `splash.png`
-- [ ] Export `hasSplashImage` and `splashImage` from asset resolver
-- [ ] Modify flow screen to render splash conditionally
+- [ ] Update build.json schema to support `assets.splash` field
+- [ ] Modify flow screen to check `currentPracta.assets?.splash` for CDN URL
 - [ ] Reset `showSplash` state when new flow starts (critical for repeat opens)
-- [ ] Test with and without splash image present
+- [ ] Test with and without splash asset in build.json
 
 ## Dependencies
 
