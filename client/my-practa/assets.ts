@@ -16,7 +16,7 @@
 type AssetSource = number | { uri: string };
 
 const localAssets: Record<string, AssetSource> = {
-  // splash: require("./assets/splash.png"),  // Uncomment after adding splash.png
+  splash: require("./assets/splash.png"),
 } as const;
 
 export type AssetKey = keyof typeof localAssets;
