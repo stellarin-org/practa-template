@@ -5,8 +5,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
   withDelay,
+  withSequence,
   runOnJS,
   Easing,
 } from "react-native-reanimated";
@@ -25,7 +25,7 @@ export default function PractaSplashScreen({
   displayDuration = 2000,
 }: PractaSplashScreenProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const overlayOpacity = useSharedValue(0);
+  const overlayOpacity = useSharedValue(1);
   const imageOpacity = useSharedValue(0);
 
   const handleAnimationComplete = useCallback(() => {
@@ -45,18 +45,19 @@ export default function PractaSplashScreen({
   useEffect(() => {
     if (!imageLoaded) return;
 
-    overlayOpacity.value = withSequence(
-      withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) }),
-      withDelay(100 + 400 + displayDuration + 400, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }, (finished) => {
+    imageOpacity.value = withSequence(
+      withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
+      withDelay(displayDuration, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
+    );
+
+    const totalImageTime = 400 + displayDuration + 400;
+
+    overlayOpacity.value = withDelay(totalImageTime,
+      withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }, (finished) => {
         if (finished) {
           runOnJS(handleAnimationComplete)();
         }
-      }))
-    );
-    
-    imageOpacity.value = withSequence(
-      withDelay(100, withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) })),
-      withDelay(displayDuration, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
+      })
     );
   }, [imageLoaded, displayDuration, overlayOpacity, imageOpacity, handleAnimationComplete]);
 
