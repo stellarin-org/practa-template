@@ -8,13 +8,11 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import PractaSplashScreen from "@/components/PractaSplashScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useFlow, useCurrentPracta } from "@/context/FlowContext";
 import { FlowDefinition, FlowExecutionState, PractaOutput, PractaContext, PractaCompleteHandler } from "@/types/flow";
 import MyPracta from "@/my-practa";
-import { hasSplashImage, splashImage } from "@/my-practa/assets";
 import { demoPractas } from "@/demo-practa";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -68,12 +66,10 @@ export default function FlowScreen() {
   const route = useRoute<FlowRouteProp>();
   const { startFlow, currentFlow, abortFlow, setOnFlowComplete } = useFlow();
   const { practa, context, complete } = useCurrentPracta();
-  const [showSplash, setShowSplash] = useState(true);
 
   const { flow } = route.params;
 
   useEffect(() => {
-    setShowSplash(true);
     startFlow(flow);
 
     setOnFlowComplete(() => (flowState: FlowExecutionState) => {
@@ -108,10 +104,6 @@ export default function FlowScreen() {
     navigation.goBack();
   }, [navigation]);
 
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false);
-  }, []);
-
   if (!currentFlow || currentFlow.status === "aborted") {
     return null;
   }
@@ -128,23 +120,8 @@ export default function FlowScreen() {
   const totalSteps = currentFlow.flowDefinition.practas.length;
   const currentStep = currentFlow.currentIndex + 1;
 
-  // Splash screen: check CDN URL first, then fall back to local bundled asset
-  const splashSource = (practa as any)?.assets?.splash
-    ? { uri: (practa as any).assets.splash }
-    : (practa?.type === "my-practa" && hasSplashImage && splashImage)
-      ? splashImage
-      : null;
-
-  const shouldShowSplash = showSplash && splashSource !== null && currentFlow?.currentIndex === 0;
-
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      {shouldShowSplash && splashSource ? (
-        <PractaSplashScreen
-          splashImage={splashSource}
-          onComplete={handleSplashComplete}
-        />
-      ) : null}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         {showCloseButton ? (
           <Pressable style={styles.closeButton} onPress={handleClose}>

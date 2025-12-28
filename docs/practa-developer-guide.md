@@ -173,44 +173,6 @@ onComplete({
 
 ---
 
-## Splash Screen
-
-Add a branded splash screen that displays when your Practa opens.
-
-### How It Works
-
-1. Place a file named `splash.png` in either:
-   - `client/my-practa/splash.png`
-   - `client/my-practa/assets/splash.png`
-
-2. When a user opens your Practa:
-   - Screen fades to white
-   - Your splash image fades in
-   - Displays for 2 seconds
-   - Fades out to reveal your Practa
-
-### Image Requirements
-
-| Requirement | Details |
-|-------------|---------|
-| File name | Must be `splash.png` |
-| Aspect ratio | 1:2 recommended (e.g., 1080x2160) |
-| Display | Full-screen edge-to-edge (may clip) |
-| Format | PNG |
-
-### Example
-
-```
-client/my-practa/
-  index.tsx
-  metadata.json
-  splash.png        <-- Just add this file!
-```
-
-That's it! The splash screen is auto-detected and requires no code changes.
-
----
-
 ## Best Practices
 
 ### Theming
