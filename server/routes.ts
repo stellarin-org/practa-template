@@ -10,6 +10,8 @@ const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const TEMPLATE_REPO = "stellarin-org/practa-template";
 const PROTECTED_PATHS = ["client/my-practa", "practa.config.json"];
+const MY_PRACTA_PATH = "client/my-practa";
+const DEMO_TEMPLATE_PATH = "demo-template";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB per file
 const MAX_TOTAL_SIZE_BYTES = 25 * 1024 * 1024; // 25MB total
