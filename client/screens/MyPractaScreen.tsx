@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform } from "react-native";
+import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -103,10 +104,37 @@ export default function MyPractaScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/template/sync-status"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/template/publish");
+      return response.json();
+    },
+    onSuccess: () => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      queryClient.invalidateQueries();
+      if (Platform.OS === "web") {
+        window.location.reload();
+      } else {
+        reloadAppAsync();
+      }
+    },
+    onError: () => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     },
   });
 
@@ -188,10 +216,35 @@ export default function MyPractaScreen() {
                 </ThemedText>
               </View>
             </View>
-            {!syncStatus.isMasterTemplate ? (
+            {syncStatus.isMasterTemplate ? (
               <Pressable
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }
+                  publishMutation.mutate();
+                }}
+                disabled={publishMutation.isPending}
+                style={[
+                  styles.syncButton,
+                  styles.syncButtonPublish,
+                  publishMutation.isPending && styles.syncButtonDisabled,
+                ]}
+              >
+                {publishMutation.isPending ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <ThemedText style={styles.syncButtonText}>
+                    Publish to Git
+                  </ThemedText>
+                )}
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }
                   updateTemplateMutation.mutate();
                 }}
                 disabled={updateTemplateMutation.isPending}
@@ -208,7 +261,7 @@ export default function MyPractaScreen() {
                   </ThemedText>
                 )}
               </Pressable>
-            ) : null}
+            )}
           </View>
         ) : null}
 
@@ -481,5 +534,8 @@ const styles = StyleSheet.create({
   },
   syncBannerMessageMaster: {
     color: "#1E40AF",
+  },
+  syncButtonPublish: {
+    backgroundColor: "#3B82F6",
   },
 });

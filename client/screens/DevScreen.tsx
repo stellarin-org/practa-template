@@ -123,7 +123,6 @@ export default function DevScreen() {
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [isUpdatingTemplate, setIsUpdatingTemplate] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
@@ -244,50 +243,6 @@ export default function DevScreen() {
     setShowConfirmModal(false);
     setIsResetting(true);
     resetMutation.mutate();
-  };
-
-  const publishMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/template/publish");
-      return response.json();
-    },
-    onSuccess: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      queryClient.invalidateQueries();
-      showAlert(
-        "Published",
-        "Template reset to demo and published to Git. Tap to reload.",
-        {
-          buttonText: "Reload App",
-          onClose: async () => {
-            if (Platform.OS === "web") {
-              window.location.reload();
-            } else {
-              await reloadAppAsync();
-            }
-          },
-        }
-      );
-    },
-    onError: (error: Error) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      showAlert("Publish Failed", error.message || "Failed to publish to Git");
-    },
-    onSettled: () => {
-      setIsPublishing(false);
-    },
-  });
-
-  const handlePublish = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    setIsPublishing(true);
-    publishMutation.mutate();
   };
 
   return (
@@ -420,60 +375,6 @@ export default function DevScreen() {
             )}
           </Pressable>
         </Card>
-
-        {syncStatus?.isMasterTemplate && !syncStatus.isInSync ? (
-          <Card style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Feather name="upload-cloud" size={20} color="#D97706" />
-              <ThemedText style={styles.sectionTitle}>Unpublished Changes</ThemedText>
-            </View>
-
-            <ThemedText style={[styles.optionDescription, { color: theme.textSecondary, marginBottom: Spacing.md, paddingHorizontal: Spacing.sm }]}>
-              Your local changes haven't been pushed to Git yet.
-            </ThemedText>
-
-            <Pressable
-              onPress={handlePublish}
-              disabled={isPublishing}
-              style={({ pressed }) => [
-                styles.optionButton,
-                {
-                  backgroundColor: pressed
-                    ? theme.backgroundSecondary
-                    : "transparent",
-                },
-              ]}
-            >
-              <View style={styles.optionContent}>
-                <Feather
-                  name="git-commit"
-                  size={20}
-                  color={isPublishing ? theme.textSecondary : "#D97706"}
-                />
-                <View style={styles.optionText}>
-                  <ThemedText
-                    style={[
-                      styles.optionTitle,
-                      { color: isPublishing ? theme.textSecondary : "#D97706" },
-                    ]}
-                  >
-                    Publish to Git
-                  </ThemedText>
-                  <ThemedText
-                    style={[styles.optionDescription, { color: theme.textSecondary }]}
-                  >
-                    Reset to demo and push all changes to Git
-                  </ThemedText>
-                </View>
-              </View>
-              {isPublishing ? (
-                <ActivityIndicator size="small" color={theme.textSecondary} />
-              ) : (
-                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-              )}
-            </Pressable>
-          </Card>
-        ) : null}
 
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
