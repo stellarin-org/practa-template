@@ -35,7 +35,7 @@ function updatePractaAssets() {
   for (const [key, filename] of Object.entries(declaredAssets)) {
     const assetPath = path.join(assetsDir, filename);
     if (fs.existsSync(assetPath)) {
-      assetLines.push(`  ${key}: require("@/my-practa/assets/${filename}"),`);
+      assetLines.push(`  ${key}: require("../my-practa/assets/${filename}"),`);
     } else {
       missingAssets.push(`${key}: ${filename}`);
     }

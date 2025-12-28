@@ -28,14 +28,16 @@ When building a Practa:
 client/
   my-practa/              # YOUR PRACTA - EDIT THIS
     index.tsx             # Your component (default export)
-    metadata.json         # Practa metadata
-    assets.ts             # Asset resolver
-    assets/               # Your local assets
+    metadata.json         # Practa metadata (includes assets declaration)
+    assets/               # Your local assets (images, splash.png, etc.)
   
   demo-practa/            # EXAMPLE PRACTAS - REFERENCE THESE
     breathing-pause/      # Breathing exercise
     gratitude-prompt/     # Text input reflection
     tap-counter/          # Interactive counter
+
+  lib/
+    practa-assets.ts      # Auto-generated asset resolver (do not edit)
 
   components/             # Shared UI (ThemedText, Card, etc.)
   constants/              # Theme tokens (Colors, Spacing)

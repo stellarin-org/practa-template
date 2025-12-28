@@ -130,21 +130,76 @@ Update `client/my-practa/metadata.json` with your Practa info:
 
 ---
 
+## Assets
+
+Declare assets in `metadata.json` and access them via `context.assets` in your Practa.
+
+### Declaring Assets
+
+Add an `assets` object to your `metadata.json`:
+
+```json
+{
+  "id": "my-practa",
+  "name": "My Practa",
+  "version": "1.0.0",
+  "assets": {
+    "splash": "splash.png",
+    "background": "bg.jpg"
+  }
+}
+```
+
+Then place the files in `client/my-practa/assets/`. On app restart, assets are automatically resolved.
+
+### Accessing Assets
+
+Assets are available via `context.assets`:
+
+```typescript
+export default function MyPracta({ context, onComplete }: PractaProps) {
+  const backgroundImage = context.assets?.background;
+  
+  return (
+    <Image source={backgroundImage} style={styles.background} />
+  );
+}
+```
+
+### Why This Pattern?
+
+Your Practa code works identically in development (Replit) and production (Stellarin):
+- **Dev**: Assets resolved via Metro bundler's require()
+- **Production**: Stellarin provides CDN URLs through the same context
+
+---
+
 ## Splash Screen
 
 Add a branded splash screen that fades in before your Practa loads.
 
 ### Setup
 
-Simply drop a `splash.png` file into `client/my-practa/assets/` and restart the app. The splash screen is automatically detected - no code changes needed!
+1. Add `splash.png` to `client/my-practa/assets/`
+2. Declare it in `metadata.json`:
 
-To remove the splash screen, just delete the file and restart.
+```json
+{
+  "assets": {
+    "splash": "splash.png"
+  }
+}
+```
+
+3. Restart the app
+
+To remove the splash screen, remove the `splash` key from assets and delete the file.
 
 ### Image Requirements
 
 | Property | Requirement |
 |----------|-------------|
-| File name | `splash.png` (exact, lowercase) |
+| File name | Any PNG (declared in metadata.json) |
 | Aspect ratio | 1:2 recommended (e.g., 1080 x 2160) |
 | Format | PNG |
 
@@ -158,7 +213,7 @@ The image displays edge-to-edge, anchored to the top. Overflow clips from the bo
 4. Everything fades out (400ms)
 5. Practa content appears
 
-If no splash.png is provided, your Practa loads immediately.
+If no splash is declared, your Practa loads immediately.
 
 ---
 
