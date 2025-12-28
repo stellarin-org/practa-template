@@ -128,13 +128,20 @@ export default function FlowScreen() {
   const totalSteps = currentFlow.flowDefinition.practas.length;
   const currentStep = currentFlow.currentIndex + 1;
 
-  const shouldShowSplash = showSplash && hasSplashImage && practa?.type === "my-practa" && currentFlow?.currentIndex === 0;
+  // Splash screen: check CDN URL first, then fall back to local bundled asset
+  const splashSource = (practa as any)?.assets?.splash
+    ? { uri: (practa as any).assets.splash }
+    : (practa?.type === "my-practa" && hasSplashImage && splashImage)
+      ? splashImage
+      : null;
+
+  const shouldShowSplash = showSplash && splashSource !== null && currentFlow?.currentIndex === 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      {shouldShowSplash && splashImage ? (
+      {shouldShowSplash && splashSource ? (
         <PractaSplashScreen
-          splashImage={splashImage}
+          splashImage={splashSource}
           onComplete={handleSplashComplete}
         />
       ) : null}

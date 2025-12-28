@@ -122,20 +122,24 @@ const styles = StyleSheet.create({
 });
 ```
 
-### 2. Asset Detection from build.json
+### 2. Dual-Source Asset Detection
 
-Community Practas use CDN URLs defined in `build.json`, not bundled `require()` imports. Check the practa's asset map at runtime:
+The solution must work for both local development (bundled require) and production (CDN URLs):
 
 ```typescript
-// When loading a community practa, check build.json assets
-const splashUrl = currentPracta.assets?.splash 
-  ? { uri: currentPracta.assets.splash } 
-  : null;
+// Check CDN URL first (production), fall back to local bundled asset (development)
+const splashSource = currentPracta.assets?.splash
+  ? { uri: currentPracta.assets.splash }  // CDN URL from build.json
+  : localSplashImage                       // Bundled require() result
+    ? localSplashImage
+    : null;
 
-const hasSplashImage = splashUrl !== null;
+const hasSplashImage = splashSource !== null;
 ```
 
-**build.json structure:**
+**Local development:** Uses `require("./splash.png")` from the practa's assets.ts
+**Production:** Uses CDN URL from `build.json`:
+
 ```json
 {
   "assets": {
@@ -144,14 +148,15 @@ const hasSplashImage = splashUrl !== null;
 }
 ```
 
-This fits the existing pattern where assets are resolved at runtime from CDN rather than bundled with require().
+This unified approach seamlessly handles both environments.
 
 ### 3. Integration in Flow/Practa Screen
 
-Modify your flow screen to conditionally render the splash using the CDN URL:
+Modify your flow screen to conditionally render the splash with dual-source detection:
 
 ```typescript
 import PractaSplashScreen from "@/components/PractaSplashScreen";
+import { hasSplashImage as hasLocalSplash, splashImage as localSplashImage } from "@/my-practa/assets";
 
 export default function FlowScreen() {
   const [showSplash, setShowSplash] = useState(true);
@@ -166,20 +171,21 @@ export default function FlowScreen() {
     setShowSplash(false);
   }, []);
 
-  // Get splash from practa's build.json assets
-  const splashUrl = currentPracta.assets?.splash 
-    ? { uri: currentPracta.assets.splash } 
-    : null;
-  const hasSplashImage = splashUrl !== null;
+  // Check CDN URL first (production), fall back to local bundled asset (development)
+  const splashSource = currentPracta.assets?.splash
+    ? { uri: currentPracta.assets.splash }
+    : (currentPracta.type === "my-practa" && hasLocalSplash && localSplashImage)
+      ? localSplashImage
+      : null;
 
   // Only show splash on first practa in flow
-  const shouldShowSplash = showSplash && hasSplashImage && currentIndex === 0;
+  const shouldShowSplash = showSplash && splashSource !== null && currentIndex === 0;
 
   return (
     <View style={styles.container}>
-      {shouldShowSplash && splashUrl ? (
+      {shouldShowSplash && splashSource ? (
         <PractaSplashScreen
-          splashImage={splashUrl}
+          splashImage={splashSource}
           onComplete={handleSplashComplete}
         />
       ) : null}
