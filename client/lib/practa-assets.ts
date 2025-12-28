@@ -13,6 +13,7 @@ import { ResolvedAssets } from "@/types/flow";
 type AssetSource = number | { uri: string };
 
 const localAssets: Record<string, AssetSource> = {
+
 } as const;
 
 export function resolveAssets(): ResolvedAssets {

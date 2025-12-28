@@ -13,70 +13,86 @@ import {
   getCurrentCommitSha,
 } from "../scripts/bump-version";
 
-function updateAssetsFile() {
+function updatePractaAssets() {
+  const metadataPath = path.join(process.cwd(), "client/my-practa/metadata.json");
   const assetsDir = path.join(process.cwd(), "client/my-practa/assets");
-  const assetsFilePath = path.join(process.cwd(), "client/my-practa/assets.ts");
+  const outputPath = path.join(process.cwd(), "client/lib/practa-assets.ts");
   
-  const hasSplash = fs.existsSync(path.join(assetsDir, "splash.png"));
+  let declaredAssets: Record<string, string> = {};
   
-  const splashLine = hasSplash ? '  splash: require("./assets/splash.png"),' : '';
+  try {
+    if (fs.existsSync(metadataPath)) {
+      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+      declaredAssets = metadata.assets || {};
+    }
+  } catch (error) {
+    console.error("[Assets] Failed to read metadata.json:", error);
+  }
+  
+  const assetLines: string[] = [];
+  const missingAssets: string[] = [];
+  
+  for (const [key, filename] of Object.entries(declaredAssets)) {
+    const assetPath = path.join(assetsDir, filename);
+    if (fs.existsSync(assetPath)) {
+      assetLines.push(`  ${key}: require("@/my-practa/assets/${filename}"),`);
+    } else {
+      missingAssets.push(`${key}: ${filename}`);
+    }
+  }
+  
+  if (missingAssets.length > 0) {
+    console.warn(`[Assets] Missing files: ${missingAssets.join(", ")}`);
+  }
+  
+  const assetsBlock = assetLines.join("\n");
   
   const newContent = `/**
- * Asset Resolver for Practa
+ * Local Asset Resolver for Development
  * 
- * This file is auto-generated based on assets in the assets/ folder.
- * Just drop a splash.png file into assets/ and restart the app.
- * No manual code changes needed!
- * 
+ * This file is auto-generated based on assets declared in metadata.json.
  * DO NOT EDIT - this file is regenerated on server startup.
+ * 
+ * In production (Stellarin), assets are provided via CDN URLs through context.
  */
+
+import { ImageSourcePropType } from "react-native";
+import { ResolvedAssets } from "@/types/flow";
 
 type AssetSource = number | { uri: string };
 
 const localAssets: Record<string, AssetSource> = {
-${splashLine}
+${assetsBlock}
 } as const;
 
-export type AssetKey = keyof typeof localAssets;
+export function resolveAssets(): ResolvedAssets {
+  return { ...localAssets };
+}
 
-export const assets = (key: AssetKey): string => {
-  const asset = localAssets[key] as AssetSource | undefined;
-  if (asset === undefined) {
-    console.warn(\`[Practa Assets] Asset "\${String(key)}" not found.\`);
-    return "";
-  }
-  if (typeof asset === "object" && "uri" in asset) {
-    return asset.uri;
-  }
-  if (typeof asset === "number") {
-    return String(asset);
-  }
-  return "";
-};
-
-export const hasSplash = (): boolean => {
+export function hasSplash(): boolean {
   return "splash" in localAssets;
-};
+}
 
-export const getSplashSource = (): AssetSource | null => {
+export function getSplashSource(): ImageSourcePropType | null {
   if (hasSplash()) {
-    return localAssets.splash;
+    return localAssets.splash as ImageSourcePropType;
   }
   return null;
-};
+}
 `;
 
   try {
-    const existingContent = fs.existsSync(assetsFilePath) 
-      ? fs.readFileSync(assetsFilePath, "utf-8") 
+    const existingContent = fs.existsSync(outputPath) 
+      ? fs.readFileSync(outputPath, "utf-8") 
       : "";
     
     if (existingContent !== newContent) {
-      fs.writeFileSync(assetsFilePath, newContent);
-      console.log(`[Assets] Updated assets.ts: hasSplash=${hasSplash}`);
+      fs.writeFileSync(outputPath, newContent);
+      const assetCount = Object.keys(declaredAssets).length;
+      console.log(`[Assets] Updated practa-assets.ts: ${assetCount} asset(s) declared`);
     }
   } catch (error) {
-    console.error("[Assets] Failed to update assets.ts:", error);
+    console.error("[Assets] Failed to update practa-assets.ts:", error);
   }
 }
 
@@ -378,7 +394,7 @@ function startGitVersionWatcher() {
 }
 
 (async () => {
-  updateAssetsFile();
+  updatePractaAssets();
   
   setupCors(app);
   setupBodyParsing(app);

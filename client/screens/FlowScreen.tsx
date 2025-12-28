@@ -14,7 +14,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useFlow, useCurrentPracta } from "@/context/FlowContext";
 import { FlowDefinition, FlowExecutionState, PractaOutput, PractaContext, PractaCompleteHandler } from "@/types/flow";
 import MyPracta from "@/my-practa";
-import { hasSplash, getSplashSource } from "@/my-practa/assets";
+import { hasSplash, getSplashSource, resolveAssets } from "@/lib/practa-assets";
 import { demoPractas } from "@/demo-practa";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -72,6 +72,14 @@ export default function FlowScreen() {
 
   const { flow, splashActive } = route.params;
 
+  const resolvedAssets = useMemo(() => {
+    if (!practa) return null;
+    if (practa.type === "my-practa") {
+      return resolveAssets();
+    }
+    return null;
+  }, [practa?.type]);
+
   const splashSource = useMemo(() => {
     if (!practa) return null;
     if (practa.type === "my-practa" && hasSplash()) {
@@ -79,6 +87,14 @@ export default function FlowScreen() {
     }
     return null;
   }, [practa?.type]);
+
+  const enrichedContext = useMemo(() => {
+    if (!context) return null;
+    return {
+      ...context,
+      assets: resolvedAssets || undefined,
+    };
+  }, [context, resolvedAssets]);
 
   useEffect(() => {
     setShowSplash(true);
@@ -129,7 +145,7 @@ export default function FlowScreen() {
     return <CompletionScreen onContinue={handleContinue} />;
   }
 
-  if (!practa || !context) {
+  if (!practa || !enrichedContext) {
     return null;
   }
 
@@ -206,7 +222,7 @@ export default function FlowScreen() {
           }
           return (
             <PractaComponent
-              context={context}
+              context={enrichedContext}
               onComplete={handleComplete}
               onSkip={totalSteps > 1 ? handleSkip : undefined}
             />
