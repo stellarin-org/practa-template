@@ -37,6 +37,16 @@ export interface PractaStorage {
 }
 
 /**
+ * Resolved assets available to the Practa at runtime.
+ * In dev: resolved from require() statements
+ * In production: CDN URLs provided by Stellarin
+ */
+export interface ResolvedAssets {
+  splash?: number | { uri: string };
+  [key: string]: number | { uri: string } | undefined;
+}
+
+/**
  * Context passed to every practa component.
  * Includes flow information and optional storage for persistence.
  */
@@ -49,6 +59,11 @@ export interface PractaContext {
    * See docs/practa-storage-system.md for usage examples.
    */
   storage?: PractaStorage;
+  /**
+   * Resolved assets declared in metadata.json.
+   * Use this to access splash screens, images, etc.
+   */
+  assets?: ResolvedAssets;
 }
 
 export interface PractaOutput {
