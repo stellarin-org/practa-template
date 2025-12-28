@@ -130,6 +130,43 @@ Update `client/my-practa/metadata.json` with your Practa info:
 
 ---
 
+## Splash Screen
+
+Add a branded splash screen that fades in before your Practa loads.
+
+### Setup
+
+1. Add `splash.png` to `client/my-practa/assets/`
+2. Uncomment the splash line in `client/my-practa/assets.ts`:
+
+```typescript
+const localAssets: Record<string, AssetSource> = {
+  splash: require("./assets/splash.png"),  // Uncomment this
+} as const;
+```
+
+### Image Requirements
+
+| Property | Requirement |
+|----------|-------------|
+| File name | `splash.png` (exact, lowercase) |
+| Aspect ratio | 1:2 recommended (e.g., 1080 x 2160) |
+| Format | PNG |
+
+The image displays edge-to-edge, anchored to the top. Overflow clips from the bottom, ensuring branding at the top is always visible.
+
+### Animation Sequence
+
+1. White overlay fades in (300ms)
+2. Splash image fades in (400ms)
+3. Holds for 2 seconds
+4. Everything fades out (400ms)
+5. Practa content appears
+
+If no splash.png is provided, your Practa loads immediately.
+
+---
+
 ## Output Schema
 
 When calling `onComplete`, provide structured output:

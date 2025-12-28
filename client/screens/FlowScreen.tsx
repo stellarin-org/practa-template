@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useMemo } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -8,11 +8,13 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import PractaSplashScreen from "@/components/PractaSplashScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useFlow, useCurrentPracta } from "@/context/FlowContext";
 import { FlowDefinition, FlowExecutionState, PractaOutput, PractaContext, PractaCompleteHandler } from "@/types/flow";
 import MyPracta from "@/my-practa";
+import { hasSplash, getSplashSource } from "@/my-practa/assets";
 import { demoPractas } from "@/demo-practa";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -66,8 +68,23 @@ export default function FlowScreen() {
   const route = useRoute<FlowRouteProp>();
   const { startFlow, currentFlow, abortFlow, setOnFlowComplete } = useFlow();
   const { practa, context, complete } = useCurrentPracta();
+  const [showSplash, setShowSplash] = useState(true);
 
   const { flow } = route.params;
+
+  const splashSource = useMemo(() => {
+    if (!practa) return null;
+    if (practa.type === "my-practa" && hasSplash()) {
+      return getSplashSource();
+    }
+    return null;
+  }, [practa?.type]);
+
+  useEffect(() => {
+    setShowSplash(true);
+  }, [practa?.id]);
+
+  const shouldShowSplash = showSplash && splashSource !== null;
 
   useEffect(() => {
     startFlow(flow);
@@ -122,6 +139,13 @@ export default function FlowScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      {shouldShowSplash ? (
+        <PractaSplashScreen
+          splashImage={splashSource as any}
+          onComplete={() => setShowSplash(false)}
+        />
+      ) : null}
+
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         {showCloseButton ? (
           <Pressable style={styles.closeButton} onPress={handleClose}>
