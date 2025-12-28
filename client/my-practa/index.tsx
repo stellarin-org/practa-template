@@ -13,6 +13,11 @@
  *   await context.storage?.set("key", value)
  * 
  * See docs/practa-storage-system.md for full storage documentation.
+ * 
+ * Splash Screen (optional):
+ * 1. Add splash.png to my-practa/assets/ folder (1:2 ratio recommended)
+ * 2. Register in assets.ts: splash: require("./assets/splash.png")
+ * 3. Wrap content with <PractaSplash> component (already done below)
  */
 
 import React, { useState } from "react";
@@ -26,6 +31,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaSplash } from "./splash";
 
 interface MyPractaProps {
   context: PractaContext;
@@ -63,49 +69,51 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-      <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
-          <Feather name="star" size={48} color={theme.primary} />
+    <PractaSplash>
+      <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
+        <View style={styles.content}>
+          <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
+            <Feather name="star" size={48} color={theme.primary} />
+          </View>
+
+          <ThemedText style={styles.title}>
+            {isStarted ? "Great!" : "Welcome"}
+          </ThemedText>
+          
+          <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {isStarted 
+              ? "You've started your Practa experience."
+              : "This is a starter template. Customize it to create your own wellbeing experience."}
+          </ThemedText>
         </View>
 
-        <ThemedText style={styles.title}>
-          {isStarted ? "Great!" : "Welcome"}
-        </ThemedText>
-        
-        <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {isStarted 
-            ? "You've started your Practa experience."
-            : "This is a starter template. Customize it to create your own wellbeing experience."}
-        </ThemedText>
-      </View>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          {isStarted ? (
+            <Pressable
+              onPress={handleComplete}
+              style={[styles.button, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText style={styles.buttonText}>Complete</ThemedText>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={handleStart}
+              style={[styles.button, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText style={styles.buttonText}>Start</ThemedText>
+            </Pressable>
+          )}
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
-        {isStarted ? (
-          <Pressable
-            onPress={handleComplete}
-            style={[styles.button, { backgroundColor: theme.primary }]}
-          >
-            <ThemedText style={styles.buttonText}>Complete</ThemedText>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={handleStart}
-            style={[styles.button, { backgroundColor: theme.primary }]}
-          >
-            <ThemedText style={styles.buttonText}>Start</ThemedText>
-          </Pressable>
-        )}
-
-        {onSkip ? (
-          <Pressable onPress={onSkip} style={styles.skipButton}>
-            <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
-              Skip
-            </ThemedText>
-          </Pressable>
-        ) : null}
-      </View>
-    </ThemedView>
+          {onSkip ? (
+            <Pressable onPress={onSkip} style={styles.skipButton}>
+              <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
+                Skip
+              </ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+      </ThemedView>
+    </PractaSplash>
   );
 }
 

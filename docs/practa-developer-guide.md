@@ -173,6 +173,58 @@ onComplete({
 
 ---
 
+## Splash Screen (Optional)
+
+Add a professional splash screen that displays when your Practa opens.
+
+### Quick Setup
+
+1. **Add your image**: Place `splash.png` in `my-practa/assets/` folder
+2. **Register it**: In `assets.ts`, uncomment the splash line:
+   ```typescript
+   const localAssets = {
+     splash: require("./assets/splash.png"),
+   } as const;
+   ```
+3. **Wrap your content**: Use the `<PractaSplash>` component (already in template)
+
+### How It Works
+
+When a user opens your Practa:
+1. Screen fades to white
+2. Splash image fades in
+3. Displays for 2 seconds
+4. Fades out revealing your Practa
+
+### Image Recommendations
+
+| Aspect | Recommendation |
+|--------|----------------|
+| Ratio | **1:2** (width:height) - e.g., 750x1500px |
+| Format | PNG (supports transparency) |
+| Sizing | Full-screen, edge-to-edge (may clip on some devices) |
+| Content | Keep important elements centered, avoid text near edges |
+
+### Example
+
+```typescript
+import { PractaSplash } from "./splash";
+
+export default function MyPracta({ context, onComplete }: Props) {
+  return (
+    <PractaSplash>
+      <ThemedView style={styles.container}>
+        {/* Your Practa content */}
+      </ThemedView>
+    </PractaSplash>
+  );
+}
+```
+
+If no `splash.png` is registered, the component renders children immediately with no splash effect.
+
+---
+
 ## Best Practices
 
 ### Theming
