@@ -1,22 +1,17 @@
 /**
  * Asset Resolver for Practa
  * 
- * Register your assets here and use assets("key") to get URLs.
- * NEVER use require() directly in component code.
+ * This file is auto-generated based on assets in the assets/ folder.
+ * Just drop a splash.png file into assets/ and restart the app.
+ * No manual code changes needed!
  * 
- * SPLASH SCREEN:
- * To enable a branded splash screen, add splash.png to the assets folder
- * and uncomment the splash line below:
- * 
- *   const localAssets: Record<string, AssetSource> = {
- *     splash: require("./assets/splash.png"),
- *   } as const;
+ * DO NOT EDIT - this file is regenerated on server startup.
  */
 
 type AssetSource = number | { uri: string };
 
 const localAssets: Record<string, AssetSource> = {
-  // splash: require("./assets/splash.png"),  // Uncomment after adding splash.png
+
 } as const;
 
 export type AssetKey = keyof typeof localAssets;
@@ -37,7 +32,7 @@ export const assets = (key: AssetKey): string => {
 };
 
 export const hasSplash = (): boolean => {
-  return "splash" in localAssets && localAssets.splash !== undefined;
+  return "splash" in localAssets;
 };
 
 export const getSplashSource = (): AssetSource | null => {

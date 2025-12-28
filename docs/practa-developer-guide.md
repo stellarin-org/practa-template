@@ -136,14 +136,9 @@ Add a branded splash screen that fades in before your Practa loads.
 
 ### Setup
 
-1. Add `splash.png` to `client/my-practa/assets/`
-2. Uncomment the splash line in `client/my-practa/assets.ts`:
+Simply drop a `splash.png` file into `client/my-practa/assets/` and restart the app. The splash screen is automatically detected - no code changes needed!
 
-```typescript
-const localAssets: Record<string, AssetSource> = {
-  splash: require("./assets/splash.png"),  // Uncomment this
-} as const;
-```
+To remove the splash screen, just delete the file and restart.
 
 ### Image Requirements
 
