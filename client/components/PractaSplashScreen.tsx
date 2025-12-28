@@ -15,6 +15,7 @@ interface PractaSplashScreenProps {
   splashImage: ImageSourcePropType;
   onComplete: () => void;
   displayDuration?: number;
+  startWithOverlay?: boolean;
 }
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
@@ -23,10 +24,11 @@ export default function PractaSplashScreen({
   splashImage,
   onComplete,
   displayDuration = 2000,
+  startWithOverlay = false,
 }: PractaSplashScreenProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [overlayReady, setOverlayReady] = useState(false);
-  const overlayOpacity = useSharedValue(0);
+  const [overlayReady, setOverlayReady] = useState(startWithOverlay);
+  const overlayOpacity = useSharedValue(startWithOverlay ? 1 : 0);
   const imageOpacity = useSharedValue(0);
 
   const handleAnimationComplete = useCallback(() => {
@@ -34,10 +36,11 @@ export default function PractaSplashScreen({
   }, [onComplete]);
 
   useEffect(() => {
+    if (startWithOverlay) return;
     overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
     const timer = setTimeout(() => setOverlayReady(true), 300);
     return () => clearTimeout(timer);
-  }, [overlayOpacity]);
+  }, [overlayOpacity, startWithOverlay]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {

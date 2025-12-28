@@ -70,7 +70,7 @@ export default function FlowScreen() {
   const { practa, context, complete } = useCurrentPracta();
   const [showSplash, setShowSplash] = useState(true);
 
-  const { flow } = route.params;
+  const { flow, splashActive } = route.params;
 
   const splashSource = useMemo(() => {
     if (!practa) return null;
@@ -143,6 +143,7 @@ export default function FlowScreen() {
         <PractaSplashScreen
           splashImage={splashSource as any}
           onComplete={() => setShowSplash(false)}
+          startWithOverlay={splashActive}
         />
       ) : null}
 

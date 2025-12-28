@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -19,6 +20,7 @@ import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { validatePracta, ValidationResult } from "@/lib/practa-validator";
 import { apiRequest } from "@/lib/query-client";
+import { hasSplash } from "@/my-practa/assets";
 
 interface PractaMetadata {
   name: string;
@@ -81,11 +83,18 @@ export default function MyPractaScreen() {
   const queryClient = useQueryClient();
   const [showValidation, setShowValidation] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
+  const transitionOpacity = useSharedValue(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setEnableSyncCheck(true), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      transitionOpacity.value = 0;
+    }, [transitionOpacity])
+  );
 
   const { data: savedMetadata } = useQuery<PractaMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -150,8 +159,7 @@ export default function MyPractaScreen() {
     return validatePracta(MyPracta, practaMetadataJson);
   }, []);
 
-  const handlePreview = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const navigateToFlow = useCallback(() => {
     navigation.navigate("Flow", {
       flow: {
         id: "preview",
@@ -165,8 +173,30 @@ export default function MyPractaScreen() {
           },
         ],
       },
+      splashActive: hasSplash(),
     });
+  }, [navigation, metadata]);
+
+  const handlePreview = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    
+    if (hasSplash()) {
+      transitionOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) }, (finished) => {
+        if (finished) {
+          runOnJS(navigateToFlow)();
+        }
+      });
+    } else {
+      navigateToFlow();
+    }
   };
+
+  const transitionStyle = useAnimatedStyle(() => ({
+    opacity: transitionOpacity.value,
+    pointerEvents: transitionOpacity.value > 0 ? "auto" as const : "none" as const,
+  }));
 
   const toggleValidation = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -360,6 +390,7 @@ export default function MyPractaScreen() {
           ) : null}
         </Card>
       </ScrollView>
+      <Animated.View style={[styles.transitionOverlay, transitionStyle]} />
     </ThemedView>
   );
 }
@@ -367,6 +398,11 @@ export default function MyPractaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  transitionOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "white",
+    zIndex: 1000,
   },
   content: {
     paddingHorizontal: Spacing.lg,
