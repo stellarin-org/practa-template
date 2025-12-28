@@ -73,6 +73,7 @@ export default function FlowScreen() {
   const { flow } = route.params;
 
   useEffect(() => {
+    setShowSplash(true);
     startFlow(flow);
 
     setOnFlowComplete(() => (flowState: FlowExecutionState) => {
