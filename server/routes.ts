@@ -31,6 +31,7 @@ interface PractaMetadata {
   estimatedDuration?: number;
   category?: string;
   tags?: string[];
+  assets?: Record<string, string>;
 }
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
@@ -353,6 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       tags: config.tags || ["practa", "wellbeing"],
       estimatedDuration: config.estimatedDuration,
       requiredPermissions: [],
+      assets: config.assets || {},
     } : null;
 
     const readme = config ? `# ${config.name}
@@ -409,7 +411,12 @@ ${config.version}
     });
 
     archive.pipe(res);
-    archive.directory(practaDir, false);
+    
+    // Add directory contents but exclude files we'll add separately
+    archive.glob("**/*", {
+      cwd: practaDir,
+      ignore: ["metadata.json", "README.md"],
+    });
     
     if (manifest) {
       archive.append(JSON.stringify(manifest, null, 2), { name: "metadata.json" });
@@ -476,6 +483,7 @@ ${config.version}
         tags: config.tags || ["practa", "wellbeing"],
         estimatedDuration: config.estimatedDuration,
         requiredPermissions: [],
+        assets: config.assets || {},
       };
 
       const readme = `# ${config.name}
@@ -533,7 +541,11 @@ ${config.version}
         archive.on("error", reject);
         passThrough.on("error", reject);
         
-        archive.directory(practaDir, false);
+        // Add directory contents but exclude files we'll add separately
+        archive.glob("**/*", {
+          cwd: practaDir,
+          ignore: ["metadata.json", "README.md"],
+        });
         archive.append(JSON.stringify(manifest, null, 2), { name: "metadata.json" });
         archive.append(readme, { name: "README.md" });
         archive.finalize();
