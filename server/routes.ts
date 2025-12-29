@@ -609,11 +609,16 @@ ${config.version}
         }
       } catch {}
       
-      // Get latest template version from GitHub
+      // Get latest template version from GitHub (use API to avoid raw.githubusercontent CDN cache)
       let latestTemplateVersion = localTemplateVersion;
       try {
-        const appJsonUrl = `https://raw.githubusercontent.com/${TEMPLATE_REPO}/${defaultBranch}/app.json`;
-        const appJsonResponse = await fetch(appJsonUrl);
+        const appJsonUrl = `https://api.github.com/repos/${TEMPLATE_REPO}/contents/app.json?ref=${defaultBranch}`;
+        const appJsonResponse = await fetch(appJsonUrl, {
+          headers: { 
+            "Accept": "application/vnd.github.raw+json",
+            "Cache-Control": "no-cache"
+          }
+        });
         if (appJsonResponse.ok) {
           const remoteAppJson = await appJsonResponse.json();
           latestTemplateVersion = remoteAppJson.expo?.version || localTemplateVersion;
@@ -786,9 +791,15 @@ ${config.version}
 
   app.post("/api/template/update", async (req, res) => {
     try {
+      // Add cache-busting headers to bypass GitHub CDN cache
+      const githubHeaders = { 
+        "Accept": "application/vnd.github+json",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      };
+      
       const repoResponse = await fetch(
         `https://api.github.com/repos/${TEMPLATE_REPO}`,
-        { headers: { "Accept": "application/vnd.github+json" } }
+        { headers: githubHeaders }
       );
       
       if (!repoResponse.ok) {
@@ -802,7 +813,7 @@ ${config.version}
       
       const branchResponse = await fetch(
         `https://api.github.com/repos/${TEMPLATE_REPO}/branches/${defaultBranch}`,
-        { headers: { "Accept": "application/vnd.github+json" } }
+        { headers: githubHeaders }
       );
       
       if (!branchResponse.ok) {
@@ -816,7 +827,7 @@ ${config.version}
       
       const archiveUrl = `https://api.github.com/repos/${TEMPLATE_REPO}/zipball/${defaultBranch}`;
       const archiveResponse = await fetch(archiveUrl, {
-        headers: { "Accept": "application/vnd.github+json" }
+        headers: githubHeaders
       });
       
       if (!archiveResponse.ok) {
