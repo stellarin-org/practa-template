@@ -11,6 +11,7 @@
     "template"
   ],
   "assets": {
-    "wellnessBg": "wellness-bg.png"
+    "wellnessBg": "wellness-bg.png",
+    "content": "content.json"
   }
 }

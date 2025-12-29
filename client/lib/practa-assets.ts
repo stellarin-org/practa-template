@@ -15,6 +15,7 @@ type AssetSource = number | { uri: string };
 const assetRegistry: Record<string, Record<string, AssetSource>> = {
   "my-practa": {
     wellnessBg: require("../my-practa/assets/wellness-bg.png"),
+    content: require("../my-practa/assets/content.json"),
   },
   "breathing-pause": {
     breathingOrb: require("../demo-practa/breathing-pause/assets/breathing-orb.png"),

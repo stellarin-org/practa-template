@@ -28,6 +28,16 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
 
+interface ContentData {
+  title: string;
+  startedTitle: string;
+  welcomeMessage: string;
+  startedMessage: string;
+  buttonStart: string;
+  buttonComplete: string;
+  buttonSkip: string;
+}
+
 interface MyPractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
@@ -39,8 +49,20 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
   const insets = useSafeAreaInsets();
   const [isStarted, setIsStarted] = useState(false);
 
-  // Get the wellness background image from context.assets
+  // Get assets from context
   const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;
+  const content = context.assets?.content as ContentData | undefined;
+
+  // Default content fallbacks
+  const title = isStarted 
+    ? (content?.startedTitle ?? "Great!") 
+    : (content?.title ?? "Welcome");
+  const subtitle = isStarted
+    ? (content?.startedMessage ?? "You've started your Practa experience.")
+    : (content?.welcomeMessage ?? "This is a starter template. Customize it to create your own wellbeing experience.");
+  const startButtonText = content?.buttonStart ?? "Start";
+  const completeButtonText = content?.buttonComplete ?? "Complete";
+  const skipButtonText = content?.buttonSkip ?? "Skip";
 
   const triggerHaptic = () => {
     if (Platform.OS !== "web") {
@@ -82,13 +104,11 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
         )}
 
         <ThemedText style={styles.title}>
-          {isStarted ? "Great!" : "Welcome"}
+          {title}
         </ThemedText>
         
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {isStarted 
-            ? "You've started your Practa experience."
-            : "This is a starter template. Customize it to create your own wellbeing experience."}
+          {subtitle}
         </ThemedText>
       </View>
 
@@ -98,21 +118,21 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
             onPress={handleComplete}
             style={[styles.button, { backgroundColor: theme.primary }]}
           >
-            <ThemedText style={styles.buttonText}>Complete</ThemedText>
+            <ThemedText style={styles.buttonText}>{completeButtonText}</ThemedText>
           </Pressable>
         ) : (
           <Pressable
             onPress={handleStart}
             style={[styles.button, { backgroundColor: theme.primary }]}
           >
-            <ThemedText style={styles.buttonText}>Start</ThemedText>
+            <ThemedText style={styles.buttonText}>{startButtonText}</ThemedText>
           </Pressable>
         )}
 
         {onSkip ? (
           <Pressable onPress={onSkip} style={styles.skipButton}>
             <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
-              Skip
+              {skipButtonText}
             </ThemedText>
           </Pressable>
         ) : null}
