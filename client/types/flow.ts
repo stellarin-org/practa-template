@@ -37,13 +37,26 @@ export interface PractaStorage {
 }
 
 /**
+ * Asset types supported by the asset system:
+ * - Images (.png, .jpg, .jpeg, .gif): number (require) or { uri: string } (CDN)
+ * - JSON (.json): Parsed JavaScript object or array
+ */
+export type ImageAsset = number | { uri: string };
+export type JsonAsset = Record<string, unknown> | unknown[];
+export type AssetValue = ImageAsset | JsonAsset;
+
+/**
  * Resolved assets available to the Practa at runtime.
  * In dev: resolved from require() statements
  * In production: CDN URLs provided by Stellarin
+ * 
+ * Usage:
+ * - Images: <Image source={context.assets.splash} />
+ * - JSON: context.assets.wordlist (already parsed, use directly)
  */
 export interface ResolvedAssets {
-  splash?: number | { uri: string };
-  [key: string]: number | { uri: string } | undefined;
+  splash?: ImageAsset;
+  [key: string]: AssetValue | undefined;
 }
 
 /**

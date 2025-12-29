@@ -8,11 +8,9 @@
  */
 
 import { ImageSourcePropType } from "react-native";
-import { ResolvedAssets } from "@/types/flow";
+import { ResolvedAssets, AssetValue } from "@/types/flow";
 
-type AssetSource = number | { uri: string };
-
-const assetRegistry: Record<string, Record<string, AssetSource>> = {
+const assetRegistry: Record<string, Record<string, AssetValue>> = {
   "my-practa": {
     wellnessBg: require("../my-practa/assets/wellness-bg.png"),
     content: require("../my-practa/assets/content.json"),
