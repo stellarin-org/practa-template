@@ -23,7 +23,8 @@ const assetRegistry: Record<string, Record<string, AssetSource>> = {
 };
 
 export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {
-  return { ...assetRegistry[practaId] } || {};
+  const assets = assetRegistry[practaId];
+  return assets ? { ...assets } : {};
 }
 
 export function hasSplash(practaId: string = "my-practa"): boolean {
