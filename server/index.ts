@@ -19,6 +19,32 @@ interface PractaAssetEntry {
   assets: Record<string, string>;
 }
 
+/**
+ * Normalize asset path to just the filename.
+ * Handles common user mistakes:
+ * - "assets/splash.png" → "splash.png"
+ * - "./assets/splash.png" → "splash.png"
+ * - "  splash.png  " → "splash.png"
+ * - "/assets/splash.png" → "splash.png"
+ * - "././assets/foo.png" → "foo.png"
+ * Returns empty string for invalid paths (e.g., just "assets/" or "./")
+ */
+function normalizeAssetPath(assetPath: string): string {
+  let normalized = assetPath.trim();
+  
+  // Iteratively strip prefixes until stable (handles ././assets/... etc.)
+  let prev = "";
+  while (prev !== normalized) {
+    prev = normalized;
+    // Remove leading ./ or /
+    normalized = normalized.replace(/^\.?\//, "");
+    // Remove assets/ prefix if present
+    normalized = normalized.replace(/^assets\//, "");
+  }
+  
+  return normalized;
+}
+
 function discoverPractas(): PractaAssetEntry[] {
   const practas: PractaAssetEntry[] = [];
   
@@ -74,13 +100,33 @@ function updatePractaAssets() {
     const assetLines: string[] = [];
     const assetsDir = path.join(process.cwd(), `client/${practa.relativePath.replace("../", "")}/assets`);
     
-    for (const [key, filename] of Object.entries(practa.assets)) {
+    for (const [key, rawFilename] of Object.entries(practa.assets)) {
+      // Normalize the path to handle common user mistakes
+      const filename = normalizeAssetPath(rawFilename);
+      
+      // Guard against empty paths (e.g., just "assets/" or "./")
+      if (!filename) {
+        console.warn(`[Assets] ${practa.id}: Invalid path for key "${key}" - normalized to empty (original: "${rawFilename}")`);
+        continue;
+      }
+      
       const assetPath = path.join(assetsDir, filename);
+      
+      // Check file exists and is actually a file (not a directory)
       if (fs.existsSync(assetPath)) {
-        assetLines.push(`    ${key}: require("${practa.relativePath}/assets/${filename}"),`);
-        totalAssets++;
+        try {
+          const stat = fs.statSync(assetPath);
+          if (stat.isFile()) {
+            assetLines.push(`    ${key}: require("${practa.relativePath}/assets/${filename}"),`);
+            totalAssets++;
+          } else {
+            console.warn(`[Assets] ${practa.id}: Path "${filename}" for key "${key}" is a directory, not a file`);
+          }
+        } catch {
+          console.warn(`[Assets] ${practa.id}: Could not stat "${filename}" for key "${key}"`);
+        }
       } else {
-        console.warn(`[Assets] ${practa.id}: Missing file "${filename}" for key "${key}"`);
+        console.warn(`[Assets] ${practa.id}: Missing file "${filename}" for key "${key}" (original: "${rawFilename}")`);
       }
     }
     
@@ -162,7 +208,7 @@ function setupCors(app: express.Application) {
     }
 
     if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d) => {
+      process.env.REPLIT_DOMAINS.split(",").forEach((d: string) => {
         origins.add(`https://${d.trim()}`);
       });
     }
