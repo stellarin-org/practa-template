@@ -13,44 +13,90 @@ import {
   getCurrentCommitSha,
 } from "../scripts/bump-version";
 
+interface PractaAssetEntry {
+  id: string;
+  relativePath: string;
+  assets: Record<string, string>;
+}
+
+function discoverPractas(): PractaAssetEntry[] {
+  const practas: PractaAssetEntry[] = [];
+  
+  // my-practa
+  const myPractaPath = path.join(process.cwd(), "client/my-practa/metadata.json");
+  if (fs.existsSync(myPractaPath)) {
+    try {
+      const metadata = JSON.parse(fs.readFileSync(myPractaPath, "utf-8"));
+      practas.push({
+        id: metadata.id || "my-practa",
+        relativePath: "../my-practa",
+        assets: metadata.assets || {},
+      });
+    } catch (error) {
+      console.error("[Assets] Failed to read my-practa metadata:", error);
+    }
+  }
+  
+  // demo-practa directories
+  const demoPractaDir = path.join(process.cwd(), "client/demo-practa");
+  if (fs.existsSync(demoPractaDir)) {
+    const entries = fs.readdirSync(demoPractaDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const metadataPath = path.join(demoPractaDir, entry.name, "metadata.json");
+        if (fs.existsSync(metadataPath)) {
+          try {
+            const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+            practas.push({
+              id: metadata.id || entry.name,
+              relativePath: `../demo-practa/${entry.name}`,
+              assets: metadata.assets || {},
+            });
+          } catch (error) {
+            console.error(`[Assets] Failed to read ${entry.name} metadata:`, error);
+          }
+        }
+      }
+    }
+  }
+  
+  return practas;
+}
+
 function updatePractaAssets() {
-  const metadataPath = path.join(process.cwd(), "client/my-practa/metadata.json");
-  const assetsDir = path.join(process.cwd(), "client/my-practa/assets");
   const outputPath = path.join(process.cwd(), "client/lib/practa-assets.ts");
+  const practas = discoverPractas();
   
-  let declaredAssets: Record<string, string> = {};
+  const registryEntries: string[] = [];
+  let totalAssets = 0;
   
-  try {
-    if (fs.existsSync(metadataPath)) {
-      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-      declaredAssets = metadata.assets || {};
+  for (const practa of practas) {
+    const assetLines: string[] = [];
+    const assetsDir = path.join(process.cwd(), `client/${practa.relativePath.replace("../", "")}/assets`);
+    
+    for (const [key, filename] of Object.entries(practa.assets)) {
+      const assetPath = path.join(assetsDir, filename);
+      if (fs.existsSync(assetPath)) {
+        assetLines.push(`    ${key}: require("${practa.relativePath}/assets/${filename}"),`);
+        totalAssets++;
+      } else {
+        console.warn(`[Assets] ${practa.id}: Missing file "${filename}" for key "${key}"`);
+      }
     }
-  } catch (error) {
-    console.error("[Assets] Failed to read metadata.json:", error);
-  }
-  
-  const assetLines: string[] = [];
-  const missingAssets: string[] = [];
-  
-  for (const [key, filename] of Object.entries(declaredAssets)) {
-    const assetPath = path.join(assetsDir, filename);
-    if (fs.existsSync(assetPath)) {
-      assetLines.push(`  ${key}: require("../my-practa/assets/${filename}"),`);
+    
+    if (assetLines.length > 0) {
+      registryEntries.push(`  "${practa.id}": {\n${assetLines.join("\n")}\n  },`);
     } else {
-      missingAssets.push(`${key}: ${filename}`);
+      registryEntries.push(`  "${practa.id}": {},`);
     }
   }
   
-  if (missingAssets.length > 0) {
-    console.warn(`[Assets] Missing files: ${missingAssets.join(", ")}`);
-  }
-  
-  const assetsBlock = assetLines.join("\n");
+  const registryBlock = registryEntries.join("\n");
   
   const newContent = `/**
  * Local Asset Resolver for Development
  * 
- * This file is auto-generated based on assets declared in metadata.json.
+ * This file is auto-generated based on assets declared in metadata.json files.
  * DO NOT EDIT - this file is regenerated on server startup.
  * 
  * In production (Stellarin), assets are provided via CDN URLs through context.
@@ -61,21 +107,23 @@ import { ResolvedAssets } from "@/types/flow";
 
 type AssetSource = number | { uri: string };
 
-const localAssets: Record<string, AssetSource> = {
-${assetsBlock}
-} as const;
+const assetRegistry: Record<string, Record<string, AssetSource>> = {
+${registryBlock}
+};
 
-export function resolveAssets(): ResolvedAssets {
-  return { ...localAssets };
+export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {
+  return { ...assetRegistry[practaId] } || {};
 }
 
-export function hasSplash(): boolean {
-  return "splash" in localAssets;
+export function hasSplash(practaId: string = "my-practa"): boolean {
+  const assets = assetRegistry[practaId];
+  return assets ? "splash" in assets : false;
 }
 
-export function getSplashSource(): ImageSourcePropType | null {
-  if (hasSplash()) {
-    return localAssets.splash as ImageSourcePropType;
+export function getSplashSource(practaId: string = "my-practa"): ImageSourcePropType | null {
+  const assets = assetRegistry[practaId];
+  if (assets && "splash" in assets) {
+    return assets.splash as ImageSourcePropType;
   }
   return null;
 }
@@ -88,8 +136,7 @@ export function getSplashSource(): ImageSourcePropType | null {
     
     if (existingContent !== newContent) {
       fs.writeFileSync(outputPath, newContent);
-      const assetCount = Object.keys(declaredAssets).length;
-      console.log(`[Assets] Updated practa-assets.ts: ${assetCount} asset(s) declared`);
+      console.log(`[Assets] Updated practa-assets.ts: ${practas.length} practa(s), ${totalAssets} asset(s)`);
     }
   } catch (error) {
     console.error("[Assets] Failed to update practa-assets.ts:", error);

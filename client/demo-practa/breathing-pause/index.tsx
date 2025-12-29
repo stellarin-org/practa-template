@@ -16,7 +16,6 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
-import { assets } from "./assets";
 
 const BREATH_CYCLES = 3;
 const INHALE_DURATION = 4000;
@@ -48,8 +47,8 @@ export default function BreathingPause({ context, onComplete, onSkip }: Breathin
   const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
 
-  const chimeSource = assets.getAudioSource("chime");
-  const player = useAudioPlayer(chimeSource);
+  const chimeSource = context.assets?.chime as number | { uri: string } | undefined;
+  const player = useAudioPlayer(chimeSource || null);
 
   const playChime = useCallback(() => {
     if (player) {
@@ -217,7 +216,7 @@ export default function BreathingPause({ context, onComplete, onSkip }: Breathin
         <View style={styles.orbContainer}>
           <Animated.View style={[styles.orbWrapper, animatedOrbStyle]}>
             <Image 
-              source={assets.getImageSource("breathing-orb") || undefined} 
+              source={context.assets?.breathingOrb as number | { uri: string } | undefined} 
               style={styles.orbImage}
               resizeMode="cover"
             />

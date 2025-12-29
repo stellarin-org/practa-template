@@ -74,16 +74,13 @@ export default function FlowScreen() {
 
   const resolvedAssets = useMemo(() => {
     if (!practa) return null;
-    if (practa.type === "my-practa") {
-      return resolveAssets();
-    }
-    return null;
+    return resolveAssets(practa.type);
   }, [practa?.type]);
 
   const splashSource = useMemo(() => {
     if (!practa) return null;
-    if (practa.type === "my-practa" && hasSplash()) {
-      return getSplashSource();
+    if (hasSplash(practa.type)) {
+      return getSplashSource(practa.type);
     }
     return null;
   }, [practa?.type]);

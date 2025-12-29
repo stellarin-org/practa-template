@@ -1,0 +1,14 @@
+{
+  "id": "breathing-pause",
+  "name": "Breathing Pause",
+  "version": "1.0.0",
+  "description": "A calming breathing exercise to help you center yourself and find peace",
+  "author": "Stellarin",
+  "estimatedDuration": 60,
+  "category": "breathwork",
+  "tags": ["breathing", "calm", "mindfulness", "relaxation"],
+  "assets": {
+    "breathingOrb": "breathing-orb.png",
+    "chime": "chime.mp3"
+  }
+}

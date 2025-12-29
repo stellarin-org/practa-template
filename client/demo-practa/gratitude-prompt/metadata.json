@@ -1,0 +1,11 @@
+{
+  "id": "gratitude-prompt",
+  "name": "Gratitude Moment",
+  "version": "1.0.0",
+  "description": "A simple reflection exercise to cultivate gratitude and appreciation",
+  "author": "Stellarin",
+  "estimatedDuration": 30,
+  "category": "reflection",
+  "tags": ["gratitude", "journaling", "reflection", "mindfulness"],
+  "assets": {}
+}
