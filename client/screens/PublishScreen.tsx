@@ -55,7 +55,7 @@ export default function PublishScreen() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [claimAttempted, setClaimAttempted] = useState(false);
+  const [submissionStarted, setSubmissionStarted] = useState(false);
 
   const { data: metadata } = useQuery<PractaMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -104,13 +104,13 @@ export default function PublishScreen() {
     }
   };
 
-  const handleClaimSubmission = () => {
+  const handleContinueToSubmit = () => {
     if (!submitResult?.token) return;
     
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const submitUrl = `${VERIFICATION_SERVICE_URL}/submit?token=${submitResult.token}`;
     Linking.openURL(submitUrl);
-    setClaimAttempted(true);
+    setSubmissionStarted(true);
   };
 
   const handleViewDashboard = async () => {
@@ -218,14 +218,14 @@ export default function PublishScreen() {
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
-                {claimAttempted ? "Claim Initiated" : "Upload Complete"}
+                {submissionStarted ? "Submission Initiated" : "Validation Complete"}
               </ThemedText>
             </View>
             
             <ThemedText style={[styles.successText, { color: theme.textSecondary }]}>
-              {claimAttempted 
+              {submissionStarted 
                 ? "If you authorized access, your submission should now be linked to your Stellarin account. Check your dashboard to confirm."
-                : "Your Practa has been validated and uploaded. Sign in on Stellarin to claim your submission."
+                : "Your Practa has been validated and is ready. Continue to Stellarin to complete your submission."
               }
             </ThemedText>
 
@@ -245,7 +245,7 @@ export default function PublishScreen() {
             </View>
 
             <View style={styles.detailRow}>
-              <ThemedText style={styles.detailLabel}>Claim Token Expires</ThemedText>
+              <ThemedText style={styles.detailLabel}>Complete within</ThemedText>
               <ThemedText style={[styles.detailValue, { color: theme.textSecondary }]}>
                 {formatExpiryTime(submitResult.expiresAt)}
               </ThemedText>
@@ -271,42 +271,22 @@ export default function PublishScreen() {
               </View>
             ) : null}
 
-            {claimAttempted ? (
-              <View style={styles.buttonRow}>
-                <Pressable
-                  style={[styles.resetButton, { borderColor: theme.textSecondary }]}
-                  onPress={handleReset}
-                >
-                  <ThemedText style={[styles.resetButtonText, { color: theme.textSecondary }]}>
-                    Submit Again
-                  </ThemedText>
-                </Pressable>
-                <Pressable
-                  style={[styles.claimButton, { backgroundColor: theme.primary }]}
-                  onPress={handleViewDashboard}
-                >
-                  <Feather name="external-link" size={18} color="#FFFFFF" />
-                  <ThemedText style={styles.claimButtonText}>View Dashboard</ThemedText>
-                </Pressable>
-              </View>
+            {submissionStarted ? (
+              <Pressable
+                style={[styles.continueButton, { backgroundColor: theme.primary }]}
+                onPress={handleViewDashboard}
+              >
+                <Feather name="external-link" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.continueButtonText}>View Dashboard</ThemedText>
+              </Pressable>
             ) : (
-              <View style={styles.buttonRow}>
-                <Pressable
-                  style={[styles.resetButton, { borderColor: theme.textSecondary }]}
-                  onPress={handleReset}
-                >
-                  <ThemedText style={[styles.resetButtonText, { color: theme.textSecondary }]}>
-                    Submit Again
-                  </ThemedText>
-                </Pressable>
-                <Pressable
-                  style={[styles.claimButton, { backgroundColor: theme.primary }]}
-                  onPress={handleClaimSubmission}
-                >
-                  <Feather name="external-link" size={18} color="#FFFFFF" />
-                  <ThemedText style={styles.claimButtonText}>Claim</ThemedText>
-                </Pressable>
-              </View>
+              <Pressable
+                style={[styles.continueButton, { backgroundColor: theme.primary }]}
+                onPress={handleContinueToSubmit}
+              >
+                <Feather name="arrow-right" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.continueButtonText}>Continue to Submit</ThemedText>
+              </Pressable>
             )}
           </Card>
         ) : null}
@@ -337,7 +317,7 @@ export default function PublishScreen() {
               <View style={styles.infoRow}>
                 <Feather name="info" size={18} color={theme.textSecondary} />
                 <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
-                  Your Practa will be validated and uploaded to Stellarin. After uploading, sign in to claim your submission.
+                  Your Practa will be validated. After validation, continue to Stellarin to complete your submission.
                 </ThemedText>
               </View>
             </Card>
@@ -523,33 +503,16 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 13,
   },
-  buttonRow: {
+  continueButton: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
     marginTop: Spacing.lg,
   },
-  resetButton: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-  },
-  resetButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  claimButton: {
-    flex: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-  },
-  claimButtonText: {
+  continueButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
