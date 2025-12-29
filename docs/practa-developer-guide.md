@@ -50,9 +50,9 @@ Allow users to exit early:
 
 ---
 
-## Context & Storage
+## Context, Assets & Storage
 
-The `context` prop provides flow information and optional persistence:
+The `context` prop provides flow information, assets, and optional persistence:
 
 ```typescript
 interface PractaContext {
@@ -64,6 +64,7 @@ interface PractaContext {
     content?: { type: "text" | "image"; value: string };
     metadata?: Record<string, unknown>;
   };
+  assets?: ResolvedAssets;  // Images and JSON declared in metadata.json
   storage?: PractaStorage;  // Persist state across sessions
 }
 ```
