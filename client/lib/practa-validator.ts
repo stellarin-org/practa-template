@@ -324,19 +324,19 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for direct require() usage in component code (not in assets.ts)
+  // Check for direct require() usage in component code
   // This pattern catches: require("./assets/...) or require('./assets/...)
   const requirePattern = /require\s*\(\s*["']\.\/assets\//;
   if (requirePattern.test(source)) {
     results.push({
       passed: false,
-      message: "Do not use require() directly. Use assets.getImageSource() from ./assets.ts instead",
+      message: "Do not use require() directly. Declare assets in metadata.json and use context.assets instead",
       severity: "error",
     });
-  } else if (source.includes("assets.getImageSource") || source.includes("assets.getAudioUri") || source.includes("assets.getUri")) {
+  } else if (source.includes("context.assets")) {
     results.push({
       passed: true,
-      message: "Uses asset resolver pattern correctly",
+      message: "Uses context.assets pattern correctly",
       severity: "success",
     });
   }
