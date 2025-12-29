@@ -147,34 +147,51 @@ interface AssetValidationResult {
   fileCount: number;
 }
 
+/**
+ * Normalize asset path to just the filename.
+ * Handles common user mistakes like "assets/splash.png" instead of "splash.png"
+ */
+function normalizeAssetPath(assetPath: string): string {
+  let normalized = assetPath.trim();
+  
+  // Iteratively strip prefixes until stable
+  let prev = "";
+  while (prev !== normalized) {
+    prev = normalized;
+    normalized = normalized.replace(/^\.?\//, "");
+    normalized = normalized.replace(/^assets\//, "");
+  }
+  
+  return normalized;
+}
+
 function extractDeclaredAssets(practaDir: string): { key: string; path: string }[] {
-  const assetsPath = path.join(practaDir, "assets.ts");
-  if (!fs.existsSync(assetsPath)) {
+  const metadataPath = path.join(practaDir, "metadata.json");
+  if (!fs.existsSync(metadataPath)) {
     return [];
   }
 
-  const content = fs.readFileSync(assetsPath, "utf-8");
-  const declared: { key: string; path: string }[] = [];
+  try {
+    const content = fs.readFileSync(metadataPath, "utf-8");
+    const metadata = JSON.parse(content);
+    const declared: { key: string; path: string }[] = [];
 
-  // Match patterns like: "key": require("./assets/file.png")
-  // Also match: 'key': require('./assets/file.png')
-  const requirePattern = /["']([^"']+)["']\s*:\s*require\s*\(\s*["']([^"']+)["']\s*\)/g;
-  let match;
-
-  while ((match = requirePattern.exec(content)) !== null) {
-    const key = match[1];
-    const assetPath = match[2];
-    
-    // Only process paths that start with ./assets/
-    if (assetPath.startsWith("./assets/")) {
-      declared.push({
-        key,
-        path: assetPath.replace("./assets/", ""),
-      });
+    if (metadata.assets && typeof metadata.assets === "object") {
+      for (const [key, rawPath] of Object.entries(metadata.assets)) {
+        if (typeof rawPath === "string") {
+          const normalizedPath = normalizeAssetPath(rawPath);
+          if (normalizedPath) {
+            declared.push({ key, path: normalizedPath });
+          }
+        }
+      }
     }
-  }
 
-  return declared;
+    return declared;
+  } catch (error) {
+    console.error("[Validator] Failed to parse metadata.json:", error);
+    return [];
+  }
 }
 
 function validateAssets(practaDir: string): AssetValidationResult {
