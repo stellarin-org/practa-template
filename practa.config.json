@@ -1,7 +1,7 @@
 {
   "id": "my-practa",
   "name": "My Practa",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "A starter template for your custom wellbeing experience",
   "author": "Your Name",
   "estimatedDuration": 30,
@@ -9,5 +9,8 @@
   "tags": [
     "starter",
     "template"
-  ]
+  ],
+  "assets": {
+    "wellnessBg": "wellness-bg.png"
+  }
 }

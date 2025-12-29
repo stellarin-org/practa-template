@@ -9,5 +9,8 @@
   "tags": [
     "starter",
     "template"
-  ]
+  ],
+  "assets": {
+    "wellnessBg": "wellness-bg.png"
+  }
 }

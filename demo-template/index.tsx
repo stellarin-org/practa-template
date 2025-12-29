@@ -16,7 +16,8 @@
  */
 
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Platform, ImageSourcePropType } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
@@ -37,6 +38,9 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [isStarted, setIsStarted] = useState(false);
+
+  // Get the wellness background image from context.assets
+  const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;
 
   const triggerHaptic = () => {
     if (Platform.OS !== "web") {
@@ -65,9 +69,17 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
   return (
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
-          <Feather name="star" size={48} color={theme.primary} />
-        </View>
+        {wellnessBgSource ? (
+          <Image
+            source={wellnessBgSource}
+            style={styles.wellnessImage}
+            contentFit="cover"
+          />
+        ) : (
+          <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
+            <Feather name="star" size={48} color={theme.primary} />
+          </View>
+        )}
 
         <ThemedText style={styles.title}>
           {isStarted ? "Great!" : "Welcome"}
@@ -125,6 +137,12 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: Spacing.xl,
+  },
+  wellnessImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: Spacing.xl,
   },
   title: {
