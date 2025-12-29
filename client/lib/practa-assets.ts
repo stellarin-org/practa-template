@@ -13,7 +13,9 @@ import { ResolvedAssets } from "@/types/flow";
 type AssetSource = number | { uri: string };
 
 const assetRegistry: Record<string, Record<string, AssetSource>> = {
-  "my-practa": {},
+  "my-practa": {
+    wellnessBg: require("../my-practa/assets/wellness-bg.png"),
+  },
   "breathing-pause": {
     breathingOrb: require("../demo-practa/breathing-pause/assets/breathing-orb.png"),
     chime: require("../demo-practa/breathing-pause/assets/chime.mp3"),
