@@ -134,6 +134,15 @@ Update `client/my-practa/metadata.json` with your Practa info:
 
 Declare assets in `metadata.json` and access them via `context.assets` in your Practa.
 
+### Supported File Types
+
+| Extension | What You Receive | Usage |
+|-----------|------------------|-------|
+| `.png` | Image source object | `<Image source={context.assets.icon} />` |
+| `.jpg` / `.jpeg` | Image source object | `<Image source={context.assets.photo} />` |
+| `.gif` | Image source object | `<Image source={context.assets.animation} />` |
+| `.json` | Parsed JavaScript object/array | `context.assets.data.forEach(...)` |
+
 ### Declaring Assets
 
 Add an `assets` object to your `metadata.json`:
@@ -145,24 +154,43 @@ Add an `assets` object to your `metadata.json`:
   "version": "1.0.0",
   "assets": {
     "splash": "splash.png",
-    "background": "bg.jpg"
+    "background": "bg.jpg",
+    "wordlist": "words.json",
+    "puzzles": "puzzles.json"
   }
 }
 ```
 
 Then place the files in `client/my-practa/assets/`. On app restart, assets are automatically resolved.
 
-### Accessing Assets
+### Using Image Assets
 
-Assets are available via `context.assets`:
+Images are used directly with the Image component:
+
+```typescript
+import { Image } from 'react-native';
+
+export default function MyPracta({ context, onComplete }: PractaProps) {
+  return (
+    <Image source={context.assets?.splash} />
+    <Image source={context.assets?.background} style={styles.bg} />
+  );
+}
+```
+
+### Using JSON Data
+
+JSON files are automatically parsed and available as objects or arrays:
 
 ```typescript
 export default function MyPracta({ context, onComplete }: PractaProps) {
-  const backgroundImage = context.assets?.background;
+  const words = context.assets?.wordlist as string[];
+  const puzzles = context.assets?.puzzles as Puzzle[];
   
-  return (
-    <Image source={backgroundImage} style={styles.background} />
-  );
+  const randomWord = words[Math.floor(Math.random() * words.length)];
+  const todaysPuzzle = puzzles.find(p => p.date === today);
+  
+  return <Text>{randomWord}</Text>;
 }
 ```
 
