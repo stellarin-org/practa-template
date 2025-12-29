@@ -39,7 +39,21 @@ function bumpPatchVersion(version: string): string {
     return "1.0.1";
   }
   const [, major, minor, patch, suffix] = match;
-  return `${major}.${minor}.${Number(patch) + 1}${suffix || ""}`;
+  let newMajor = Number(major);
+  let newMinor = Number(minor);
+  let newPatch = Number(patch) + 1;
+  
+  // Roll over: 1.0.9 -> 1.1.0, 1.9.9 -> 2.0.0
+  if (newPatch >= 10) {
+    newPatch = 0;
+    newMinor += 1;
+  }
+  if (newMinor >= 10) {
+    newMinor = 0;
+    newMajor += 1;
+  }
+  
+  return `${newMajor}.${newMinor}.${newPatch}${suffix || ""}`;
 }
 
 export function bumpMetadataPatch(): { success: boolean; newVersion?: string; error?: string } {
