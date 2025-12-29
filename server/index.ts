@@ -32,15 +32,11 @@ interface PractaAssetEntry {
 function normalizeAssetPath(assetPath: string): string {
   let normalized = assetPath.trim();
   
-  // Iteratively strip prefixes until stable (handles ././assets/... etc.)
-  let prev = "";
-  while (prev !== normalized) {
-    prev = normalized;
-    // Remove leading ./ or /
-    normalized = normalized.replace(/^\.?\//, "");
-    // Remove assets/ prefix if present
-    normalized = normalized.replace(/^assets\//, "");
-  }
+  // Strip leading ./ or /
+  normalized = normalized.replace(/^\.\//, "");
+  normalized = normalized.replace(/^\//, "");
+  // Strip single leading assets/ prefix if present
+  normalized = normalized.replace(/^assets\//, "");
   
   return normalized;
 }

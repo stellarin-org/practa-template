@@ -154,13 +154,11 @@ interface AssetValidationResult {
 function normalizeAssetPath(assetPath: string): string {
   let normalized = assetPath.trim();
   
-  // Iteratively strip prefixes until stable
-  let prev = "";
-  while (prev !== normalized) {
-    prev = normalized;
-    normalized = normalized.replace(/^\.?\//, "");
-    normalized = normalized.replace(/^assets\//, "");
-  }
+  // Strip leading ./ or /
+  normalized = normalized.replace(/^\.\//, "");
+  normalized = normalized.replace(/^\//, "");
+  // Strip single leading assets/ prefix if present
+  normalized = normalized.replace(/^assets\//, "");
   
   return normalized;
 }
