@@ -56,7 +56,6 @@ export default function PublishScreen() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submissionStarted, setSubmissionStarted] = useState(false);
 
   const { data: metadata } = useQuery<PractaMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -111,16 +110,9 @@ export default function PublishScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const submitUrl = `${VERIFICATION_SERVICE_URL}/submit?token=${submitResult.token}`;
     Linking.openURL(submitUrl);
-    setSubmissionStarted(true);
-  };
-
-  const handleViewDashboard = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      await WebBrowser.openBrowserAsync(`${VERIFICATION_SERVICE_URL}/dashboard`);
-    } catch {
-      Linking.openURL(`${VERIFICATION_SERVICE_URL}/dashboard`);
-    }
+    // Reset to initial state so user can submit again if needed
+    setSubmitState("idle");
+    setSubmitResult(null);
   };
 
   const handleDownloadZip = () => {
@@ -219,15 +211,12 @@ export default function PublishScreen() {
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
-                {submissionStarted ? "Submission Initiated" : "Validation Complete"}
+                Validation Complete
               </ThemedText>
             </View>
             
             <ThemedText style={[styles.successText, { color: theme.textSecondary }]}>
-              {submissionStarted 
-                ? "If you authorized access, your submission should now be linked to your Stellarin account. Check your dashboard to confirm."
-                : "Your Practa has been validated and is ready. Continue to Stellarin to complete your submission."
-              }
+              Your Practa has been validated and is ready. Continue to Stellarin to complete your submission.
             </ThemedText>
 
             <View style={styles.detailRow}>
@@ -268,23 +257,13 @@ export default function PublishScreen() {
               </View>
             ) : null}
 
-            {submissionStarted ? (
-              <Pressable
-                style={[styles.continueButton, { backgroundColor: theme.primary }]}
-                onPress={handleViewDashboard}
-              >
-                <Feather name="external-link" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.continueButtonText}>View Dashboard</ThemedText>
-              </Pressable>
-            ) : (
-              <Pressable
-                style={[styles.continueButton, { backgroundColor: theme.primary }]}
-                onPress={handleContinueToSubmit}
-              >
-                <Feather name="arrow-right" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.continueButtonText}>Continue to Submit</ThemedText>
-              </Pressable>
-            )}
+            <Pressable
+              style={[styles.continueButton, { backgroundColor: theme.primary }]}
+              onPress={handleContinueToSubmit}
+            >
+              <Feather name="arrow-right" size={18} color="#FFFFFF" />
+              <ThemedText style={styles.continueButtonText}>Continue to Submit</ThemedText>
+            </Pressable>
           </Card>
         ) : null}
 
