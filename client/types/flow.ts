@@ -39,10 +39,10 @@ export interface PractaStorage {
 /**
  * Asset types supported by the asset system:
  * - Images (.png, .jpg, .jpeg, .gif): number (require) or { uri: string } (CDN)
- * - JSON (.json): Parsed JavaScript object or array
+ * - JSON (.json): Any valid JSON value (object, array, string, number, boolean, null)
  */
 export type ImageAsset = number | { uri: string };
-export type JsonAsset = Record<string, unknown> | unknown[];
+export type JsonAsset = unknown;
 export type AssetValue = ImageAsset | JsonAsset;
 
 /**
