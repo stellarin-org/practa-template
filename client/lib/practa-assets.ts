@@ -8,11 +8,9 @@
  */
 
 import { ImageSourcePropType } from "react-native";
-import { ResolvedAssets } from "@/types/flow";
+import { ResolvedAssets, AssetValue } from "@/types/flow";
 
-type AssetSource = number | { uri: string };
-
-const assetRegistry: Record<string, Record<string, AssetSource>> = {
+const assetRegistry: Record<string, Record<string, AssetValue>> = {
   "my-practa": {
     wellnessBg: require("../my-practa/assets/wellness-bg.png"),
     content: require("../my-practa/assets/content.json"),
@@ -20,9 +18,14 @@ const assetRegistry: Record<string, Record<string, AssetSource>> = {
   "breathing-pause": {
     breathingOrb: require("../demo-practa/breathing-pause/assets/breathing-orb.png"),
     chime: require("../demo-practa/breathing-pause/assets/chime.mp3"),
+    config: require("../demo-practa/breathing-pause/assets/config.json"),
   },
-  "gratitude-prompt": {},
-  "tap-counter": {},
+  "gratitude-prompt": {
+    prompts: require("../demo-practa/gratitude-prompt/assets/prompts.json"),
+  },
+  "tap-counter": {
+    config: require("../demo-practa/tap-counter/assets/config.json"),
+  },
 };
 
 export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {

@@ -16,7 +16,23 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
 
-const TARGET_TAPS = 10;
+interface TapConfig {
+  targetTaps: number;
+  title: string;
+  completeTitle: string;
+  subtitle: string;
+  completeSubtitle: string;
+  hint: string;
+}
+
+const DEFAULT_CONFIG: TapConfig = {
+  targetTaps: 10,
+  title: "Mindful Taps",
+  completeTitle: "Great job!",
+  subtitle: "Tap {target} times to complete",
+  completeSubtitle: "You completed the exercise",
+  hint: "Tap the circle above",
+};
 
 interface TapCounterProps {
   context: PractaContext;
@@ -27,6 +43,9 @@ interface TapCounterProps {
 export default function TapCounter({ context, onComplete, onSkip }: TapCounterProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  const config = (context.assets?.config as TapConfig) || DEFAULT_CONFIG;
+  const TARGET_TAPS = config.targetTaps;
   
   const [count, setCount] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -94,12 +113,12 @@ export default function TapCounter({ context, onComplete, onSkip }: TapCounterPr
     <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
       <View style={styles.content}>
         <ThemedText style={styles.title}>
-          {isComplete ? "Great job!" : "Mindful Taps"}
+          {isComplete ? config.completeTitle : config.title}
         </ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
           {isComplete 
-            ? "You completed the exercise" 
-            : `Tap ${TARGET_TAPS} times to complete`}
+            ? config.completeSubtitle 
+            : config.subtitle.replace("{target}", String(TARGET_TAPS))}
         </ThemedText>
 
         <View style={styles.counterContainer}>
@@ -149,7 +168,7 @@ export default function TapCounter({ context, onComplete, onSkip }: TapCounterPr
           </Pressable>
         ) : (
           <ThemedText style={[styles.hint, { color: theme.textSecondary }]}>
-            Tap the circle above
+            {config.hint}
           </ThemedText>
         )}
 

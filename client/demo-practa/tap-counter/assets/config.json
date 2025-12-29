@@ -1,0 +1,8 @@
+{
+  "targetTaps": 10,
+  "title": "Mindful Taps",
+  "completeTitle": "Great job!",
+  "subtitle": "Tap {target} times to complete",
+  "completeSubtitle": "You completed the exercise",
+  "hint": "Tap the circle above"
+}

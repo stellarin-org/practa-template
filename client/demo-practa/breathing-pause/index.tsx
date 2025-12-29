@@ -17,11 +17,33 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
 
-const BREATH_CYCLES = 3;
-const INHALE_DURATION = 4000;
-const HOLD_DURATION = 2000;
-const EXHALE_DURATION = 4000;
-const CYCLE_DURATION = INHALE_DURATION + HOLD_DURATION + EXHALE_DURATION;
+interface BreathingConfig {
+  cycles: number;
+  inhaleDuration: number;
+  holdDuration: number;
+  exhaleDuration: number;
+  phases: {
+    ready: { title: string; subtitle: string };
+    complete: { title: string; subtitle: string };
+    inhale: string;
+    hold: string;
+    exhale: string;
+  };
+}
+
+const DEFAULT_CONFIG: BreathingConfig = {
+  cycles: 3,
+  inhaleDuration: 4000,
+  holdDuration: 2000,
+  exhaleDuration: 4000,
+  phases: {
+    ready: { title: "Take a moment to pause", subtitle: "A brief breathing exercise to center yourself" },
+    complete: { title: "Well done", subtitle: "You completed your breathing pause" },
+    inhale: "Breathe in...",
+    hold: "Hold...",
+    exhale: "Breathe out...",
+  },
+};
 
 interface BreathingPauseProps {
   context: PractaContext;
@@ -32,6 +54,13 @@ interface BreathingPauseProps {
 export default function BreathingPause({ context, onComplete, onSkip }: BreathingPauseProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  const config = (context.assets?.config as BreathingConfig) || DEFAULT_CONFIG;
+  const BREATH_CYCLES = config.cycles;
+  const INHALE_DURATION = config.inhaleDuration;
+  const HOLD_DURATION = config.holdDuration;
+  const EXHALE_DURATION = config.exhaleDuration;
+  const CYCLE_DURATION = INHALE_DURATION + HOLD_DURATION + EXHALE_DURATION;
   
   const [phase, setPhase] = useState<"ready" | "breathing" | "complete">("ready");
   const [breathPhase, setBreathPhase] = useState<"inhale" | "hold" | "exhale">("inhale");
@@ -195,18 +224,18 @@ export default function BreathingPause({ context, onComplete, onSkip }: Breathin
   }));
 
   const getPhaseText = () => {
-    if (phase === "ready") return "Take a moment to pause";
-    if (phase === "complete") return "Well done";
+    if (phase === "ready") return config.phases.ready.title;
+    if (phase === "complete") return config.phases.complete.title;
     switch (breathPhase) {
-      case "inhale": return "Breathe in...";
-      case "hold": return "Hold...";
-      case "exhale": return "Breathe out...";
+      case "inhale": return config.phases.inhale;
+      case "hold": return config.phases.hold;
+      case "exhale": return config.phases.exhale;
     }
   };
 
   const getSubtext = () => {
-    if (phase === "ready") return "A brief breathing exercise to center yourself";
-    if (phase === "complete") return "You completed your breathing pause";
+    if (phase === "ready") return config.phases.ready.subtitle;
+    if (phase === "complete") return config.phases.complete.subtitle;
     return `Cycle ${cycleCount + 1} of ${BREATH_CYCLES}`;
   };
 

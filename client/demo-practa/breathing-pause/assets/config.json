@@ -1,0 +1,19 @@
+{
+  "cycles": 3,
+  "inhaleDuration": 4000,
+  "holdDuration": 2000,
+  "exhaleDuration": 4000,
+  "phases": {
+    "ready": {
+      "title": "Take a moment to pause",
+      "subtitle": "A brief breathing exercise to center yourself"
+    },
+    "complete": {
+      "title": "Well done",
+      "subtitle": "You completed your breathing pause"
+    },
+    "inhale": "Breathe in...",
+    "hold": "Hold...",
+    "exhale": "Breathe out..."
+  }
+}

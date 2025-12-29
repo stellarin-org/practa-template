@@ -11,12 +11,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler } from "@/types/flow";
 
-const PROMPTS = [
+const DEFAULT_PROMPTS = [
   "What made you smile today?",
   "Name something you're thankful for right now.",
-  "What's a small joy you experienced recently?",
-  "Who is someone you appreciate and why?",
-  "What's something good that happened this week?",
 ];
 
 interface GratitudePromptProps {
@@ -29,7 +26,8 @@ export default function GratitudePrompt({ context, onComplete, onSkip }: Gratitu
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   
-  const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
+  const prompts = (context.assets?.prompts as string[]) || DEFAULT_PROMPTS;
+  const [prompt] = useState(() => prompts[Math.floor(Math.random() * prompts.length)]);
   const [response, setResponse] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 

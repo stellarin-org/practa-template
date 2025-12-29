@@ -9,6 +9,7 @@
   "tags": ["breathing", "calm", "mindfulness", "relaxation"],
   "assets": {
     "breathingOrb": "breathing-orb.png",
-    "chime": "chime.mp3"
+    "chime": "chime.mp3",
+    "config": "config.json"
   }
 }

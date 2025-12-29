@@ -7,5 +7,7 @@
   "estimatedDuration": 30,
   "category": "focus",
   "tags": ["focus", "interactive", "mindfulness", "tapping"],
-  "assets": {}
+  "assets": {
+    "config": "config.json"
+  }
 }

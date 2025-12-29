@@ -7,5 +7,7 @@
   "estimatedDuration": 30,
   "category": "reflection",
   "tags": ["gratitude", "journaling", "reflection", "mindfulness"],
-  "assets": {}
+  "assets": {
+    "prompts": "prompts.json"
+  }
 }
