@@ -96,7 +96,7 @@ Main Practa content becomes visible
 The splash screen uses a `startWithOverlay` prop that determines initial state:
 
 - **When navigating to a Practa:** The overlay fades in from transparent (300ms), then the image appears
-- **When transitioning between Practas in a flow:** The overlay may already be visible, creating a seamless transition between splash screens
+- **When transitioning between Practa in a flow:** The overlay may already be visible, creating a seamless transition between splash screens
 
 ### Key Files
 
