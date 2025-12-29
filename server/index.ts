@@ -28,7 +28,7 @@ function discoverPractas(): PractaAssetEntry[] {
     try {
       const metadata = JSON.parse(fs.readFileSync(myPractaPath, "utf-8"));
       practas.push({
-        id: metadata.id || "my-practa",
+        id: "my-practa", // Always use "my-practa" as key - this matches practa.type in FlowScreen
         relativePath: "../my-practa",
         assets: metadata.assets || {},
       });
