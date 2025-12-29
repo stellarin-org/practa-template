@@ -144,6 +144,13 @@ export default function HowToScreen() {
         </View>
 
         <Card style={styles.card}>
+          <ThemedText style={styles.sectionTitle}>What is this?</ThemedText>
+          <ThemedText style={[styles.introText, { color: theme.textSecondary }]}>
+            This Practa template lets you build Practas - small daily rituals that operate like mini-app experiences. Build your Practa with this template and then publish it to the Stellarin app. The next time the app is published to the app store, your Practa will be bundled and included with it, allowing users to include it in their daily flows.
+          </ThemedText>
+        </Card>
+
+        <Card style={styles.card}>
           <ThemedText style={styles.sectionTitle}>Try Demo Practas</ThemedText>
           <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
             Explore these examples to see what's possible
@@ -289,6 +296,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: Spacing.xs,
+  },
+  introText: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: Spacing.sm,
   },
   sectionSubtitle: {
     fontSize: 14,
