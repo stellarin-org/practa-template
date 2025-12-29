@@ -252,20 +252,16 @@ export default function PublishScreen() {
               </ThemedText>
             </View>
 
-            {submitResult.validationChecks.length > 0 ? (
+            {submitResult.validationChecks.filter(c => !c.passed).length > 0 ? (
               <View style={styles.checksContainer}>
-                <ThemedText style={[styles.checksTitle, { color: theme.textSecondary }]}>
-                  Validation Checks ({submitResult.validationChecks.filter(c => c.passed).length}/{submitResult.validationChecks.length} passed)
+                <ThemedText style={[styles.checksTitle, { color: theme.error }]}>
+                  Failed Checks
                 </ThemedText>
-                {submitResult.validationChecks.map((check, index) => (
+                {submitResult.validationChecks.filter(c => !c.passed).map((check, index) => (
                   <View key={index} style={styles.checkRow}>
-                    <Feather
-                      name={check.passed ? "check" : "x"}
-                      size={14}
-                      color={check.passed ? theme.success : theme.error}
-                    />
-                    <ThemedText style={[styles.checkText, { color: check.passed ? theme.textSecondary : theme.error }]}>
-                      {check.name}{check.message && !check.passed ? `: ${check.message}` : ""}
+                    <Feather name="x" size={14} color={theme.error} />
+                    <ThemedText style={[styles.checkText, { color: theme.error }]}>
+                      {check.name}{check.message ? `: ${check.message}` : ""}
                     </ThemedText>
                   </View>
                 ))}
