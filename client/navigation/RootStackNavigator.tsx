@@ -9,7 +9,7 @@ import { FlowDefinition } from "@/types/flow";
 
 export type RootStackParamList = {
   Main: undefined;
-  Flow: { flow: FlowDefinition; splashActive?: boolean };
+  Flow: { flow: FlowDefinition; splashActive?: boolean; testMode?: boolean };
   MetadataEditor: undefined;
   Submit: undefined;
 };

@@ -25,6 +25,17 @@ interface SyncStatus {
   isMasterTemplate?: boolean;
 }
 
+interface AppSyncStatus {
+  available: boolean;
+  reason?: string;
+  isMasterTemplate?: boolean;
+  mainAppRepo?: string;
+  mainAppBranch?: string;
+  repoAccessible?: boolean;
+  syncItems?: Array<{ from: string; to: string; description: string }>;
+  lastSync?: string | null;
+}
+
 function ConfirmModal({
   visible,
   title,
@@ -123,8 +134,10 @@ export default function DevScreen() {
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [isUpdatingTemplate, setIsUpdatingTemplate] = useState(false);
+  const [isAppSyncing, setIsAppSyncing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showAppSyncModal, setShowAppSyncModal] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const [alertModal, setAlertModal] = useState<{ visible: boolean; title: string; message: string; onClose?: () => void; buttonText?: string }>({
     visible: false,
@@ -141,6 +154,12 @@ export default function DevScreen() {
     queryKey: ["/api/template/sync-status"],
     staleTime: 1000 * 60 * 5,
     enabled: enableSyncCheck,
+  });
+
+  const { data: appSyncStatus } = useQuery<AppSyncStatus>({
+    queryKey: ["/api/app-sync/status"],
+    staleTime: 1000 * 60 * 5,
+    enabled: enableSyncCheck && syncStatus?.isMasterTemplate,
   });
 
   const showAlert = (title: string, message: string, options?: { onClose?: () => void; buttonText?: string }) => {
@@ -243,6 +262,65 @@ export default function DevScreen() {
     setShowConfirmModal(false);
     setIsResetting(true);
     resetMutation.mutate();
+  };
+
+  const appSyncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/app-sync/sync");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/app-sync/status"] });
+      const successCount = data.results?.filter((r: { status: string }) => r.status === "success").length || 0;
+      const failedCount = data.results?.filter((r: { status: string }) => r.status === "failed").length || 0;
+      
+      if (failedCount > 0) {
+        showAlert(
+          "Sync Partially Complete",
+          `Synced ${successCount} files. ${failedCount} files failed. Check console for details.`
+        );
+      } else {
+        showAlert(
+          "Sync Complete",
+          `Successfully synced ${successCount} files from the main app. Restart the app to see changes.`,
+          {
+            buttonText: "Reload App",
+            onClose: async () => {
+              if (Platform.OS === "web") {
+                window.location.reload();
+              } else {
+                await reloadAppAsync();
+              }
+            },
+          }
+        );
+      }
+    },
+    onError: (error: Error) => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      showAlert("Sync Failed", error.message || "Failed to sync from main app");
+    },
+    onSettled: () => {
+      setIsAppSyncing(false);
+    },
+  });
+
+  const handleAppSync = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    setShowAppSyncModal(true);
+  };
+
+  const handleConfirmAppSync = () => {
+    setShowAppSyncModal(false);
+    setIsAppSyncing(true);
+    appSyncMutation.mutate();
   };
 
   return (
@@ -424,6 +502,82 @@ export default function DevScreen() {
           </Pressable>
         </Card>
 
+        {appSyncStatus?.available ? (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Feather name="git-pull-request" size={20} color={theme.primary} />
+              <ThemedText style={styles.sectionTitle}>Sync from Main App</ThemedText>
+              <View style={[styles.versionBadge, { backgroundColor: "#10B981" + "20" }]}>
+                <ThemedText style={[styles.versionBadgeText, { color: "#10B981" }]}>
+                  Master
+                </ThemedText>
+              </View>
+            </View>
+
+            {appSyncStatus.lastSync ? (
+              <View style={styles.versionInfo}>
+                <View style={styles.versionRow}>
+                  <ThemedText style={[styles.versionLabel, { color: theme.textSecondary }]}>
+                    Last Sync
+                  </ThemedText>
+                  <ThemedText style={styles.versionValue}>
+                    {new Date(appSyncStatus.lastSync).toLocaleDateString()}
+                  </ThemedText>
+                </View>
+                <View style={styles.versionRow}>
+                  <ThemedText style={[styles.versionLabel, { color: theme.textSecondary }]}>
+                    Source
+                  </ThemedText>
+                  <ThemedText style={[styles.versionValue, { fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: 12 }]}>
+                    {appSyncStatus.mainAppRepo}
+                  </ThemedText>
+                </View>
+              </View>
+            ) : null}
+
+            <Pressable
+              onPress={handleAppSync}
+              disabled={isAppSyncing || !appSyncStatus.repoAccessible}
+              style={({ pressed }) => [
+                styles.optionButton,
+                {
+                  backgroundColor: pressed
+                    ? theme.backgroundSecondary
+                    : "transparent",
+                },
+              ]}
+            >
+              <View style={styles.optionContent}>
+                <Feather
+                  name="download"
+                  size={20}
+                  color={isAppSyncing ? theme.textSecondary : "#10B981"}
+                />
+                <View style={styles.optionText}>
+                  <ThemedText
+                    style={[
+                      styles.optionTitle,
+                      { color: isAppSyncing ? theme.textSecondary : "#10B981" },
+                    ]}
+                  >
+                    Import from Stellarin
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.optionDescription, { color: theme.textSecondary }]}
+                  >
+                    Sync design system, components, and types ({appSyncStatus.syncItems?.length || 0} files)
+                  </ThemedText>
+                </View>
+              </View>
+              {isAppSyncing ? (
+                <ActivityIndicator size="small" color={theme.textSecondary} />
+              ) : (
+                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+              )}
+            </Pressable>
+          </Card>
+        ) : null}
+
         <ThemedText style={[styles.warningText, { color: theme.textSecondary }]}>
           Note: Your Practa files (my-practa folder) are preserved during updates.
         </ThemedText>
@@ -448,6 +602,16 @@ export default function DevScreen() {
         onConfirm={handleConfirmReset}
         onCancel={() => setShowConfirmModal(false)}
         isDestructive
+      />
+
+      <ConfirmModal
+        visible={showAppSyncModal}
+        title="Sync from Main App"
+        message={`This will import ${appSyncStatus?.syncItems?.length || 0} files from the Stellarin app (design system, components, types). Existing files will be overwritten. Continue?`}
+        confirmText="Sync"
+        cancelText="Cancel"
+        onConfirm={handleConfirmAppSync}
+        onCancel={() => setShowAppSyncModal(false)}
       />
 
       <AlertModal

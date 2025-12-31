@@ -1011,6 +1011,191 @@ ${config.version}
     }
   });
 
+  // ============================================
+  // APP SYNC ROUTES (Master Template Only)
+  // Syncs critical files from main Stellarin app
+  // ============================================
+  
+  const APP_SYNC_CONFIG_PATH = path.resolve(process.cwd(), ".config/app-sync.config.json");
+  
+  interface AppSyncConfig {
+    mainAppRepo: string;
+    mainAppBranch: string;
+    syncItems: Array<{
+      from: string;
+      to: string;
+      description: string;
+    }>;
+  }
+  
+  function readAppSyncConfig(): AppSyncConfig | null {
+    try {
+      if (fs.existsSync(APP_SYNC_CONFIG_PATH)) {
+        return JSON.parse(fs.readFileSync(APP_SYNC_CONFIG_PATH, "utf-8"));
+      }
+    } catch (error) {
+      console.error("Error reading app-sync.config.json:", error);
+    }
+    return null;
+  }
+
+  app.get("/api/app-sync/status", async (req, res) => {
+    try {
+      const masterKey = process.env.MASTER_TEMPLATE_KEY;
+      const isMasterTemplate = typeof masterKey === "string" && masterKey.length > 0;
+      
+      if (!isMasterTemplate) {
+        return res.json({
+          available: false,
+          reason: "App sync is only available for the master template"
+        });
+      }
+      
+      const config = readAppSyncConfig();
+      if (!config) {
+        return res.json({
+          available: false,
+          reason: "App sync configuration not found"
+        });
+      }
+      
+      // Check if main app repo is accessible
+      const repoResponse = await fetch(
+        `https://api.github.com/repos/${config.mainAppRepo}`,
+        { headers: { "Accept": "application/vnd.github+json" } }
+      );
+      
+      const repoAccessible = repoResponse.ok;
+      
+      // Get last sync timestamp if exists
+      const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
+      let lastSync: string | null = null;
+      if (fs.existsSync(syncLogPath)) {
+        lastSync = fs.readFileSync(syncLogPath, "utf-8").trim();
+      }
+      
+      res.json({
+        available: true,
+        isMasterTemplate: true,
+        mainAppRepo: config.mainAppRepo,
+        mainAppBranch: config.mainAppBranch,
+        repoAccessible,
+        syncItems: config.syncItems,
+        lastSync
+      });
+    } catch (error) {
+      console.error("App sync status error:", error);
+      res.status(500).json({
+        available: false,
+        reason: "Failed to check app sync status"
+      });
+    }
+  });
+
+  app.post("/api/app-sync/sync", async (req, res) => {
+    try {
+      const masterKey = process.env.MASTER_TEMPLATE_KEY;
+      const isMasterTemplate = typeof masterKey === "string" && masterKey.length > 0;
+      
+      if (!isMasterTemplate) {
+        return res.status(403).json({
+          error: "App sync is only available for the master template"
+        });
+      }
+      
+      const config = readAppSyncConfig();
+      if (!config) {
+        return res.status(404).json({
+          error: "App sync configuration not found"
+        });
+      }
+      
+      const projectRoot = process.cwd();
+      const results: Array<{ file: string; status: "success" | "failed"; error?: string }> = [];
+      
+      // Helper to validate paths don't escape project root
+      const isPathSafe = (filePath: string): boolean => {
+        const resolved = path.resolve(projectRoot, filePath);
+        return resolved.startsWith(projectRoot) && !filePath.includes('..');
+      };
+      
+      for (const item of config.syncItems) {
+        try {
+          // Validate paths to prevent directory traversal
+          if (!isPathSafe(item.to)) {
+            results.push({
+              file: item.to,
+              status: "failed",
+              error: "Invalid destination path"
+            });
+            continue;
+          }
+          
+          // Fetch file from GitHub
+          const fileUrl = `https://api.github.com/repos/${config.mainAppRepo}/contents/${item.from}?ref=${config.mainAppBranch}`;
+          const response = await fetch(fileUrl, {
+            headers: {
+              "Accept": "application/vnd.github.raw+json",
+              "Cache-Control": "no-cache"
+            }
+          });
+          
+          if (!response.ok) {
+            results.push({
+              file: item.from,
+              status: "failed",
+              error: `HTTP ${response.status}: File not found in main app`
+            });
+            continue;
+          }
+          
+          const content = await response.text();
+          
+          // Ensure destination directory exists
+          const destPath = path.resolve(projectRoot, item.to);
+          const destDir = path.dirname(destPath);
+          if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+          }
+          
+          // Write the file
+          fs.writeFileSync(destPath, content, "utf-8");
+          
+          results.push({
+            file: item.to,
+            status: "success"
+          });
+        } catch (itemError) {
+          results.push({
+            file: item.from,
+            status: "failed",
+            error: itemError instanceof Error ? itemError.message : "Unknown error"
+          });
+        }
+      }
+      
+      // Log the sync
+      const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
+      fs.writeFileSync(syncLogPath, new Date().toISOString(), "utf-8");
+      
+      const successCount = results.filter(r => r.status === "success").length;
+      const failedCount = results.filter(r => r.status === "failed").length;
+      
+      res.json({
+        success: failedCount === 0,
+        message: `Synced ${successCount}/${config.syncItems.length} files from main app`,
+        results,
+        syncedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("App sync error:", error);
+      res.status(500).json({
+        error: "Failed to sync from main app",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
