@@ -1,0 +1,224 @@
+# PractaTestHarness
+
+A minimal testing environment for developing individual practa without importing Stellarin flow machinery.
+
+## Overview
+
+The `PractaTestHarness` allows template developers to:
+- Test single practa in isolation
+- Simulate receiving context from a previous practa
+- Use splash screens and floating chrome controls
+- Chain multiple practa manually without FlowContext
+
+## Installation
+
+Sync these files from stellarin-app:
+- `client/types/flow.ts`
+- `client/components/PractaSplashScreen.tsx`
+- `client/context/PractaChromeContext.tsx`
+- `client/components/PractaTestHarness.tsx`
+- Theme files (theme.ts, useTheme.ts, ThemedText.tsx, ThemedView.tsx, Card.tsx)
+
+## Basic Usage
+
+```tsx
+import { PractaTestHarness } from "@/components/PractaTestHarness";
+import MyPracta from "./practa/MyPracta";
+
+export default function App() {
+  return (
+    <PractaTestHarness
+      PractaComponent={MyPracta}
+      assets={{
+        splash: require("./assets/splash.png"),
+        background: require("./assets/bg.png"),
+      }}
+      onComplete={(output) => {
+        console.log("Practa completed:", output);
+      }}
+    />
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `PractaComponent` | `React.ComponentType<PractaProps>` | Yes | The practa component to render |
+| `assets` | `Record<string, unknown>` | No | Assets to pass via `context.assets`. If `splash` key exists, shows splash screen |
+| `previousContext` | `PreviousPractaContext` | No | Simulates output from a previous practa |
+| `storage` | `PractaStorage` | No | Storage instance. Defaults to no-op storage |
+| `onComplete` | `(output: PractaOutput) => void` | No | Called when practa completes |
+| `onClose` | `() => void` | No | Called when X close button is pressed |
+| `showSplash` | `boolean` | No | Force splash on/off. Default: true if `assets.splash` exists |
+| `showClose` | `boolean` | No | Show X close button in chrome overlay. Default: true if `onClose` is provided |
+| `splashDuration` | `number` | No | Splash display duration in ms. Default: 2000 |
+
+## Simulating Previous Practa Context
+
+Test how your practa handles incoming context from a prior practa:
+
+```tsx
+<PractaTestHarness
+  PractaComponent={PersonalizedMeditationPracta}
+  previousContext={{
+    practaId: "journal-1",
+    practaType: "journal",
+    content: {
+      type: "text",
+      value: "I've been feeling anxious about work lately. The deadlines are piling up.",
+    },
+    metadata: {
+      source: "user",
+      duration: 180000,
+    },
+  }}
+  onComplete={(output) => console.log(output)}
+/>
+```
+
+Your practa receives this via `context.previous`:
+
+```tsx
+function PersonalizedMeditationPracta({ context, onComplete }: PractaProps) {
+  const journalText = context.previous?.content?.value;
+  
+  // Generate meditation based on journal content
+  // ...
+}
+```
+
+## Manual Flow Chaining
+
+Chain multiple practa without FlowContext by passing one's output to the next:
+
+```tsx
+function TestFlow() {
+  const [step, setStep] = useState<"journal" | "meditation" | "done">("journal");
+  const [journalOutput, setJournalOutput] = useState<PractaOutput | null>(null);
+
+  if (step === "journal") {
+    return (
+      <PractaTestHarness
+        PractaComponent={JournalPracta}
+        assets={{ splash: require("./journal-splash.png") }}
+        onComplete={(output) => {
+          setJournalOutput(output);
+          setStep("meditation");
+        }}
+      />
+    );
+  }
+
+  if (step === "meditation") {
+    return (
+      <PractaTestHarness
+        PractaComponent={MeditationPracta}
+        previousContext={journalOutput ? {
+          practaId: "journal-step",
+          practaType: "journal",
+          content: journalOutput.content,
+          metadata: journalOutput.metadata,
+        } : undefined}
+        onComplete={() => setStep("done")}
+      />
+    );
+  }
+
+  return <Text>Flow complete!</Text>;
+}
+```
+
+## Storage
+
+By default, storage operations are no-ops (reads return null, writes succeed silently). For testing persistence:
+
+```tsx
+import { createTestStorage } from "@/lib/test-storage";
+
+const testStorage = createTestStorage();
+
+<PractaTestHarness
+  PractaComponent={MyPracta}
+  storage={testStorage}
+  onComplete={() => {
+    // Inspect what was stored
+    console.log(testStorage.dump());
+  }}
+/>
+```
+
+## Chrome Controls
+
+The harness renders a floating chrome overlay with an X close button (shown by default). Practa can also configure a right-side action via `usePractaChrome()`:
+
+```tsx
+<PractaTestHarness
+  PractaComponent={MyPracta}
+  showClose={true}
+  onClose={() => console.log("User dismissed practa")}
+  onComplete={(output) => console.log("Practa completed:", output)}
+/>
+```
+
+### Adding Right Action
+
+Your practa can add custom controls to the chrome overlay:
+
+```tsx
+function MyPracta({ context, onComplete }: PractaProps) {
+  const { setConfig } = usePractaChrome();
+
+  useEffect(() => {
+    setConfig({
+      rightAction: (
+        <Pressable onPress={() => console.log("Settings tapped")}>
+          <Feather name="settings" size={20} color="white" />
+        </Pressable>
+      ),
+    });
+  }, []);
+
+  return <View>...</View>;
+}
+```
+
+## Full Component Code
+
+See `client/components/PractaTestHarness.tsx` for the full implementation. The component includes:
+- ChromeOverlay with X close button and rightAction support
+- PractaSplashScreen integration
+- Safe area inset handling
+- No-op storage default
+
+## Type Definitions Reference
+
+From `flow.ts`:
+
+```typescript
+interface PractaContext {
+  flowId: string;
+  practaIndex: number;
+  assets?: Record<string, unknown>;
+  storage?: PractaStorage;
+  previous?: PreviousPractaContext;
+}
+
+interface PreviousPractaContext {
+  practaId: string;
+  practaType: PractaType;
+  content?: PractaContent;
+  metadata?: PractaMetadata;
+}
+
+interface PractaOutput {
+  content?: PractaContent;
+  metadata?: PractaMetadata;
+}
+
+interface PractaProps {
+  context: PractaContext;
+  onComplete: (output: PractaOutput) => void;
+}
+```
