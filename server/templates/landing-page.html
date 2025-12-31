@@ -395,6 +395,17 @@
 
     <script src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
     <script>
+      // Auto-retry on connection issues during startup
+      (function checkConnection() {
+        if (document.visibilityState === 'hidden') return;
+        fetch('/api/health', { method: 'GET' })
+          .then(r => r.ok ? null : Promise.reject())
+          .catch(() => {
+            setTimeout(() => location.reload(), 2000);
+          });
+      })();
+    </script>
+    <script>
       (function () {
         const ua = navigator.userAgent;
         const loadingEl = document.getElementById("loading");
