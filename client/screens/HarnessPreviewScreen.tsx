@@ -9,7 +9,7 @@ import MyPracta from "@/my-practa";
 import { demoPractas } from "@/demo-practa";
 import { PractaOutput } from "@/types/flow";
 import { ThemedText } from "@/components/ThemedText";
-import { Colors, Spacing } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 
 type HarnessRouteProp = RouteProp<RootStackParamList, "HarnessPreview">;
@@ -24,14 +24,17 @@ export default function HarnessPreviewScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<HarnessRouteProp>();
   const { practaId } = route.params;
-  const { colorScheme } = useTheme();
-  const colors = Colors[colorScheme];
+  const { theme } = useTheme();
 
   const PractaComponent = PRACTA_COMPONENTS[practaId];
   const assets = resolveAssets(practaId);
 
   const handleComplete = useCallback((output: PractaOutput) => {
     console.log("Practa completed:", output);
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleClose = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
@@ -44,8 +47,8 @@ export default function HarnessPreviewScreen() {
 
   if (!PractaComponent) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.backgroundDefault }}>
+        <ActivityIndicator size="large" color={theme.primary} />
         <ThemedText style={{ marginTop: Spacing.md }}>Loading...</ThemedText>
       </View>
     );
@@ -56,6 +59,7 @@ export default function HarnessPreviewScreen() {
       PractaComponent={PractaComponent}
       assets={assets}
       onComplete={handleComplete}
+      onClose={handleClose}
     />
   );
 }
