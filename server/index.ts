@@ -138,8 +138,15 @@ function updatePractaAssets() {
   const newContent = `/**
  * Local Asset Resolver for Development
  * 
- * This file is auto-generated based on assets declared in metadata.json files.
- * DO NOT EDIT - this file is regenerated on server startup.
+ * AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
+ * This file is regenerated on server startup.
+ * 
+ * Assets are discovered from each practa's metadata.json file:
+ * - client/my-practa/metadata.json
+ * - client/demo-practa/[name]/metadata.json
+ * 
+ * To add/remove assets, update the "assets" section in metadata.json.
+ * Only assets that exist on disk will be included.
  * 
  * In production (Stellarin), assets are provided via CDN URLs through context.
  */
