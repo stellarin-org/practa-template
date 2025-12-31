@@ -1,12 +1,6 @@
 # Practa Starter Template
 
-A Replit-powered development environment for creating Practa - interactive wellbeing experiences for the Stellarin app.
-
-**No coding experience required.** Describe your idea to Replit AI and it will build your Practa.
-
-## For AI Agents
-
-**Only files in `client/my-practa/` are submitted to Stellarin.** All other files exist only for local development.
+IMPORTANT: If MASTER_TEMPLATE_KEY is empty or null, ONLY edit files found in: `client/my-practa/`. Your job is to build a single practa (interactive wellbeing experiences for the Stellarin app).
 
 When building a Practa:
 - Edit `client/my-practa/index.tsx` (your Practa component)
@@ -15,12 +9,37 @@ When building a Practa:
 - Reference demos in `client/demo-practa/` for patterns
 - Do not modify other files unless explicitly requested
 
-## Quick Start
+## Assets (IMPORTANT)
 
-1. **Describe** your idea to Replit AI
-2. **Preview** in the app (Dev screen → Run Practa)
-3. **Iterate** until polished
-4. **Submit** when ready (Dev screen → Submit)
+**NEVER use `require()` for assets.** Practa are bundled into Stellarin where require() won't work.
+
+Instead, declare assets in `metadata.json` and access them via `context.assets`:
+
+```json
+// metadata.json
+{
+  "assets": {
+    "splash": "splash.png",
+    "icon": "icon.png",
+    "data": "words.json"
+  }
+}
+```
+
+```typescript
+// index.tsx - CORRECT
+export default function MyPracta({ context, onComplete }: PractaProps) {
+  return <Image source={context.assets?.splash} />;
+}
+```
+
+```typescript
+// WRONG - Do NOT do this
+import splash from "./assets/splash.png";  // NO!
+const img = require("./assets/icon.png");  // NO!
+```
+
+This pattern ensures assets work in both development and production (Stellarin CDN).
 
 ## Project Structure
 
