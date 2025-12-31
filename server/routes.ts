@@ -1022,6 +1022,7 @@ ${config.version}
   interface AppSyncConfig {
     mainAppRepo: string;
     mainAppBranch: string;
+    githubConnectionId?: string;
     syncItems: Array<{
       from: string;
       to: string;
@@ -1032,7 +1033,7 @@ ${config.version}
   // Cache for Replit GitHub connector token
   let githubConnectionSettings: { settings: { access_token?: string; expires_at?: string; oauth?: { credentials?: { access_token?: string } } } } | null = null;
   
-  async function getGitHubAccessToken(): Promise<string | null> {
+  async function getGitHubAccessToken(connectionId?: string): Promise<string | null> {
     try {
       // Check if cached token is still valid
       if (githubConnectionSettings?.settings?.expires_at) {
@@ -1058,22 +1059,31 @@ ${config.version}
         return null;
       }
       
-      const response = await fetch(
-        `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=github`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'X_REPLIT_TOKEN': xReplitToken
-          }
+      // If a specific connection ID is provided, query it directly
+      const url = connectionId
+        ? `https://${hostname}/api/v2/connection/${connectionId}?include_secrets=true`
+        : `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=github`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'X_REPLIT_TOKEN': xReplitToken
         }
-      );
+      });
       
       if (!response.ok) {
         return null;
       }
       
-      const data = await response.json() as { items?: Array<typeof githubConnectionSettings> };
-      githubConnectionSettings = data.items?.[0] || null;
+      const data = await response.json();
+      
+      // Handle different response formats (single object vs array)
+      if (connectionId) {
+        githubConnectionSettings = data as typeof githubConnectionSettings;
+      } else {
+        const items = (data as { items?: Array<typeof githubConnectionSettings> }).items;
+        githubConnectionSettings = items?.[0] || null;
+      }
       
       if (!githubConnectionSettings) {
         return null;
@@ -1119,7 +1129,7 @@ ${config.version}
       }
       
       // Check if main app repo is accessible (use Replit GitHub connector)
-      const githubToken = await getGitHubAccessToken();
+      const githubToken = await getGitHubAccessToken(config.githubConnectionId);
       const headers: Record<string, string> = { "Accept": "application/vnd.github+json" };
       if (githubToken) {
         headers["Authorization"] = `Bearer ${githubToken}`;
@@ -1199,7 +1209,7 @@ ${config.version}
           }
           
           // Fetch file from GitHub (use Replit GitHub connector for private repos)
-          const githubToken = await getGitHubAccessToken();
+          const githubToken = await getGitHubAccessToken(config.githubConnectionId);
           const fileUrl = `https://api.github.com/repos/${config.mainAppRepo}/contents/${item.from}?ref=${config.mainAppBranch}`;
           const fetchHeaders: Record<string, string> = {
             "Accept": "application/vnd.github.raw+json",
