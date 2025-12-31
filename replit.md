@@ -101,3 +101,15 @@ See `docs/practa-developer-guide.md` for:
 
 - [Expo Icons](https://icons.expo.fyi) - Browse available icons
 - `design_guidelines.md` - Visual design system
+
+---
+
+## Template Maintainers Only
+
+### App Syncing (Master Template)
+
+If you maintain the master Practa template, you can sync critical files from the main Stellarin app using the "Sync from Main App" option in the Dev screen. This keeps the template's design system, components, and types in sync with the main app.
+
+Configuration is in `.config/app-sync.config.json` (hidden from regular developers).
+
+Regular template developers: **You don't need to worry about this.**
