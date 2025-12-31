@@ -1,0 +1,58 @@
+{
+  "description": "Configuration for syncing critical files from the main Stellarin app",
+  "note": "Only the master template can perform app syncs. This imports design system, types, and shared components from the main app.",
+  "mainAppRepo": "woodenfox/stellarin",
+  "mainAppBranch": "main",
+  "syncItems": [
+    {
+      "from": "client/constants/theme.ts",
+      "to": "client/constants/theme.ts",
+      "description": "Design tokens (colors, spacing, typography)"
+    },
+    {
+      "from": "client/hooks/useTheme.ts",
+      "to": "client/hooks/useTheme.ts",
+      "description": "Theme hook for light/dark mode support"
+    },
+    {
+      "from": "client/components/ThemedText.tsx",
+      "to": "client/components/ThemedText.tsx",
+      "description": "Themed text component"
+    },
+    {
+      "from": "client/components/ThemedView.tsx",
+      "to": "client/components/ThemedView.tsx",
+      "description": "Themed view component with background colors"
+    },
+    {
+      "from": "client/components/Card.tsx",
+      "to": "client/components/Card.tsx",
+      "description": "Card component for elevation and grouping"
+    },
+    {
+      "from": "client/components/ErrorBoundary.tsx",
+      "to": "client/components/ErrorBoundary.tsx",
+      "description": "Error boundary for crash handling"
+    },
+    {
+      "from": "client/components/ErrorFallback.tsx",
+      "to": "client/components/ErrorFallback.tsx",
+      "description": "Error fallback UI"
+    },
+    {
+      "from": "client/types/flow.ts",
+      "to": "client/types/flow.ts",
+      "description": "Practa contract types (PractaProps, PractaContext, etc.)"
+    },
+    {
+      "from": "client/lib/practa-storage.ts",
+      "to": "client/lib/practa-storage.ts",
+      "description": "Practa storage API for persistence"
+    },
+    {
+      "from": "design_guidelines.md",
+      "to": "design_guidelines.md",
+      "description": "Design system documentation"
+    }
+  ]
+}
