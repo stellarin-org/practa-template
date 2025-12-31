@@ -1028,6 +1028,7 @@ ${config.version}
     mainAppRepo: string;
     mainAppBranch: string;
     githubConnectionId?: string;
+    deleteStaleFiles?: boolean;
     syncItems: Array<{
       from: string;
       to: string;
@@ -1193,13 +1194,51 @@ ${config.version}
       }
       
       const projectRoot = process.cwd();
-      const results: Array<{ file: string; status: "success" | "failed"; error?: string }> = [];
+      const results: Array<{ file: string; status: "success" | "failed" | "deleted"; error?: string }> = [];
       
       // Helper to validate paths don't escape project root
       const isPathSafe = (filePath: string): boolean => {
         const resolved = path.resolve(projectRoot, filePath);
         return resolved.startsWith(projectRoot) && !filePath.includes('..');
       };
+      
+      // Load manifest of previously synced files
+      const manifestPath = path.resolve(projectRoot, ".config/.app-sync-manifest.json");
+      let previouslySyncedFiles: string[] = [];
+      if (fs.existsSync(manifestPath)) {
+        try {
+          previouslySyncedFiles = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        } catch {
+          previouslySyncedFiles = [];
+        }
+      }
+      
+      // Get current sync destinations
+      const currentSyncFiles = config.syncItems.map(item => item.to);
+      
+      // Delete stale files (files that were synced before but are no longer in config)
+      if (config.deleteStaleFiles) {
+        const staleFiles = previouslySyncedFiles.filter(f => !currentSyncFiles.includes(f));
+        for (const staleFile of staleFiles) {
+          try {
+            if (!isPathSafe(staleFile)) continue;
+            const filePath = path.resolve(projectRoot, staleFile);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              results.push({
+                file: staleFile,
+                status: "deleted"
+              });
+              console.log(`[App Sync] Deleted stale file: ${staleFile}`);
+            }
+          } catch (deleteError) {
+            console.error(`[App Sync] Failed to delete stale file ${staleFile}:`, deleteError);
+          }
+        }
+      }
+      
+      // Track successfully synced files for manifest
+      const syncedFiles: string[] = [];
       
       for (const item of config.syncItems) {
         try {
@@ -1245,6 +1284,7 @@ ${config.version}
           
           // Write the file
           fs.writeFileSync(destPath, content, "utf-8");
+          syncedFiles.push(item.to);
           
           results.push({
             file: item.to,
@@ -1259,16 +1299,25 @@ ${config.version}
         }
       }
       
+      // Save manifest of synced files for future stale detection
+      fs.writeFileSync(manifestPath, JSON.stringify(syncedFiles, null, 2), "utf-8");
+      
       // Log the sync
       const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
       fs.writeFileSync(syncLogPath, new Date().toISOString(), "utf-8");
       
       const successCount = results.filter(r => r.status === "success").length;
       const failedCount = results.filter(r => r.status === "failed").length;
+      const deletedCount = results.filter(r => r.status === "deleted").length;
+      
+      let message = `Synced ${successCount}/${config.syncItems.length} files from main app`;
+      if (deletedCount > 0) {
+        message += `, deleted ${deletedCount} stale files`;
+      }
       
       res.json({
         success: failedCount === 0,
-        message: `Synced ${successCount}/${config.syncItems.length} files from main app`,
+        message,
         results,
         syncedAt: new Date().toISOString()
       });
