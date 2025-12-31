@@ -1014,6 +1014,7 @@ ${config.version}
   // ============================================
   // APP SYNC ROUTES (Master Template Only)
   // Syncs critical files from main Stellarin app
+  // Uses Replit GitHub connector for authentication
   // ============================================
   
   const APP_SYNC_CONFIG_PATH = path.resolve(process.cwd(), ".config/app-sync.config.json");
@@ -1026,6 +1027,64 @@ ${config.version}
       to: string;
       description: string;
     }>;
+  }
+  
+  // Cache for Replit GitHub connector token
+  let githubConnectionSettings: { settings: { access_token?: string; expires_at?: string; oauth?: { credentials?: { access_token?: string } } } } | null = null;
+  
+  async function getGitHubAccessToken(): Promise<string | null> {
+    try {
+      // Check if cached token is still valid
+      if (githubConnectionSettings?.settings?.expires_at) {
+        const expiresAt = new Date(githubConnectionSettings.settings.expires_at).getTime();
+        if (expiresAt > Date.now()) {
+          return githubConnectionSettings.settings.access_token || 
+                 githubConnectionSettings.settings.oauth?.credentials?.access_token || null;
+        }
+      }
+      
+      const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+      if (!hostname) {
+        return null;
+      }
+      
+      const xReplitToken = process.env.REPL_IDENTITY 
+        ? 'repl ' + process.env.REPL_IDENTITY 
+        : process.env.WEB_REPL_RENEWAL 
+        ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+        : null;
+      
+      if (!xReplitToken) {
+        return null;
+      }
+      
+      const response = await fetch(
+        `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=github`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X_REPLIT_TOKEN': xReplitToken
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json() as { items?: Array<typeof githubConnectionSettings> };
+      githubConnectionSettings = data.items?.[0] || null;
+      
+      if (!githubConnectionSettings) {
+        return null;
+      }
+      
+      return githubConnectionSettings.settings?.access_token || 
+             githubConnectionSettings.settings?.oauth?.credentials?.access_token || null;
+    } catch (error) {
+      console.error("Failed to get GitHub access token from Replit connector:", error);
+      return null;
+    }
   }
   
   function readAppSyncConfig(): AppSyncConfig | null {
@@ -1059,8 +1118,8 @@ ${config.version}
         });
       }
       
-      // Check if main app repo is accessible (use token for private repos)
-      const githubToken = process.env.GITHUB_TOKEN;
+      // Check if main app repo is accessible (use Replit GitHub connector)
+      const githubToken = await getGitHubAccessToken();
       const headers: Record<string, string> = { "Accept": "application/vnd.github+json" };
       if (githubToken) {
         headers["Authorization"] = `Bearer ${githubToken}`;
@@ -1072,7 +1131,7 @@ ${config.version}
       );
       
       const repoAccessible = repoResponse.ok;
-      const hasGithubToken = typeof githubToken === "string" && githubToken.length > 0;
+      const hasGithubConnector = githubToken !== null;
       
       // Get last sync timestamp if exists
       const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
@@ -1087,7 +1146,7 @@ ${config.version}
         mainAppRepo: config.mainAppRepo,
         mainAppBranch: config.mainAppBranch,
         repoAccessible,
-        hasGithubToken,
+        hasGithubConnector,
         syncItems: config.syncItems,
         lastSync
       });
@@ -1139,8 +1198,8 @@ ${config.version}
             continue;
           }
           
-          // Fetch file from GitHub (use token for private repos)
-          const githubToken = process.env.GITHUB_TOKEN;
+          // Fetch file from GitHub (use Replit GitHub connector for private repos)
+          const githubToken = await getGitHubAccessToken();
           const fileUrl = `https://api.github.com/repos/${config.mainAppRepo}/contents/${item.from}?ref=${config.mainAppBranch}`;
           const fetchHeaders: Record<string, string> = {
             "Accept": "application/vnd.github.raw+json",
