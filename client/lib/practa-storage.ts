@@ -1,28 +1,121 @@
-import { PractaStorage } from "@/types/flow";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const STORAGE_PREFIX = "practa";
+const MAX_VALUE_SIZE = 10 * 1024;
+const MAX_TOTAL_SIZE = 100 * 1024;
+const QUOTA_KEY_SUFFIX = "__quota__";
+
+export interface PractaStorage {
+  get<T = unknown>(key: string): Promise<T | null>;
+  set<T = unknown>(key: string, value: T): Promise<void>;
+  remove(key: string): Promise<void>;
+  clear(): Promise<void>;
+}
 
 export class PractaStorageManager implements PractaStorage {
   private prefix: string;
+  private quotaKey: string;
 
-  constructor(userId: string, practaSlug?: string) {
-    this.prefix = practaSlug ? `practa_${userId}_${practaSlug}_` : `practa_${userId}_`;
+  constructor(userId: string, slug: string) {
+    this.prefix = `${STORAGE_PREFIX}:${userId}:${slug}:`;
+    this.quotaKey = `${this.prefix}${QUOTA_KEY_SUFFIX}`;
+  }
+
+  private getFullKey(key: string): string {
+    return `${this.prefix}${key}`;
+  }
+
+  private async getUsedBytes(): Promise<number> {
+    try {
+      const quota = await AsyncStorage.getItem(this.quotaKey);
+      return quota ? parseInt(quota, 10) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private async updateUsedBytes(delta: number): Promise<void> {
+    const current = await this.getUsedBytes();
+    const newTotal = Math.max(0, current + delta);
+    await AsyncStorage.setItem(this.quotaKey, String(newTotal));
   }
 
   async get<T = unknown>(key: string): Promise<T | null> {
-    return null;
+    try {
+      const value = await AsyncStorage.getItem(this.getFullKey(key));
+      if (value === null) return null;
+      return JSON.parse(value) as T;
+    } catch (error) {
+      console.warn(`PractaStorage: Failed to parse key "${key}"`, error);
+      return null;
+    }
   }
 
-  async set<T = unknown>(key: string, value: T): Promise<void> {}
+  async set<T = unknown>(key: string, value: T): Promise<void> {
+    let serialized: string;
+    try {
+      serialized = JSON.stringify(value);
+    } catch {
+      throw new Error("Value is not serializable");
+    }
 
-  async remove(key: string): Promise<void> {}
+    const valueSize = serialized.length;
 
-  async clear(): Promise<void> {}
+    if (valueSize > MAX_VALUE_SIZE) {
+      throw new Error(`Value exceeds maximum size of ${MAX_VALUE_SIZE} bytes`);
+    }
+
+    const fullKey = this.getFullKey(key);
+    const existingValue = await AsyncStorage.getItem(fullKey);
+    const existingSize = existingValue ? existingValue.length : 0;
+    const usedBytes = await this.getUsedBytes();
+    const newTotal = usedBytes - existingSize + valueSize;
+
+    if (newTotal > MAX_TOTAL_SIZE) {
+      throw new Error(`Storage quota exceeded (${MAX_TOTAL_SIZE} bytes)`);
+    }
+
+    await AsyncStorage.setItem(fullKey, serialized);
+    await this.updateUsedBytes(valueSize - existingSize);
+  }
+
+  async remove(key: string): Promise<void> {
+    const fullKey = this.getFullKey(key);
+    try {
+      const existingValue = await AsyncStorage.getItem(fullKey);
+      const existingSize = existingValue ? existingValue.length : 0;
+      await AsyncStorage.removeItem(fullKey);
+      if (existingSize > 0) {
+        await this.updateUsedBytes(-existingSize);
+      }
+    } catch (error) {
+      console.warn(`PractaStorage: Failed to remove key "${key}"`, error);
+    }
+  }
+
+  async clear(): Promise<void> {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const practaKeys = allKeys.filter((k) => k.startsWith(this.prefix));
+      if (practaKeys.length > 0) {
+        await AsyncStorage.multiRemove(practaKeys);
+      }
+      await AsyncStorage.setItem(this.quotaKey, "0");
+    } catch (error) {
+      console.warn("PractaStorage: Failed to clear storage", error);
+    }
+  }
 }
 
+const NOOP_STORAGE: PractaStorage = {
+  async get() {
+    return null;
+  },
+  async set() {},
+  async remove() {},
+  async clear() {},
+};
+
 export function createNoopStorage(): PractaStorage {
-  return {
-    get: async () => null,
-    set: async () => {},
-    remove: async () => {},
-    clear: async () => {},
-  };
+  return NOOP_STORAGE;
 }

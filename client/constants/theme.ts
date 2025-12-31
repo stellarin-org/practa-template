@@ -21,9 +21,7 @@ export const Colors = {
     backgroundTertiary: "#FFF0E6",
     border: "rgba(0,0,0,0.08)",
     success: "#4CAF50",
-    warning: "#F39C12",
     error: "#E74C3C",
-    card: "#F8F9FA",
   },
   dark: {
     text: "#ECEDEE",
@@ -45,9 +43,7 @@ export const Colors = {
     backgroundTertiary: "#383838",
     border: "rgba(255,255,255,0.1)",
     success: "#4CAF50",
-    warning: "#F39C12",
     error: "#E74C3C",
-    card: "#2E2E2E",
   },
 };
 

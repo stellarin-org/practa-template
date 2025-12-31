@@ -1,8 +1,8 @@
-export type PractaType = string;
+import type { PractaStorage } from "@/lib/practa-storage";
 
-export interface PractaAssets {
-  [key: string]: string; // Maps asset name to filename in assets/ folder
-}
+export type { PractaStorage };
+
+export type PractaType = "journal" | "silent-meditation" | "personalized-meditation" | "tend" | "integration-breath";
 
 export interface PractaContent {
   type: "text" | "image";
@@ -14,7 +14,6 @@ export interface PractaMetadata {
   themes?: string[];
   duration?: number;
   emotionTags?: string[];
-  assets?: PractaAssets;
   [key: string]: unknown;
 }
 
@@ -25,58 +24,15 @@ export interface PreviousPractaContext {
   metadata?: PractaMetadata;
 }
 
-/**
- * Storage interface for persisting practa state across sessions.
- * See docs/practa-storage-system.md for full documentation.
- */
-export interface PractaStorage {
-  get<T = unknown>(key: string): Promise<T | null>;
-  set<T = unknown>(key: string, value: T): Promise<void>;
-  remove(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
+export type PractaAssetValue = string | { uri: string };
+export type PractaAssets = Record<string, PractaAssetValue>;
 
-/**
- * Asset types supported by the asset system:
- * - Images (.png, .jpg, .jpeg, .gif): number (require) or { uri: string } (CDN)
- * - JSON (.json): Any valid JSON value (object, array, string, number, boolean, null)
- */
-export type ImageAsset = number | { uri: string };
-export type JsonAsset = unknown;
-export type AssetValue = ImageAsset | JsonAsset;
-
-/**
- * Resolved assets available to the Practa at runtime.
- * In dev: resolved from require() statements
- * In production: CDN URLs provided by Stellarin
- * 
- * Usage:
- * - Images: <Image source={context.assets.splash} />
- * - JSON: context.assets.wordlist (already parsed, use directly)
- */
-export interface ResolvedAssets {
-  splash?: ImageAsset;
-  [key: string]: AssetValue | undefined;
-}
-
-/**
- * Context passed to every practa component.
- * Includes flow information and optional storage for persistence.
- */
 export interface PractaContext {
   flowId: string;
   practaIndex: number;
   previous?: PreviousPractaContext;
-  /** 
-   * Optional storage for persisting state across sessions.
-   * See docs/practa-storage-system.md for usage examples.
-   */
   storage?: PractaStorage;
-  /**
-   * Resolved assets declared in metadata.json.
-   * Use this to access splash screens, images, etc.
-   */
-  assets?: ResolvedAssets;
+  assets?: PractaAssets;
 }
 
 export interface PractaOutput {
