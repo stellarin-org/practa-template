@@ -1059,13 +1059,20 @@ ${config.version}
         });
       }
       
-      // Check if main app repo is accessible
+      // Check if main app repo is accessible (use token for private repos)
+      const githubToken = process.env.GITHUB_TOKEN;
+      const headers: Record<string, string> = { "Accept": "application/vnd.github+json" };
+      if (githubToken) {
+        headers["Authorization"] = `Bearer ${githubToken}`;
+      }
+      
       const repoResponse = await fetch(
         `https://api.github.com/repos/${config.mainAppRepo}`,
-        { headers: { "Accept": "application/vnd.github+json" } }
+        { headers }
       );
       
       const repoAccessible = repoResponse.ok;
+      const hasGithubToken = typeof githubToken === "string" && githubToken.length > 0;
       
       // Get last sync timestamp if exists
       const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
@@ -1080,6 +1087,7 @@ ${config.version}
         mainAppRepo: config.mainAppRepo,
         mainAppBranch: config.mainAppBranch,
         repoAccessible,
+        hasGithubToken,
         syncItems: config.syncItems,
         lastSync
       });
@@ -1131,14 +1139,17 @@ ${config.version}
             continue;
           }
           
-          // Fetch file from GitHub
+          // Fetch file from GitHub (use token for private repos)
+          const githubToken = process.env.GITHUB_TOKEN;
           const fileUrl = `https://api.github.com/repos/${config.mainAppRepo}/contents/${item.from}?ref=${config.mainAppBranch}`;
-          const response = await fetch(fileUrl, {
-            headers: {
-              "Accept": "application/vnd.github.raw+json",
-              "Cache-Control": "no-cache"
-            }
-          });
+          const fetchHeaders: Record<string, string> = {
+            "Accept": "application/vnd.github.raw+json",
+            "Cache-Control": "no-cache"
+          };
+          if (githubToken) {
+            fetchHeaders["Authorization"] = `Bearer ${githubToken}`;
+          }
+          const response = await fetch(fileUrl, { headers: fetchHeaders });
           
           if (!response.ok) {
             results.push({
