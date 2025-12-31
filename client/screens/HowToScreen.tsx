@@ -14,7 +14,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { demoPractas, DemoPractaInfo } from "@/demo-practa";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { FlowDefinition } from "@/types/flow";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -110,21 +109,7 @@ export default function HowToScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    
-    const flow: FlowDefinition = {
-      id: `demo-${demo.id}`,
-      name: demo.name,
-      practas: [
-        {
-          id: demo.id,
-          type: demo.id,
-          name: demo.name,
-          description: demo.description,
-        },
-      ],
-    };
-    
-    navigation.navigate("Flow", { flow });
+    navigation.navigate("HarnessPreview", { practaId: demo.id });
   };
 
   return (

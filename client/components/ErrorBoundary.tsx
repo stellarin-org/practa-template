@@ -1,84 +1,54 @@
-import React, { useState, useMemo } from "react";
-import { View, StyleSheet } from "react-native";
-import { PractaChromeProvider } from "@/context/PractaChromeContext";
-import PractaSplashScreen from "@/components/PractaSplashScreen";
-import type {
-  PractaProps,
-  PractaContext,
-  PractaOutput,
-  PreviousPractaContext,
-  PractaStorage,
-} from "@/types/flow";
+import React, { Component, ComponentType, PropsWithChildren } from "react";
+import { ErrorFallback, ErrorFallbackProps } from "@/components/ErrorFallback";
 
-interface PractaTestHarnessProps {
-  PractaComponent: React.ComponentType<PractaProps>;
-  assets?: Record<string, unknown>;
-  previousContext?: PreviousPractaContext;
-  storage?: PractaStorage;
-  onComplete?: (output: PractaOutput) => void;
-  showSplash?: boolean;
-  splashDuration?: number;
-}
+export type ErrorBoundaryProps = PropsWithChildren<{
+  FallbackComponent?: ComponentType<ErrorFallbackProps>;
+  onError?: (error: Error, stackTrace: string) => void;
+}>;
 
-const noopStorage: PractaStorage = {
-  get: async () => null,
-  set: async () => {},
-  remove: async () => {},
-  clear: async () => {},
-};
+type ErrorBoundaryState = { error: Error | null };
 
-export function PractaTestHarness({
-  PractaComponent,
-  assets = {},
-  previousContext,
-  storage = noopStorage,
-  onComplete,
-  showSplash,
-  splashDuration = 2000,
-}: PractaTestHarnessProps) {
-  const hasSplash = assets.splash != null;
-  const shouldShowSplash = showSplash ?? hasSplash;
-  const [splashComplete, setSplashComplete] = useState(!shouldShowSplash);
+/**
+ * This is a special case for for using the class components. Error boundaries must be class components because React only provides error boundary functionality through lifecycle methods (componentDidCatch and getDerivedStateFromError) which are not available in functional components.
+ * https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
+ */
 
-  const context = useMemo<PractaContext>(() => {
-    const ctx: PractaContext = {
-      flowId: "practa-harness",
-      practaIndex: 0,
-      assets,
-      storage,
-    };
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  state: ErrorBoundaryState = { error: null };
 
-    if (previousContext) {
-      ctx.previous = previousContext;
-    }
-
-    return ctx;
-  }, [assets, storage, previousContext]);
-
-  const handleComplete = (output: PractaOutput) => {
-    onComplete?.(output);
+  static defaultProps: {
+    FallbackComponent: ComponentType<ErrorFallbackProps>;
+  } = {
+    FallbackComponent: ErrorFallback,
   };
 
-  return (
-    <PractaChromeProvider>
-      <View style={styles.container}>
-        {!splashComplete && hasSplash ? (
-          <PractaSplashScreen
-            splashImage={assets.splash as any}
-            onComplete={() => setSplashComplete(true)}
-            displayDuration={splashDuration}
-          />
-        ) : null}
-        {splashComplete ? (
-          <PractaComponent context={context} onComplete={handleComplete} />
-        ) : null}
-      </View>
-    </PractaChromeProvider>
-  );
-}
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error };
+  }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+  componentDidCatch(error: Error, info: { componentStack: string }): void {
+    if (typeof this.props.onError === "function") {
+      this.props.onError(error, info.componentStack);
+    }
+  }
+
+  resetError = (): void => {
+    this.setState({ error: null });
+  };
+
+  render() {
+    const { FallbackComponent } = this.props;
+
+    return this.state.error && FallbackComponent ? (
+      <FallbackComponent
+        error={this.state.error}
+        resetError={this.resetError}
+      />
+    ) : (
+      this.props.children
+    );
+  }
+}

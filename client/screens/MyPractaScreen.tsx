@@ -159,23 +159,9 @@ export default function MyPractaScreen() {
     return validatePracta(MyPracta, practaMetadataJson);
   }, []);
 
-  const navigateToFlow = useCallback(() => {
-    navigation.navigate("Flow", {
-      flow: {
-        id: "preview",
-        name: "Preview",
-        practas: [
-          {
-            id: "my-practa",
-            type: "my-practa" as any,
-            name: metadata.name,
-            description: metadata.description,
-          },
-        ],
-      },
-      splashActive: hasSplash(),
-    });
-  }, [navigation, metadata]);
+  const navigateToHarness = useCallback(() => {
+    navigation.navigate("HarnessPreview", { practaId: "my-practa" });
+  }, [navigation]);
 
   const handlePreview = () => {
     if (Platform.OS !== "web") {
@@ -185,11 +171,11 @@ export default function MyPractaScreen() {
     if (hasSplash()) {
       transitionOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) }, (finished) => {
         if (finished) {
-          runOnJS(navigateToFlow)();
+          runOnJS(navigateToHarness)();
         }
       });
     } else {
-      navigateToFlow();
+      navigateToHarness();
     }
   };
 

@@ -1,15 +1,14 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabNavigator from "@/navigation/TabNavigator";
-import FlowScreen from "@/screens/FlowScreen";
+import HarnessPreviewScreen from "@/screens/HarnessPreviewScreen";
 import MetadataEditorScreen from "@/screens/MetadataEditorScreen";
 import SubmitScreen from "@/screens/SubmitScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
-import { FlowDefinition } from "@/types/flow";
 
 export type RootStackParamList = {
   Main: undefined;
-  Flow: { flow: FlowDefinition; splashActive?: boolean; testMode?: boolean };
+  HarnessPreview: { practaId: string };
   MetadataEditor: undefined;
   Submit: undefined;
 };
@@ -27,8 +26,8 @@ export default function RootStackNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Flow"
-        component={FlowScreen}
+        name="HarnessPreview"
+        component={HarnessPreviewScreen}
         options={{
           presentation: "fullScreenModal",
           headerShown: false,

@@ -118,20 +118,7 @@ export default function PreviewScreen() {
 
   const handlePreview = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    navigation.navigate("Flow", {
-      flow: {
-        id: "preview",
-        name: "Preview",
-        practas: [
-          {
-            id: "my-practa",
-            type: "my-practa" as any,
-            name: metadata.name,
-            description: metadata.description,
-          },
-        ],
-      },
-    });
+    navigation.navigate("HarnessPreview", { practaId: "my-practa" });
   };
 
   const toggleValidation = () => {
