@@ -4,20 +4,15 @@
  * This is a minimal template for building your own Practa.
  * 
  * Key concepts:
- * - `context`: Contains flow info, assets, and optional storage
+ * - `context`: Contains flow info and optional `storage` for persistence
  * - `onComplete`: Call when the user finishes the experience
  * - `onSkip`: Optional callback if the user can skip
  * 
- * ASSETS - Declare in metadata.json, access via context.assets:
- *   Images:  <Image source={context.assets?.myImage} />
- *   JSON:    const data = context.assets?.myData as MyType;
- *            (JSON is already parsed - use directly, no fetch needed)
- * 
- * STORAGE - For persistent state (user preferences, progress):
+ * For persistent state (user preferences, progress), use context.storage:
  *   await context.storage?.get<string>("key")
  *   await context.storage?.set("key", value)
  * 
- * See docs/practa-developer-guide.md for full documentation.
+ * See docs/practa-storage-system.md for full storage documentation.
  */
 
 import React, { useState } from "react";
