@@ -1,4 +1,5 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { PractaTestHarness } from "@/components/PractaTestHarness";
@@ -7,6 +8,9 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import { demoPractas } from "@/demo-practa";
 import { PractaOutput } from "@/types/flow";
+import { ThemedText } from "@/components/ThemedText";
+import { Colors, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 type HarnessRouteProp = RouteProp<RootStackParamList, "HarnessPreview">;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -20,6 +24,8 @@ export default function HarnessPreviewScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<HarnessRouteProp>();
   const { practaId } = route.params;
+  const { colorScheme } = useTheme();
+  const colors = Colors[colorScheme];
 
   const PractaComponent = PRACTA_COMPONENTS[practaId];
   const assets = resolveAssets(practaId);
@@ -29,9 +35,20 @@ export default function HarnessPreviewScreen() {
     navigation.goBack();
   }, [navigation]);
 
+  useEffect(() => {
+    if (!PractaComponent) {
+      console.warn(`Unknown practaId: ${practaId}`);
+      navigation.goBack();
+    }
+  }, [PractaComponent, practaId, navigation]);
+
   if (!PractaComponent) {
-    navigation.goBack();
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={{ marginTop: Spacing.md }}>Loading...</ThemedText>
+      </View>
+    );
   }
 
   return (
