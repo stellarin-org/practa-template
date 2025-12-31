@@ -28,6 +28,7 @@ const assetRegistry: Record<string, Record<string, AssetSource>> = {
     breathingOrb: require("../demo-practa/breathing-pause/assets/breathing-orb.png"),
     chime: require("../demo-practa/breathing-pause/assets/chime.mp3"),
     config: require("../demo-practa/breathing-pause/assets/config.json"),
+    splash: require("../demo-practa/breathing-pause/assets/splash.png"),
   },
   "gratitude-prompt": {
     prompts: require("../demo-practa/gratitude-prompt/assets/prompts.json"),

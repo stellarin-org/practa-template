@@ -10,6 +10,7 @@
   "assets": {
     "breathingOrb": "breathing-orb.png",
     "chime": "chime.mp3",
-    "config": "config.json"
+    "config": "config.json",
+    "splash": "splash.png"
   }
 }
