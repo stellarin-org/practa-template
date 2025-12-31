@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from "react";
 import {
   FlowDefinition,
   FlowExecutionState,
@@ -6,8 +6,10 @@ import {
   PractaContext,
   PractaCompleteHandler,
   FlowCompleteHandler,
+  PractaAssets,
 } from "@/types/flow";
-import { resolveAssets } from "@/lib/practa-assets";
+
+export type AssetResolver = (practaType: string) => PractaAssets | undefined;
 
 interface FlowContextValue {
   currentFlow: FlowExecutionState | null;
@@ -25,9 +27,16 @@ function generateFlowId(): string {
   return `flow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function FlowProvider({ children }: { children: React.ReactNode }) {
+interface FlowProviderProps {
+  children: React.ReactNode;
+  resolveAssets?: AssetResolver;
+}
+
+export function FlowProvider({ children, resolveAssets }: FlowProviderProps) {
   const [currentFlow, setCurrentFlow] = useState<FlowExecutionState | null>(null);
   const [onFlowComplete, setOnFlowComplete] = useState<FlowCompleteHandler | undefined>();
+  const resolveAssetsRef = useRef(resolveAssets);
+  resolveAssetsRef.current = resolveAssets;
 
   const startFlow = useCallback((flowDefinition: FlowDefinition) => {
     const newFlow: FlowExecutionState = {
@@ -81,11 +90,13 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
 
     const { flowId, currentIndex, practaOutputs, flowDefinition } = currentFlow;
     const currentPracta = flowDefinition.practas[currentIndex];
+    
+    if (!currentPracta) return null;
 
     const context: PractaContext = {
       flowId,
       practaIndex: currentIndex,
-      assets: resolveAssets(currentPracta.type),
+      assets: resolveAssetsRef.current?.(currentPracta.type),
     };
 
     if (currentIndex > 0 && practaOutputs.length > 0) {
