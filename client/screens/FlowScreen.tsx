@@ -60,7 +60,7 @@ export default function FlowScreen() {
   const { addJournalEntry, addSession, addFlowCompletion, sessions, journalEntries, tendCompletions } = useMeditation();
   const { publish: addItem } = useTimeline();
   const { user } = useManaPondAuth();
-
+  
   const [totalRiceEarned, setTotalRiceEarned] = useState(0);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
@@ -91,7 +91,7 @@ export default function FlowScreen() {
 
     setAssetsLoading(true);
     setOfflineError(null);
-
+    
     try {
       const launchCheck = await canLaunchPracta(practa.type);
       if (!launchCheck.canLaunch) {
@@ -110,7 +110,7 @@ export default function FlowScreen() {
       console.warn("[FlowScreen] Failed to load assets:", e);
       setAssets(undefined);
     }
-
+    
     setAssetsLoading(false);
   }, [practa?.type]);
 
@@ -248,7 +248,7 @@ export default function FlowScreen() {
       if (hasCompletedPracta) {
         addFlowCompletion(flow.id);
       }
-
+      
       if (testMode && !hasNavigatedBack.current) {
         hasNavigatedBack.current = true;
         requestAnimationFrame(() => {

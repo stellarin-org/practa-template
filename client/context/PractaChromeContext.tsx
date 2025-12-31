@@ -1,65 +1,52 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
-interface ChromeConfig {
-  showProgressDots: boolean;
-  rightAction: ReactNode | null;
+export interface PractaChromeConfig {
+  showProgressDots?: boolean;
+  rightAction?: ReactNode;
 }
 
 interface PractaChromeContextValue {
-  config: ChromeConfig;
-  setShowProgressDots: (show: boolean) => void;
-  setRightAction: (action: ReactNode | null) => void;
-  resetChrome: () => void;
+  config: PractaChromeConfig;
+  setConfig: (config: PractaChromeConfig) => void;
+  resetConfig: () => void;
 }
 
-const defaultConfig: ChromeConfig = {
+const defaultConfig: PractaChromeConfig = {
   showProgressDots: true,
   rightAction: null,
 };
 
-const PractaChromeContext = createContext<PractaChromeContextValue | undefined>(undefined);
+const PractaChromeContext = createContext<PractaChromeContextValue | null>(null);
 
 interface PractaChromeProviderProps {
   children: ReactNode;
 }
 
 export function PractaChromeProvider({ children }: PractaChromeProviderProps) {
-  const [config, setConfig] = useState<ChromeConfig>(defaultConfig);
+  const [config, setConfigState] = useState<PractaChromeConfig>(defaultConfig);
 
-  const setShowProgressDots = useCallback((show: boolean) => {
-    setConfig((prev) => ({ ...prev, showProgressDots: show }));
+  const setConfig = useCallback((newConfig: PractaChromeConfig) => {
+    setConfigState((prev) => ({ ...prev, ...newConfig }));
   }, []);
 
-  const setRightAction = useCallback((action: ReactNode | null) => {
-    setConfig((prev) => ({ ...prev, rightAction: action }));
-  }, []);
-
-  const resetChrome = useCallback(() => {
-    setConfig(defaultConfig);
+  const resetConfig = useCallback(() => {
+    setConfigState(defaultConfig);
   }, []);
 
   return (
-    <PractaChromeContext.Provider
-      value={{
-        config,
-        setShowProgressDots,
-        setRightAction,
-        resetChrome,
-      }}
-    >
+    <PractaChromeContext.Provider value={{ config, setConfig, resetConfig }}>
       {children}
     </PractaChromeContext.Provider>
   );
 }
 
-export function usePractaChrome(): PractaChromeContextValue {
+export function usePractaChrome() {
   const context = useContext(PractaChromeContext);
   if (!context) {
     return {
       config: defaultConfig,
-      setShowProgressDots: () => {},
-      setRightAction: () => {},
-      resetChrome: () => {},
+      setConfig: () => {},
+      resetConfig: () => {},
     };
   }
   return context;

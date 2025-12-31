@@ -24,23 +24,14 @@ export default function PractaSplashScreen({
   splashImage,
   onComplete,
   displayDuration = 2000,
-  startWithOverlay = false,
 }: PractaSplashScreenProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [overlayReady, setOverlayReady] = useState(startWithOverlay);
-  const overlayOpacity = useSharedValue(startWithOverlay ? 1 : 0);
+  const overlayOpacity = useSharedValue(1);
   const imageOpacity = useSharedValue(0);
 
   const handleAnimationComplete = useCallback(() => {
     onComplete();
   }, [onComplete]);
-
-  useEffect(() => {
-    if (startWithOverlay) return;
-    overlayOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
-    const timer = setTimeout(() => setOverlayReady(true), 300);
-    return () => clearTimeout(timer);
-  }, [overlayOpacity, startWithOverlay]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -53,7 +44,7 @@ export default function PractaSplashScreen({
   }, [imageLoaded, onComplete]);
 
   useEffect(() => {
-    if (!imageLoaded || !overlayReady) return;
+    if (!imageLoaded) return;
 
     imageOpacity.value = withSequence(
       withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
@@ -69,7 +60,7 @@ export default function PractaSplashScreen({
         }
       })
     );
-  }, [imageLoaded, overlayReady, displayDuration, overlayOpacity, imageOpacity, handleAnimationComplete]);
+  }, [imageLoaded, displayDuration, overlayOpacity, imageOpacity, handleAnimationComplete]);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,

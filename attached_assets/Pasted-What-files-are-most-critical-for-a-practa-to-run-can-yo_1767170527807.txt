@@ -1,0 +1,58 @@
+What files are most critical for a practa to run, can you create a list
+
+
+1 message & 1 action
+Here are the most critical files for the practa/flow system: **Core Infrastructure:** - `client/context/FlowContext.tsx` - The flow engine that manages execution state and context passing between practa - `client/screens/FlowScreen.tsx` - Orchestrates rendering practa, handles persistence, and displays the chrome overlay - `client/types/flow.ts` - Type definitions for Practa, Flow, PractaContext, PractaOutput **Practa Registry & Loading:** - `client/practa/registry.ts` - Registry of all practa definitions and preset flows (maps practa types to components) - `client/practa/community-loader.ts` - Loads community practa from the registry with asset resolution **Community Practa Specific:** - `scripts/fetch-community-practa.js` - Fetches community practa from GitHub at server startup - `client/lib/community-asset-cache.ts` - Caches community practa assets for offline use - `client/lib/practa-storage.ts` - Allows practa to persist preferences/state **Chrome System (new):** - `client/context/PractaChromeContext.tsx` - Lets practa customize header appearance (hide dots, add actions) **Individual Practa Components:** - `client/practa/JournalPracta.tsx` - `client/practa/SilentMeditationPracta.tsx` - `client/practa/PersonalizedMeditationPracta.tsx` - `client/practa/TendPracta.tsx` - `client/practa/community/*/index.tsx` - Community practa live here
+Core Infrastructure:
+
+client/context/FlowContext.tsx - The flow engine that manages execution state and context passing between practa
+client/screens/FlowScreen.tsx - Orchestrates rendering practa, handles persistence, and displays the chrome overlay
+client/types/flow.ts - Type definitions for Practa, Flow, PractaContext, PractaOutput
+Chrome System (new):
+
+client/context/PractaChromeContext.tsx - Lets practa customize header appearance (hide dots, add actions)
+
+What file dependencies do thse files have?
+
+Here are the dependencies for those core files:
+
+client/types/flow.ts
+Only one dependency:
+
+@/lib/practa-storage - For the PractaStorage type
+client/context/FlowContext.tsx
+Dependencies:
+
+react - React core (createContext, useContext, useState, useCallback, useMemo)
+@/types/flow - FlowDefinition, FlowExecutionState, PractaOutput, PractaContext, PractaCompleteHandler, FlowCompleteHandler
+client/context/PractaChromeContext.tsx
+Dependencies:
+
+react - React core only (createContext, useContext, useState, useCallback, ReactNode)
+This is the most self-contained - no app-specific dependencies!
+
+client/screens/FlowScreen.tsx (heaviest)
+Dependencies:
+
+React/RN Core: react, react-native, react-native-safe-area-context
+Navigation: @react-navigation/native, @react-navigation/native-stack
+Expo: @expo/vector-icons (Feather), expo-haptics
+App Components:
+@/components/FlowCelebration
+@/components/PractaSplashScreen
+Hooks/Theme: @/hooks/useTheme, @/constants/theme
+Contexts:
+@/context/PractaChromeContext
+@/context/FlowContext
+@/context/MeditationContext
+@/context/TimelineContext
+@/context/ManaPondAuthContext
+Types: @/types/flow
+Practa System:
+@/practa (built-in practa components)
+@/practa/community-loader
+Utilities:
+@/lib/practa-storage
+@/lib/device-id
+Navigation Types: @/navigation/RootStackNavigator
+Summary: flow.ts and PractaChromeContext.tsx are very lightweight. FlowContext.tsx only depends on types. FlowScreen.tsx is the integration point that pulls everything together.
