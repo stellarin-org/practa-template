@@ -877,7 +877,12 @@ ${config.version}
       const rootFolder = firstEntry.split("/")[0];
       const projectRoot = process.cwd();
       
-      const SKIP_PATTERNS = [".git/", "node_modules/", ".template-update-temp/"];
+      const SKIP_PATTERNS = [
+        ".git/", 
+        "node_modules/", 
+        ".template-update-temp/",
+        "client/lib/practa-assets.ts",  // Generated file - regenerated on server startup
+      ];
       
       for (const entry of zipEntries) {
         if (entry.isDirectory) continue;
