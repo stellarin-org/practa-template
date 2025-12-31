@@ -32,9 +32,6 @@ const assetRegistry: Record<string, Record<string, AssetSource>> = {
   "gratitude-prompt": {
     prompts: require("../demo-practa/gratitude-prompt/assets/prompts.json"),
   },
-  "tap-counter": {
-    config: require("../demo-practa/tap-counter/assets/config.json"),
-  },
 };
 
 export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {
