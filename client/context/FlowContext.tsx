@@ -7,6 +7,7 @@ import {
   PractaCompleteHandler,
   FlowCompleteHandler,
 } from "@/types/flow";
+import { resolveAssets } from "@/lib/practa-assets";
 
 interface FlowContextValue {
   currentFlow: FlowExecutionState | null;
@@ -79,10 +80,12 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
     if (!currentFlow || currentFlow.status !== "running") return null;
 
     const { flowId, currentIndex, practaOutputs, flowDefinition } = currentFlow;
+    const currentPracta = flowDefinition.practas[currentIndex];
 
     const context: PractaContext = {
       flowId,
       practaIndex: currentIndex,
+      assets: resolveAssets(currentPracta.type),
     };
 
     if (currentIndex > 0 && practaOutputs.length > 0) {

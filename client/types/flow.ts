@@ -24,8 +24,7 @@ export interface PreviousPractaContext {
   metadata?: PractaMetadata;
 }
 
-export type PractaAssetValue = string | { uri: string };
-export type PractaAssets = Record<string, PractaAssetValue>;
+export type PractaAssets = Record<string, unknown>;
 
 export interface PractaContext {
   flowId: string;
