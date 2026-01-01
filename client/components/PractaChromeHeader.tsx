@@ -100,7 +100,7 @@ function DefaultHeader({
           <View style={styles.headerButton}>{rightAction}</View>
         ) : showSettings ? (
           <Pressable style={styles.headerButton} onPress={onSettings}>
-            <Feather name="settings" size={20} color={Colors.dark.text} />
+            <Feather name="settings" size={20} color="#000000" />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
