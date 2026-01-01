@@ -884,6 +884,20 @@ ${config.version}
         "client/lib/practa-assets.ts",  // Generated file - regenerated on server startup
       ];
       
+      // Directories to fully sync (delete stale files)
+      const SYNC_DIRECTORIES = [
+        "assets",
+        "client",
+        "demo-template",
+        "docs",
+        "scripts",
+        "server",
+        "shared",
+      ];
+      
+      // Collect all template file paths for sync directories
+      const templateFiles = new Set<string>();
+      
       for (const entry of zipEntries) {
         if (entry.isDirectory) continue;
         
@@ -900,6 +914,14 @@ ${config.version}
         const shouldSkip = SKIP_PATTERNS.some((p) => relativePath.startsWith(p));
         if (shouldSkip) continue;
         
+        // Track files in sync directories
+        const isInSyncDir = SYNC_DIRECTORIES.some(
+          (dir) => relativePath === dir || relativePath.startsWith(dir + "/")
+        );
+        if (isInSyncDir) {
+          templateFiles.add(relativePath);
+        }
+        
         const destPath = path.join(projectRoot, relativePath);
         const destDir = path.dirname(destPath);
         
@@ -908,6 +930,81 @@ ${config.version}
         }
         
         fs.writeFileSync(destPath, entry.getData());
+      }
+      
+      // Delete stale files in sync directories
+      const getAllFiles = (dir: string, baseDir: string): string[] => {
+        const files: string[] = [];
+        if (!fs.existsSync(dir)) return files;
+        
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = path.relative(baseDir, fullPath);
+          
+          if (entry.isDirectory()) {
+            files.push(...getAllFiles(fullPath, baseDir));
+          } else {
+            files.push(relativePath);
+          }
+        }
+        return files;
+      };
+      
+      for (const syncDir of SYNC_DIRECTORIES) {
+        const fullSyncDir = path.join(projectRoot, syncDir);
+        if (!fs.existsSync(fullSyncDir)) continue;
+        
+        const localFiles = getAllFiles(fullSyncDir, projectRoot);
+        
+        for (const localFile of localFiles) {
+          // Skip if file exists in template
+          if (templateFiles.has(localFile)) continue;
+          
+          // Skip protected paths
+          const isProtected = PROTECTED_PATHS.some(
+            (p) => localFile === p || localFile.startsWith(p + "/")
+          );
+          if (isProtected) continue;
+          
+          // Skip dynamically generated files
+          const shouldSkip = SKIP_PATTERNS.some((p) => localFile.startsWith(p));
+          if (shouldSkip) continue;
+          
+          // Delete stale file
+          const filePath = path.join(projectRoot, localFile);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
+        
+        // Clean up empty directories
+        const cleanEmptyDirs = (dir: string) => {
+          if (!fs.existsSync(dir)) return;
+          
+          const entries = fs.readdirSync(dir);
+          for (const entry of entries) {
+            const fullPath = path.join(dir, entry);
+            if (fs.statSync(fullPath).isDirectory()) {
+              cleanEmptyDirs(fullPath);
+            }
+          }
+          
+          // Check if directory is now empty (and not protected)
+          const relativePath = path.relative(projectRoot, dir);
+          const isProtected = PROTECTED_PATHS.some(
+            (p) => relativePath === p || relativePath.startsWith(p + "/")
+          );
+          
+          if (!isProtected && fs.existsSync(dir)) {
+            const remaining = fs.readdirSync(dir);
+            if (remaining.length === 0) {
+              fs.rmdirSync(dir);
+            }
+          }
+        };
+        
+        cleanEmptyDirs(fullSyncDir);
       }
       
       const syncFilePath = path.resolve(projectRoot, ".template-sync");
