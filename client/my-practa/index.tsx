@@ -28,7 +28,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
 
 interface ContentData {
   title: string;

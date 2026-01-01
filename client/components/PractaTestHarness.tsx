@@ -17,9 +17,11 @@ interface PractaTestHarnessProps {
   previousContext?: PreviousPractaContext;
   storage?: PractaStorage;
   onComplete?: (output: PractaOutput) => void;
+  onSettings?: () => void;
   onClose?: () => void;
   showSplash?: boolean;
   showClose?: boolean;
+  showSettings?: boolean;
   headerMode?: HeaderMode;
   title?: string;
   splashDuration?: number;
@@ -38,9 +40,11 @@ export function PractaTestHarness({
   previousContext,
   storage = noopStorage,
   onComplete,
+  onSettings,
   onClose,
   showSplash,
   showClose,
+  showSettings = true,
   headerMode = "minimal",
   title = "",
   splashDuration = 2000,
@@ -86,7 +90,12 @@ export function PractaTestHarness({
         ) : null}
         {splashComplete ? (
           <>
-            <PractaComponent context={context} onComplete={handleComplete} />
+            <PractaComponent 
+              context={context} 
+              onComplete={handleComplete} 
+              onSettings={onSettings}
+              showSettings={showSettings}
+            />
             <PractaChromeHeader
               onClose={handleClose}
               showClose={shouldShowClose}
