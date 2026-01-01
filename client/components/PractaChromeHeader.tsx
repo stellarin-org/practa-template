@@ -86,7 +86,7 @@ function DefaultHeader({
       <View style={styles.headerRow}>
         {showClose ? (
           <Pressable style={styles.headerButton} onPress={onClose}>
-            <Feather name="x" size={22} color={Colors.dark.text} />
+            <Feather name="x" size={22} color="#000000" />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
