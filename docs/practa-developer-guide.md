@@ -20,6 +20,8 @@ interface PractaProps {
   context: PractaContext;           // Flow info + optional storage
   onComplete: (output: PractaOutput) => void;  // Call when done
   onSkip?: () => void;              // Optional skip handler
+  showSettings?: boolean;           // Whether to show settings button
+  onSettings?: () => void;          // Settings button callback
 }
 ```
 
@@ -47,6 +49,79 @@ Allow users to exit early:
   </Pressable>
 ) : null}
 ```
+
+### Optional: Settings Support
+
+If your Practa has configurable options, use the settings props:
+
+```typescript
+export default function MyPracta({ showSettings, onSettings }: PractaProps) {
+  // Settings are handled via usePractaChrome - see Header Configuration below
+}
+```
+
+---
+
+## Header Configuration (usePractaChrome)
+
+Use the `usePractaChrome` hook to configure how your Practa's header appears:
+
+```typescript
+import { useEffect } from "react";
+import { usePractaChrome } from "@/context/PractaChromeContext";
+
+export default function MyPracta({ showSettings, onSettings }: PractaProps) {
+  const { setConfig } = usePractaChrome();
+
+  useEffect(() => {
+    setConfig({
+      headerMode: "default",      // "default" | "minimal" | "none"
+      title: "My Practa",         // Header title (for default mode)
+      showSettings,               // Pass through from props
+      onSettings,                 // Pass through from props
+    });
+  }, [setConfig, showSettings, onSettings]);
+}
+```
+
+### Header Modes
+
+| Mode | Description |
+|------|-------------|
+| `default` | Full header with title, close button, and optional settings |
+| `minimal` | Floating close button with optional progress dots |
+| `none` | No header (for full-screen experiences) |
+
+---
+
+## Layout Padding (useHeaderHeight)
+
+Use the `useHeaderHeight` hook to calculate proper top padding that accounts for the header:
+
+```typescript
+import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
+import { Spacing } from "@/constants/theme";
+
+export default function MyPracta({ context, onComplete }: PractaProps) {
+  const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
+
+  useEffect(() => {
+    setConfig({ headerMode: "default", title: "My Practa" });
+  }, [setConfig]);
+
+  return (
+    <ThemedView style={{ paddingTop: headerHeight + Spacing.lg }}>
+      {/* Your content */}
+    </ThemedView>
+  );
+}
+```
+
+The hook automatically returns:
+- Header height + safe area for `default` and `minimal` modes
+- `0` for `none` mode (you handle your own safe areas)
 
 ---
 
@@ -320,13 +395,27 @@ const triggerHaptic = () => {
 };
 ```
 
-### Safe Areas
+### Safe Areas & Header Height
 
-Handle notches and home indicators:
+For top padding, use `useHeaderHeight` which accounts for both the header and safe area:
 
 ```typescript
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Spacing } from "@/constants/theme";
 
+const headerHeight = useHeaderHeight();
+const insets = useSafeAreaInsets();
+
+<View style={{ 
+  paddingTop: headerHeight + Spacing.lg,  // Accounts for header + safe area
+  paddingBottom: insets.bottom + Spacing.lg 
+}}>
+```
+
+For screens with `headerMode: "none"`, use safe area insets directly:
+
+```typescript
 const insets = useSafeAreaInsets();
 
 <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
@@ -379,7 +468,7 @@ Before submitting, ensure:
 ## Complete Example
 
 ```typescript
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, TextInput, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -388,18 +477,31 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaProps } from "@/types/flow";
+import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
-interface Props {
-  context: PractaContext;
-  onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
-}
-
-export default function GratitudeJournal({ context, onComplete, onSkip }: Props) {
+export default function GratitudeJournal({ 
+  context, 
+  onComplete, 
+  onSkip,
+  showSettings,
+  onSettings 
+}: PractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    setConfig({
+      headerMode: "default",
+      title: "Gratitude Journal",
+      showSettings,
+      onSettings,
+    });
+  }, [setConfig, showSettings, onSettings]);
 
   const triggerHaptic = () => {
     if (Platform.OS !== "web") {
@@ -416,7 +518,7 @@ export default function GratitudeJournal({ context, onComplete, onSkip }: Props)
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
+    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
       <ThemedText style={styles.title}>What are you grateful for?</ThemedText>
       
       <TextInput
@@ -461,8 +563,23 @@ const styles = StyleSheet.create({
 
 ---
 
+## Demo Practas
+
+Reference these examples in `client/demo-practa/`:
+
+| Demo | Header Mode | Key Patterns |
+|------|-------------|--------------|
+| `breathing-pause` | `default` | Animation, audio, progress tracking, settings |
+| `gratitude-prompt` | `none` | Text input, keyboard handling, full-screen layout |
+
+Each demo shows proper use of `usePractaChrome`, `useHeaderHeight`, and the complete props interface.
+
+---
+
 ## Resources
 
 - Storage API: `docs/practa-storage-system.md`
 - Design system: `design_guidelines.md`
 - Type definitions: `client/types/flow.ts`
+- Chrome context: `client/context/PractaChromeContext.tsx`
+- Header component: `client/components/PractaChromeHeader.tsx`

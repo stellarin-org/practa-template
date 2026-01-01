@@ -92,10 +92,40 @@ The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on ea
 If the app is having issues or is failing to load it may be helpful to do a POST to /api/template/update
 to manually trigger an update which will restore the template to it's original files without changing /my-practa/
 
+## Header Configuration
+
+Every Practa should use `usePractaChrome` and `useHeaderHeight`:
+
+```typescript
+import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
+
+export default function MyPracta({ showSettings, onSettings }: PractaProps) {
+  const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
+
+  useEffect(() => {
+    setConfig({
+      headerMode: "default",  // "default" | "minimal" | "none"
+      title: "My Practa",
+      showSettings,
+      onSettings,
+    });
+  }, [setConfig, showSettings, onSettings]);
+
+  return (
+    <View style={{ paddingTop: headerHeight + Spacing.lg }}>
+      {/* Content */}
+    </View>
+  );
+}
+```
+
 ## Documentation
 
 See `docs/practa-developer-guide.md` for:
-- Component contract (props, onComplete, onSkip)
+- Component contract (props, onComplete, onSkip, showSettings, onSettings)
+- Header configuration (usePractaChrome, useHeaderHeight)
 - Metadata schema
 - Storage API
 - Best practices
