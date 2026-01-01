@@ -951,27 +951,40 @@ ${config.version}
         return files;
       };
       
+      console.log("[Template Update] Template files in sync dirs:", Array.from(templateFiles).filter(f => f.startsWith("docs/")));
+      
       for (const syncDir of SYNC_DIRECTORIES) {
         const fullSyncDir = path.join(projectRoot, syncDir);
         if (!fs.existsSync(fullSyncDir)) continue;
         
         const localFiles = getAllFiles(fullSyncDir, projectRoot);
+        console.log(`[Template Update] Local files in ${syncDir}:`, localFiles);
         
         for (const localFile of localFiles) {
           // Skip if file exists in template
-          if (templateFiles.has(localFile)) continue;
+          if (templateFiles.has(localFile)) {
+            console.log(`[Template Update] Keeping (in template): ${localFile}`);
+            continue;
+          }
           
           // Skip protected paths
           const isProtected = PROTECTED_PATHS.some(
             (p) => localFile === p || localFile.startsWith(p + "/")
           );
-          if (isProtected) continue;
+          if (isProtected) {
+            console.log(`[Template Update] Keeping (protected): ${localFile}`);
+            continue;
+          }
           
           // Skip dynamically generated files
           const shouldSkip = SKIP_PATTERNS.some((p) => localFile.startsWith(p));
-          if (shouldSkip) continue;
+          if (shouldSkip) {
+            console.log(`[Template Update] Keeping (skip pattern): ${localFile}`);
+            continue;
+          }
           
           // Delete stale file
+          console.log(`[Template Update] DELETING stale file: ${localFile}`);
           const filePath = path.join(projectRoot, localFile);
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
