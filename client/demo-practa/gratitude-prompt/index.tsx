@@ -9,7 +9,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
 
 const DEFAULT_PROMPTS = [
   "What made you smile today?",
@@ -24,7 +24,7 @@ interface GratitudePromptProps {
 
 import { useNavigation } from "@react-navigation/native";
 
-export default function GratitudePrompt({ context, onComplete, onSkip }: GratitudePromptProps) {
+export default function GratitudePrompt({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();

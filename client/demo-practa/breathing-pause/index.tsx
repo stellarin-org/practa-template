@@ -15,7 +15,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
+
+import { HeaderButton } from "@react-navigation/elements";
+import { Feather } from "@expo/vector-icons";
 
 interface BreathingConfig {
   cycles: number;
@@ -53,7 +56,7 @@ interface BreathingPauseProps {
 
 import { useNavigation } from "@react-navigation/native";
 
-export default function BreathingPause({ context, onComplete, onSkip }: BreathingPauseProps) {
+export default function BreathingPause({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -64,8 +67,20 @@ export default function BreathingPause({ context, onComplete, onSkip }: Breathin
       headerTransparent: true,
       headerBlurEffect: "regular",
       headerTitle: "Breathing Space",
+      headerRight: () => (showSettings && onSettings) ? (
+        <HeaderButton
+          onPress={() => {
+            if (Platform.OS !== "web") {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            onSettings();
+          }}
+        >
+          <Feather name="settings" size={24} color={theme.primary} />
+        </HeaderButton>
+      ) : null,
     });
-  }, [navigation]);
+  }, [navigation, theme.primary, showSettings, onSettings]);
 
   const config = (context.assets?.config as BreathingConfig) || DEFAULT_CONFIG;
   const BREATH_CYCLES = config.cycles;
