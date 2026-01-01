@@ -103,6 +103,10 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
       },
       metadata: { 
         completedAt: Date.now(),
+        settings: {
+          difficulty: "medium",
+          soundEnabled: true
+        }
       },
     });
   };
