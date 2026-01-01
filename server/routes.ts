@@ -6,6 +6,7 @@ import { PassThrough } from "node:stream";
 import archiver from "archiver";
 import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
+import { updatePractaAssets } from "./index";
 
 const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
@@ -937,40 +938,27 @@ ${config.version}
         return files;
       };
       
-      console.log("[Template Update] Template files in sync dirs:", Array.from(templateFiles).filter(f => f.startsWith("docs/")));
-      
       for (const syncDir of SYNC_DIRECTORIES) {
         const fullSyncDir = path.join(projectRoot, syncDir);
         if (!fs.existsSync(fullSyncDir)) continue;
         
         const localFiles = getAllFiles(fullSyncDir, projectRoot);
-        console.log(`[Template Update] Local files in ${syncDir}:`, localFiles);
         
         for (const localFile of localFiles) {
           // Skip if file exists in template
-          if (templateFiles.has(localFile)) {
-            console.log(`[Template Update] Keeping (in template): ${localFile}`);
-            continue;
-          }
+          if (templateFiles.has(localFile)) continue;
           
           // Skip protected paths
           const isProtected = PROTECTED_PATHS.some(
             (p) => localFile === p || localFile.startsWith(p + "/")
           );
-          if (isProtected) {
-            console.log(`[Template Update] Keeping (protected): ${localFile}`);
-            continue;
-          }
+          if (isProtected) continue;
           
           // Skip dynamically generated files
           const shouldSkip = SKIP_PATTERNS.some((p) => localFile.startsWith(p));
-          if (shouldSkip) {
-            console.log(`[Template Update] Keeping (skip pattern): ${localFile}`);
-            continue;
-          }
+          if (shouldSkip) continue;
           
           // Delete stale file
-          console.log(`[Template Update] DELETING stale file: ${localFile}`);
           const filePath = path.join(projectRoot, localFile);
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -1008,6 +996,10 @@ ${config.version}
       
       const syncFilePath = path.resolve(projectRoot, ".template-sync");
       fs.writeFileSync(syncFilePath, latestSha);
+      
+      // Regenerate practa-assets.ts to reflect any changes in demo-practa
+      console.log("[Template Update] Regenerating practa-assets.ts...");
+      updatePractaAssets();
       
       res.json({
         success: true,

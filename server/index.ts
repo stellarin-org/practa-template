@@ -85,7 +85,7 @@ function discoverPractas(): PractaAssetEntry[] {
   return practas;
 }
 
-function updatePractaAssets() {
+export function updatePractaAssets() {
   const outputPath = path.join(process.cwd(), "client/lib/practa-assets.ts");
   const practas = discoverPractas();
   
