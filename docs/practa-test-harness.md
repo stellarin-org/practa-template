@@ -46,7 +46,9 @@ export default function App() {
 | `storage` | `PractaStorage` | No | Storage instance. Defaults to no-op storage |
 | `onComplete` | `(output: PractaOutput) => void` | No | Called when practa completes |
 | `onClose` | `() => void` | No | Called when X close button is pressed |
+| `onSettings` | `() => void` | No | Called when settings gear is pressed. Passed to your practa component |
 | `showSplash` | `boolean` | No | Force splash on/off. Default: true if `assets.splash` exists |
+| `showSettings` | `boolean` | No | Whether to show settings gear. Passed to your practa component |
 | `showClose` | `boolean` | No | Show X close button in chrome overlay. Default: true if `onClose` is provided |
 | `headerMode` | `"default" \| "minimal" \| "none"` | No | Header style. Default: "minimal" |
 | `title` | `string` | No | Title for default header mode. Default: "" |
@@ -291,5 +293,7 @@ interface PractaOutput {
 interface PractaProps {
   context: PractaContext;
   onComplete: (output: PractaOutput) => void;
+  showSettings?: boolean;
+  onSettings?: () => void;
 }
 ```
