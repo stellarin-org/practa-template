@@ -28,6 +28,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
 interface ContentData {
   title: string;
@@ -45,6 +46,7 @@ export default function MyPracta({ context, onComplete, onSkip, onSettings, show
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
   const [isStarted, setIsStarted] = useState(false);
 
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function MyPracta({ context, onComplete, onSkip, onSettings, show
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
+    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
       <View style={styles.content}>
         {wellnessBgSource ? (
           <Image

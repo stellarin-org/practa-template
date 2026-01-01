@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
 interface BreathingConfig {
   cycles: number;
@@ -56,6 +57,7 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
   
   useEffect(() => {
     setConfig({
@@ -251,7 +253,7 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
+    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
       <View style={styles.content}>
         <View style={styles.orbContainer}>
           <Animated.View style={[styles.orbWrapper, animatedOrbStyle]}>

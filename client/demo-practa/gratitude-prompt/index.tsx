@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
+import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
 const DEFAULT_PROMPTS = [
   "What made you smile today?",
@@ -27,6 +28,7 @@ export default function GratitudePrompt({ context, onComplete, onSkip, onSetting
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     setConfig({
@@ -79,7 +81,7 @@ export default function GratitudePrompt({ context, onComplete, onSkip, onSetting
         contentContainerStyle={[
           styles.content,
           { 
-            paddingTop: insets.top + Spacing.xl, 
+            paddingTop: headerHeight + Spacing.lg, 
             paddingBottom: insets.bottom + Spacing.xl 
           }
         ]}
