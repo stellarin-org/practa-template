@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -10,6 +10,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
+import { usePractaChrome } from "@/context/PractaChromeContext";
 
 const DEFAULT_PROMPTS = [
   "What made you smile today?",
@@ -22,19 +23,18 @@ interface GratitudePromptProps {
   onSkip?: () => void;
 }
 
-import { useNavigation } from "@react-navigation/native";
-
 export default function GratitudePrompt({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const { setConfig } = usePractaChrome();
 
-  // Configure Hidden Header Example
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
+  useEffect(() => {
+    setConfig({
+      headerMode: "none",
+      showSettings,
+      onSettings,
     });
-  }, [navigation]);
+  }, [setConfig, showSettings, onSettings]);
   
   const prompts = (context.assets?.prompts as string[]) || DEFAULT_PROMPTS;
   const [prompt] = useState(() => prompts[Math.floor(Math.random() * prompts.length)]);

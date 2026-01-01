@@ -16,9 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
-
-import { HeaderButton } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { usePractaChrome } from "@/context/PractaChromeContext";
 
 interface BreathingConfig {
   cycles: number;
@@ -54,33 +52,19 @@ interface BreathingPauseProps {
   onSkip?: () => void;
 }
 
-import { useNavigation } from "@react-navigation/native";
-
 export default function BreathingPause({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const { setConfig } = usePractaChrome();
   
-  // Configure Transparent Header Example
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTransparent: true,
-      headerBlurEffect: "regular",
-      headerTitle: "Breathing Space",
-      headerRight: () => (showSettings && onSettings) ? (
-        <HeaderButton
-          onPress={() => {
-            if (Platform.OS !== "web") {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }
-            onSettings();
-          }}
-        >
-          <Feather name="settings" size={24} color={theme.primary} />
-        </HeaderButton>
-      ) : null,
+  useEffect(() => {
+    setConfig({
+      headerMode: "default",
+      title: "Breathing Space",
+      showSettings,
+      onSettings,
     });
-  }, [navigation, theme.primary, showSettings, onSettings]);
+  }, [setConfig, showSettings, onSettings]);
 
   const config = (context.assets?.config as BreathingConfig) || DEFAULT_CONFIG;
   const BREATH_CYCLES = config.cycles;

@@ -15,20 +15,19 @@
  * See docs/practa-storage-system.md for full storage documentation.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Platform, ImageSourcePropType } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { HeaderButton } from "@react-navigation/elements";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
+import { usePractaChrome } from "@/context/PractaChromeContext";
 
 interface ContentData {
   title: string;
@@ -45,24 +44,17 @@ interface MyPractaProps extends PractaProps {}
 export default function MyPracta({ context, onComplete, onSkip, onSettings, showSettings }: MyPractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const { setConfig } = usePractaChrome();
   const [isStarted, setIsStarted] = useState(false);
 
-  // Configure Header with Settings Button
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (showSettings && onSettings) ? (
-        <HeaderButton
-          onPress={() => {
-            triggerHaptic();
-            onSettings();
-          }}
-        >
-          <Feather name="settings" size={24} color={theme.primary} />
-        </HeaderButton>
-      ) : null,
+  useEffect(() => {
+    setConfig({
+      headerMode: "default",
+      title: "My Practa",
+      showSettings,
+      onSettings,
     });
-  }, [navigation, theme.primary, showSettings, onSettings]);
+  }, [setConfig, showSettings, onSettings]);
 
   // Get assets from context
   const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;
