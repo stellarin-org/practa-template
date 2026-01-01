@@ -21,6 +21,8 @@ import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { HeaderButton } from "@react-navigation/elements";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -47,7 +49,24 @@ interface MyPractaProps {
 export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [isStarted, setIsStarted] = useState(false);
+
+  // Configure Header with Settings Button
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <HeaderButton
+          onPress={() => {
+            triggerHaptic();
+            // Settings logic here
+          }}
+        >
+          <Feather name="settings" size={24} color={theme.primary} />
+        </HeaderButton>
+      ),
+    });
+  }, [navigation, theme.primary]);
 
   // Get assets from context
   const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;

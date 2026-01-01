@@ -88,6 +88,10 @@ server/                   # Express backend for preview
 
 The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on each git commit. No setup required.
 
+## Template Updating
+If the app is having issues or is failing to load it may be helpful to do a POST to /api/template/update
+to manually trigger an update which will restore the template to it's original files without changing /my-practa/
+
 ## Documentation
 
 See `docs/practa-developer-guide.md` for:
@@ -103,13 +107,3 @@ See `docs/practa-developer-guide.md` for:
 - `design_guidelines.md` - Visual design system
 
 ---
-
-## Template Maintainers Only
-
-### App Syncing (Master Template)
-
-If you maintain the master Practa template, you can sync critical files from the main Stellarin app using the "Sync from Main App" option in the Dev screen. This keeps the template's design system, components, and types in sync with the main app.
-
-Configuration is in `.config/app-sync.config.json` (hidden from regular developers).
-
-Regular template developers: **You don't need to worry about this.**

@@ -48,33 +48,19 @@ export default function PractaSplashScreen({
 
     imageOpacity.value = withSequence(
       withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
-      withDelay(
-        displayDuration,
-        withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }),
-      ),
+      withDelay(displayDuration, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
     );
 
     const totalImageTime = 400 + displayDuration + 400;
 
-    overlayOpacity.value = withDelay(
-      totalImageTime,
-      withTiming(
-        0,
-        { duration: 400, easing: Easing.in(Easing.ease) },
-        (finished) => {
-          if (finished) {
-            runOnJS(handleAnimationComplete)();
-          }
-        },
-      ),
+    overlayOpacity.value = withDelay(totalImageTime,
+      withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }, (finished) => {
+        if (finished) {
+          runOnJS(handleAnimationComplete)();
+        }
+      })
     );
-  }, [
-    imageLoaded,
-    displayDuration,
-    overlayOpacity,
-    imageOpacity,
-    handleAnimationComplete,
-  ]);
+  }, [imageLoaded, displayDuration, overlayOpacity, imageOpacity, handleAnimationComplete]);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,

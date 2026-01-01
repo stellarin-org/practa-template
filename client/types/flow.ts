@@ -25,7 +25,6 @@ export interface PreviousPractaContext {
 }
 
 export type PractaAssets = Record<string, unknown>;
-export type ResolvedAssets = PractaAssets;
 
 export interface PractaContext {
   flowId: string;
@@ -70,5 +69,4 @@ export type FlowCompleteHandler = (state: FlowExecutionState) => void;
 export interface PractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
 }

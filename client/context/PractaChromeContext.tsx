@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
+export type HeaderMode = "default" | "minimal" | "none";
+
 export interface PractaChromeConfig {
+  headerMode?: HeaderMode;
+  title?: string;
+  showSettings?: boolean;
+  onSettings?: () => void;
   showProgressDots?: boolean;
   rightAction?: ReactNode;
 }
@@ -12,8 +18,12 @@ interface PractaChromeContextValue {
 }
 
 const defaultConfig: PractaChromeConfig = {
-  showProgressDots: true,
-  rightAction: null,
+  headerMode: undefined,
+  title: undefined,
+  showSettings: undefined,
+  onSettings: undefined,
+  showProgressDots: undefined,
+  rightAction: undefined,
 };
 
 const PractaChromeContext = createContext<PractaChromeContextValue | null>(null);

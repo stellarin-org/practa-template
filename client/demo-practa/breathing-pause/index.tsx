@@ -51,10 +51,22 @@ interface BreathingPauseProps {
   onSkip?: () => void;
 }
 
+import { useNavigation } from "@react-navigation/native";
+
 export default function BreathingPause({ context, onComplete, onSkip }: BreathingPauseProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   
+  // Configure Transparent Header Example
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTransparent: true,
+      headerBlurEffect: "regular",
+      headerTitle: "Breathing Space",
+    });
+  }, [navigation]);
+
   const config = (context.assets?.config as BreathingConfig) || DEFAULT_CONFIG;
   const BREATH_CYCLES = config.cycles;
   const INHALE_DURATION = config.inhaleDuration;

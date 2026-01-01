@@ -22,9 +22,19 @@ interface GratitudePromptProps {
   onSkip?: () => void;
 }
 
+import { useNavigation } from "@react-navigation/native";
+
 export default function GratitudePrompt({ context, onComplete, onSkip }: GratitudePromptProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  // Configure Hidden Header Example
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   
   const prompts = (context.assets?.prompts as string[]) || DEFAULT_PROMPTS;
   const [prompt] = useState(() => prompts[Math.floor(Math.random() * prompts.length)]);
