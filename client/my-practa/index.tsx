@@ -40,13 +40,9 @@ interface ContentData {
   buttonSkip: string;
 }
 
-interface MyPractaProps {
-  context: PractaContext;
-  onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
-}
+interface MyPractaProps extends PractaProps {}
 
-export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps) {
+export default function MyPracta({ context, onComplete, onSkip, onSettings, showSettings }: MyPractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -55,18 +51,18 @@ export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps)
   // Configure Header with Settings Button
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
+      headerRight: () => (showSettings && onSettings) ? (
         <HeaderButton
           onPress={() => {
             triggerHaptic();
-            // Settings logic here
+            onSettings();
           }}
         >
           <Feather name="settings" size={24} color={theme.primary} />
         </HeaderButton>
-      ),
+      ) : null,
     });
-  }, [navigation, theme.primary]);
+  }, [navigation, theme.primary, showSettings, onSettings]);
 
   // Get assets from context
   const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;

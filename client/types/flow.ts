@@ -69,4 +69,7 @@ export type FlowCompleteHandler = (state: FlowExecutionState) => void;
 export interface PractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
+  onSkip?: () => void;
+  onSettings?: () => void;
+  showSettings?: boolean;
 }
