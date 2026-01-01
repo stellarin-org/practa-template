@@ -5,11 +5,12 @@ import * as path from "path";
 import { PassThrough } from "node:stream";
 import archiver from "archiver";
 import AdmZip from "adm-zip";
+import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 
 const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const TEMPLATE_REPO = "stellarin-org/practa-template";
-const PROTECTED_PATHS = ["client/my-practa", "practa.config.json"];
+const PROTECTED_PATHS = TEMPLATE_SYNC_CONFIG.protectedPaths;
 const MY_PRACTA_PATH = "client/my-practa";
 const DEMO_TEMPLATE_PATH = "demo-template";
 
@@ -877,23 +878,8 @@ ${config.version}
       const rootFolder = firstEntry.split("/")[0];
       const projectRoot = process.cwd();
       
-      const SKIP_PATTERNS = [
-        ".git/", 
-        "node_modules/", 
-        ".template-update-temp/",
-        "client/lib/practa-assets.ts",  // Generated file - regenerated on server startup
-      ];
-      
-      // Directories to fully sync (delete stale files)
-      const SYNC_DIRECTORIES = [
-        "assets",
-        "client",
-        "demo-template",
-        "docs",
-        "scripts",
-        "server",
-        "shared",
-      ];
+      const SKIP_PATTERNS = TEMPLATE_SYNC_CONFIG.skipPatterns;
+      const SYNC_DIRECTORIES = TEMPLATE_SYNC_CONFIG.syncDirectories;
       
       // Collect all template file paths for sync directories
       const templateFiles = new Set<string>();
