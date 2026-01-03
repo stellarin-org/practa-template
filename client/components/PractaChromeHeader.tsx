@@ -86,7 +86,7 @@ function DefaultHeader({
       <View style={styles.headerRow}>
         {showClose ? (
           <Pressable style={styles.headerButton} onPress={onClose}>
-            <Feather name="x" size={22} color="#000000" />
+            <Feather name="x" size={22} color={Colors.dark.text} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
@@ -100,7 +100,7 @@ function DefaultHeader({
           <View style={styles.headerButton}>{rightAction}</View>
         ) : showSettings ? (
           <Pressable style={styles.headerButton} onPress={onSettings}>
-            <Feather name="settings" size={20} color="#000000" />
+            <Feather name="settings" size={20} color={Colors.dark.text} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />

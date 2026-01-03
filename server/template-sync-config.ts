@@ -20,4 +20,9 @@ export const TEMPLATE_SYNC_CONFIG = {
     "server",
     "shared",
   ],
+
+  // Individual files to ensure are synced (in addition to syncDirectories)
+  syncFiles: [
+    "server/cdn-routes.ts",
+  ],
 };
