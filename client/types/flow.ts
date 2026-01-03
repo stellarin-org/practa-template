@@ -5,13 +5,8 @@ export type { PractaStorage };
 export type PractaType = "journal" | "silent-meditation" | "personalized-meditation" | "tend" | "integration-breath";
 
 export interface PractaContent {
-  type: "text" | "image" | "audio";
+  type: "text" | "image";
   value: string;
-  audioUri?: string;
-  audioDuration?: number;
-  imageUri?: string;
-  imageWidth?: number;
-  imageHeight?: number;
 }
 
 export interface PractaMetadata {
@@ -30,6 +25,7 @@ export interface PreviousPractaContext {
 }
 
 export type PractaAssets = Record<string, unknown>;
+export type ResolvedAssets = Record<string, number | { uri: string }>;
 
 export interface PractaContext {
   flowId: string;
@@ -74,6 +70,7 @@ export type FlowCompleteHandler = (state: FlowExecutionState) => void;
 export interface PractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
+  onSkip?: () => void;
   showSettings?: boolean;
   onSettings?: () => void;
 }
