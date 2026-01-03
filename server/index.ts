@@ -514,6 +514,19 @@ function startGitVersionWatcher() {
     },
     () => {
       log(`express server serving on port ${port}`);
+      
+      // Warmup Expo bundle with retries to ensure Metro is ready
+      const warmupExpo = (attempt: number = 1, maxAttempts: number = 5) => {
+        const expoPort = 8081;
+        fetch(`http://localhost:${expoPort}/`)
+          .then(() => log("[Warmup] Expo bundle triggered successfully"))
+          .catch(() => {
+            if (attempt < maxAttempts) {
+              setTimeout(() => warmupExpo(attempt + 1, maxAttempts), 2000);
+            }
+          });
+      };
+      setTimeout(() => warmupExpo(), 5000);
     },
   );
 })();
