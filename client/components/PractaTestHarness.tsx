@@ -98,7 +98,7 @@ export function PractaTestHarness({
               context={context}
               onComplete={handleComplete}
               showSettings={showSettings}
-              onSettings={handleSettings}
+              onSettings={onSettings ? handleSettings : undefined}
             />
             <PractaChromeHeader
               onClose={handleClose}
