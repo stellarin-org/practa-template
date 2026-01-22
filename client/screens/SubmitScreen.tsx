@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -55,6 +55,7 @@ export default function SubmitScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const queryClient = useQueryClient();
   
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
@@ -94,6 +95,9 @@ export default function SubmitScreen() {
       setSubmitResult(data);
       setSubmitState("success");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Invalidate last-submit query to refresh the timestamp display
+      queryClient.invalidateQueries({ queryKey: ["/api/practa/last-submit"] });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Submission failed";
       const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Network");

@@ -10,6 +10,7 @@ import { updatePractaAssets } from "./index";
 
 const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
+const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
 const TEMPLATE_REPO = "stellarin-org/practa-template";
 const PROTECTED_PATHS = TEMPLATE_SYNC_CONFIG.protectedPaths;
 const MY_PRACTA_PATH = "client/my-practa";
@@ -573,6 +574,22 @@ ${config.version}
       }
 
       const result = await response.json();
+      
+      // Save last submission timestamp
+      try {
+        const configDir = path.dirname(LAST_SUBMIT_PATH);
+        if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true });
+        }
+        fs.writeFileSync(LAST_SUBMIT_PATH, JSON.stringify({ 
+          timestamp: new Date().toISOString(),
+          practaId: practaIdSubmit,
+          version: config.version
+        }, null, 2));
+      } catch (timestampError) {
+        console.error("Failed to save submission timestamp:", timestampError);
+      }
+      
       res.json({ success: true, ...result });
     } catch (error) {
       console.error("Submit error:", error);
@@ -580,6 +597,20 @@ ${config.version}
         error: "Failed to submit practa",
         details: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  app.get("/api/practa/last-submit", (req, res) => {
+    try {
+      if (!fs.existsSync(LAST_SUBMIT_PATH)) {
+        return res.json({ timestamp: null });
+      }
+      const content = fs.readFileSync(LAST_SUBMIT_PATH, "utf-8");
+      const data = JSON.parse(content);
+      res.json(data);
+    } catch (error) {
+      console.error("Error reading last submission:", error);
+      res.json({ timestamp: null });
     }
   });
 

@@ -43,7 +43,40 @@ interface SyncStatus {
   isMasterTemplate?: boolean;
 }
 
+interface LastSubmitData {
+  timestamp: string | null;
+  practaId?: string;
+  version?: string;
+}
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 60) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
+
+function formatFullDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString();
+}
 
 function ValidationItem({ result }: { result: ValidationResult }) {
   const { theme } = useTheme();
@@ -104,6 +137,11 @@ export default function MyPractaScreen() {
     queryKey: ["/api/template/sync-status"],
     staleTime: 1000 * 60 * 5,
     enabled: enableSyncCheck,
+  });
+
+  const { data: lastSubmit } = useQuery<LastSubmitData>({
+    queryKey: ["/api/practa/last-submit"],
+    staleTime: 1000 * 60,
   });
 
   const updateTemplateMutation = useMutation({
@@ -375,6 +413,25 @@ export default function MyPractaScreen() {
             </View>
           ) : null}
         </Card>
+
+        {lastSubmit?.timestamp ? (
+          <Card style={styles.lastSubmitCard}>
+            <View style={styles.lastSubmitRow}>
+              <Feather name="upload-cloud" size={18} color={theme.textSecondary} />
+              <View style={styles.lastSubmitInfo}>
+                <ThemedText style={[styles.lastSubmitLabel, { color: theme.textSecondary }]}>
+                  Last submitted to Stellarin
+                </ThemedText>
+                <ThemedText style={styles.lastSubmitTime}>
+                  {formatRelativeTime(lastSubmit.timestamp)}
+                </ThemedText>
+                <ThemedText style={[styles.lastSubmitFullTime, { color: theme.textSecondary }]}>
+                  {formatFullDateTime(lastSubmit.timestamp)}
+                </ThemedText>
+              </View>
+            </View>
+          </Card>
+        ) : null}
       </ScrollView>
       <Animated.View style={[styles.transitionOverlay, transitionStyle]} />
     </ThemedView>
@@ -507,6 +564,30 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  lastSubmitCard: {
+    padding: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  lastSubmitRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+  },
+  lastSubmitInfo: {
+    flex: 1,
+  },
+  lastSubmitLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  lastSubmitTime: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  lastSubmitFullTime: {
+    fontSize: 12,
+    marginTop: 2,
   },
   syncBanner: {
     backgroundColor: "#FEF3C7",
