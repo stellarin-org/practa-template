@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, ImageSourcePropType } from "react-native";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
@@ -17,7 +17,6 @@ interface PractaSplashScreenProps {
   splashVideo?: number | { uri: string };
   onComplete: () => void;
   displayDuration?: number;
-  loopDelay?: number;
   startWithOverlay?: boolean;
 }
 
@@ -28,15 +27,12 @@ export default function PractaSplashScreen({
   splashVideo,
   onComplete,
   displayDuration = 2000,
-  loopDelay = 1500,
 }: PractaSplashScreenProps) {
   const [mediaLoaded, setMediaLoaded] = useState(false);
-  const [shouldEnd, setShouldEnd] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
   const overlayOpacity = useSharedValue(1);
   const mediaOpacity = useSharedValue(0);
   const isVideo = !!splashVideo;
-  const startTimeRef = useRef<number>(0);
-  const loopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const videoPlayer = useVideoPlayer(splashVideo ?? null, (player: VideoPlayer) => {
     if (splashVideo) {
@@ -53,35 +49,21 @@ export default function PractaSplashScreen({
     if (!isVideo || !videoPlayer) return;
 
     const subscription = videoPlayer.addListener("statusChange", (status: { status: string }) => {
-      if (status.status === "readyToPlay" && !mediaLoaded) {
+      if (status.status === "readyToPlay") {
         setMediaLoaded(true);
-        startTimeRef.current = Date.now();
         videoPlayer.play();
       }
     });
 
     const endSubscription = videoPlayer.addListener("playToEnd", () => {
-      const elapsed = Date.now() - startTimeRef.current;
-      
-      if (elapsed >= displayDuration) {
-        setShouldEnd(true);
-      } else {
-        loopTimeoutRef.current = setTimeout(() => {
-          if (videoPlayer) {
-            videoPlayer.replay();
-          }
-        }, loopDelay);
-      }
+      setVideoEnded(true);
     });
 
     return () => {
       subscription.remove();
       endSubscription.remove();
-      if (loopTimeoutRef.current) {
-        clearTimeout(loopTimeoutRef.current);
-      }
     };
-  }, [videoPlayer, isVideo, displayDuration, loopDelay, mediaLoaded]);
+  }, [videoPlayer, isVideo]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -117,7 +99,7 @@ export default function PractaSplashScreen({
   }, [mediaLoaded, displayDuration, overlayOpacity, mediaOpacity, handleAnimationComplete, isVideo]);
 
   useEffect(() => {
-    if (!isVideo || !shouldEnd) return;
+    if (!isVideo || !videoEnded) return;
 
     mediaOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) });
     overlayOpacity.value = withDelay(400,
@@ -127,7 +109,7 @@ export default function PractaSplashScreen({
         }
       })
     );
-  }, [shouldEnd, isVideo, mediaOpacity, overlayOpacity, handleAnimationComplete]);
+  }, [videoEnded, isVideo, mediaOpacity, overlayOpacity, handleAnimationComplete]);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
