@@ -20,7 +20,7 @@ import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { validatePracta, ValidationResult } from "@/lib/practa-validator";
 import { apiRequest } from "@/lib/query-client";
-import { hasSplash } from "@/lib/practa-assets";
+import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
 
 interface PractaMetadata {
   name: string;

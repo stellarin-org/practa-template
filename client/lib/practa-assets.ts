@@ -42,13 +42,26 @@ export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {
 
 export function hasSplash(practaId: string = "my-practa"): boolean {
   const assets = assetRegistry[practaId];
-  return assets ? "splash" in assets : false;
+  return assets ? ("splash" in assets || "splashVideo" in assets) : false;
+}
+
+export function isSplashVideo(practaId: string = "my-practa"): boolean {
+  const assets = assetRegistry[practaId];
+  return assets ? "splashVideo" in assets : false;
 }
 
 export function getSplashSource(practaId: string = "my-practa"): ImageSourcePropType | null {
   const assets = assetRegistry[practaId];
   if (assets && "splash" in assets) {
     return assets.splash as ImageSourcePropType;
+  }
+  return null;
+}
+
+export function getSplashVideoSource(practaId: string = "my-practa"): number | { uri: string } | null {
+  const assets = assetRegistry[practaId];
+  if (assets && "splashVideo" in assets) {
+    return assets.splashVideo as number | { uri: string };
   }
   return null;
 }

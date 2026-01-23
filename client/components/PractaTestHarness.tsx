@@ -49,7 +49,7 @@ export function PractaTestHarness({
   title = "",
   splashDuration = 2000,
 }: PractaTestHarnessProps) {
-  const hasSplash = assets.splash != null;
+  const hasSplash = assets.splash != null || assets.splashVideo != null;
   const shouldShowSplash = showSplash ?? hasSplash;
   const [splashComplete, setSplashComplete] = useState(!shouldShowSplash);
   
@@ -87,7 +87,8 @@ export function PractaTestHarness({
       <View style={styles.container}>
         {!splashComplete && hasSplash ? (
           <PractaSplashScreen
-            splashImage={assets.splash as any}
+            splashImage={assets.splashVideo ? undefined : assets.splash as any}
+            splashVideo={assets.splashVideo as any}
             onComplete={() => setSplashComplete(true)}
             displayDuration={splashDuration}
           />
