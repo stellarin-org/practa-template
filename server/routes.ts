@@ -8,7 +8,6 @@ import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
 
-const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
 const TEMPLATE_REPO = "stellarin-org/practa-template";
@@ -96,7 +95,6 @@ function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
 }
 
 function readConfig(): PractaMetadata | null {
-  // Read from metadata.json as the source of truth
   try {
     if (fs.existsSync(METADATA_PATH)) {
       const content = fs.readFileSync(METADATA_PATH, "utf-8");
@@ -105,20 +103,10 @@ function readConfig(): PractaMetadata | null {
   } catch (error) {
     console.error("Error reading metadata.json:", error);
   }
-  // Fallback to practa.config.json for backward compatibility
-  try {
-    if (fs.existsSync(CONFIG_PATH)) {
-      const content = fs.readFileSync(CONFIG_PATH, "utf-8");
-      return JSON.parse(content);
-    }
-  } catch (error) {
-    console.error("Error reading practa.config.json:", error);
-  }
   return null;
 }
 
 function writeConfig(metadata: PractaMetadata): boolean {
-  // Write to both files to keep them in sync
   // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags
   const orderedMetadata = {
     id: metadata.id,
@@ -132,13 +120,10 @@ function writeConfig(metadata: PractaMetadata): boolean {
   };
   
   try {
-    // Write to metadata.json (source of truth)
     fs.writeFileSync(METADATA_PATH, JSON.stringify(orderedMetadata, null, 2) + "\n");
-    // Also write to practa.config.json for backward compatibility
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(orderedMetadata, null, 2) + "\n");
     return true;
   } catch (error) {
-    console.error("Error writing config files:", error);
+    console.error("Error writing metadata.json:", error);
     return false;
   }
 }

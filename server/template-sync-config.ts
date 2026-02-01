@@ -1,7 +1,6 @@
 export const TEMPLATE_SYNC_CONFIG = {
   protectedPaths: [
     "client/my-practa",
-    "practa.config.json",
   ],
 
   skipPatterns: [

@@ -2,7 +2,6 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
-const CONFIG_PATH = path.resolve(process.cwd(), "practa.config.json");
 const APP_JSON_PATH = path.resolve(process.cwd(), "app.json");
 const CACHE_PATH = path.resolve(process.cwd(), ".cache/last-version-commit.json");
 const TEMPLATE_CACHE_PATH = path.resolve(process.cwd(), ".cache/last-template-version-commit.json");
@@ -78,7 +77,6 @@ export function bumpMetadataPatch(): { success: boolean; newVersion?: string; er
     const jsonContent = JSON.stringify(ordered, null, 2) + "\n";
 
     fs.writeFileSync(METADATA_PATH, jsonContent);
-    fs.writeFileSync(CONFIG_PATH, jsonContent);
 
     console.log(`[Version Bump] ${oldVersion} -> ${newVersion}`);
     return { success: true, newVersion };
