@@ -199,9 +199,6 @@ export default function MyPractaScreen() {
 
   const metadata = savedMetadata || practaMetadataJson;
   const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
-  
-  // Debug: log configSchema to verify it's loaded
-  console.log("configSchema:", typedMetadata.configSchema);
 
   const navigateToHarness = useCallback(() => {
     navigation.navigate("HarnessPreview", { practaId: "my-practa" });
@@ -366,7 +363,7 @@ export default function MyPractaScreen() {
         </Card>
 
         {typedMetadata.configSchema && Object.keys(typedMetadata.configSchema.fields || {}).length > 0 ? (
-          <Card style={[styles.configCard, { borderWidth: 2, borderColor: 'red' }]}>
+          <Card style={styles.configCard}>
             <View style={styles.configHeader}>
               <Feather name="sliders" size={20} color={theme.primary} />
               <ThemedText style={styles.configTitle}>Configuration Options</ThemedText>
