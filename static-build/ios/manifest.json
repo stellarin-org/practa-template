@@ -1,11 +1,11 @@
 {
-  "id": "9b406f73-14ff-4db3-be8f-312e940b7e71",
-  "createdAt": "2026-02-01T05:30:27.955Z",
+  "id": "50ee438c-4fc6-414f-9802-3a6ee505ee34",
+  "createdAt": "2026-02-01T05:39:18.523Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1769923827955-2121",
+    "key": "bundle-1769924358523-4200",
     "contentType": "application/javascript",
-    "url": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/1769923827955-2121/_expo/static/js/ios/bundle.js"
+    "url": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/1769924358523-4200/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -14,7 +14,7 @@
     "expoClient": {
       "name": "Practa Starter",
       "slug": "practa-starter",
-      "version": "2.5.9",
+      "version": "2.6.2",
       "orientation": "portrait",
       "icon": "./assets/images/icon.png",
       "scheme": "practa-starter",

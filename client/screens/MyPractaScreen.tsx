@@ -289,28 +289,11 @@ export default function MyPractaScreen() {
               </View>
             </View>
             {syncStatus.isMasterTemplate ? (
-              <Pressable
-                onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  }
-                  publishMutation.mutate();
-                }}
-                disabled={publishMutation.isPending}
-                style={[
-                  styles.syncButton,
-                  styles.syncButtonPublish,
-                  publishMutation.isPending && styles.syncButtonDisabled,
-                ]}
-              >
-                {publishMutation.isPending ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <ThemedText style={styles.syncButtonText}>
-                    Publish to Git
-                  </ThemedText>
-                )}
-              </Pressable>
+              <View style={styles.syncInfoContainer}>
+                <ThemedText style={styles.syncInfoText}>
+                  Updates need to be published to Git
+                </ThemedText>
+              </View>
             ) : (
               <Pressable
                 onPress={() => {
@@ -712,6 +695,15 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+  },
+  syncInfoContainer: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  syncInfoText: {
+    fontSize: 12,
+    fontStyle: "italic",
+    opacity: 0.8,
   },
   syncBannerMaster: {
     backgroundColor: "#EFF6FF",
