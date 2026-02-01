@@ -17,6 +17,10 @@ interface PractaMetadata {
   category?: string;
   tags?: string[];
   assets?: Record<string, string>;
+  configSchema?: {
+    fields: Record<string, unknown>;
+    requiredConfig?: boolean;
+  };
 }
 
 function getOrderedMetadata(metadata: PractaMetadata): Record<string, unknown> {
@@ -30,6 +34,7 @@ function getOrderedMetadata(metadata: PractaMetadata): Record<string, unknown> {
     ...(metadata.category && { category: metadata.category }),
     ...(metadata.tags && metadata.tags.length > 0 && { tags: metadata.tags }),
     ...(metadata.assets && Object.keys(metadata.assets).length > 0 && { assets: metadata.assets }),
+    ...(metadata.configSchema && { configSchema: metadata.configSchema }),
   };
 }
 
