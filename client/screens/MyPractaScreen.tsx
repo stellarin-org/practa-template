@@ -288,13 +288,7 @@ export default function MyPractaScreen() {
                 </ThemedText>
               </View>
             </View>
-            {syncStatus.isMasterTemplate ? (
-              <View style={styles.syncInfoContainer}>
-                <ThemedText style={styles.syncInfoText}>
-                  Updates need to be published to Git
-                </ThemedText>
-              </View>
-            ) : (
+            {syncStatus.isMasterTemplate ? null : (
               <Pressable
                 onPress={() => {
                   if (Platform.OS !== "web") {
