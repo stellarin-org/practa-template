@@ -1,7 +1,7 @@
 {
   "id": "my-practa",
   "name": "My Practa",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "A starter template for your custom wellbeing experience",
   "author": "Your Name",
   "estimatedDuration": 30,
@@ -52,13 +52,15 @@
             "value": "night",
             "label": "Night Mode"
           }
-        ]
+        ],
+        "default": "calm"
       },
       "intention": {
         "type": "string",
         "label": "Session Intention",
         "description": "Set a personal intention for this session",
-        "placeholder": "e.g., Find inner peace"
+        "placeholder": "e.g., Find inner peace",
+        "default": ""
       }
     },
     "requiredConfig": false
