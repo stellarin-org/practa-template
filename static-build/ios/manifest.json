@@ -1,0 +1,102 @@
+{
+  "id": "903d064e-a7ed-4748-aef9-8c2a54877124",
+  "createdAt": "2026-02-01T04:24:49.770Z",
+  "runtimeVersion": "exposdk:54.0.0",
+  "launchAsset": {
+    "key": "bundle-1769919889770-8073",
+    "contentType": "application/javascript",
+    "url": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/1769919889770-8073/_expo/static/js/ios/bundle.js"
+  },
+  "assets": [],
+  "metadata": {},
+  "extra": {
+    "eas": {},
+    "expoClient": {
+      "name": "Practa Starter",
+      "slug": "practa-starter",
+      "version": "2.5.6",
+      "orientation": "portrait",
+      "icon": "./assets/images/icon.png",
+      "scheme": "practa-starter",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "com.practa.starter"
+      },
+      "android": {
+        "adaptiveIcon": {
+          "backgroundColor": "#FFFFFF",
+          "foregroundImage": "./assets/images/android-icon-foreground.png",
+          "backgroundImage": "./assets/images/android-icon-background.png",
+          "monochromeImage": "./assets/images/android-icon-monochrome.png",
+          "foregroundImageUrl": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/assets/./assets/images/android-icon-foreground.png",
+          "monochromeImageUrl": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/assets/./assets/images/android-icon-monochrome.png",
+          "backgroundImageUrl": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/assets/./assets/images/android-icon-background.png"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false,
+        "package": "com.practa.starter"
+      },
+      "web": {
+        "output": "single",
+        "favicon": "./assets/images/favicon.png"
+      },
+      "plugins": [
+        [
+          "expo-splash-screen",
+          {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 280,
+            "resizeMode": "contain",
+            "backgroundColor": "#008ACA"
+          }
+        ],
+        "expo-web-browser"
+      ],
+      "experiments": {
+        "reactCompiler": true
+      },
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/home/runner/workspace",
+        "dynamicConfigPath": {},
+        "staticConfigPath": "/home/runner/workspace/app.json",
+        "packageJsonPath": "/home/runner/workspace/package.json",
+        "pluginHistory": {
+          "expo-splash-screen": {
+            "name": "expo-splash-screen",
+            "version": "31.0.11"
+          },
+          "expo-web-browser": {
+            "name": "expo-web-browser",
+            "version": "15.0.9"
+          }
+        }
+      },
+      "sdkVersion": "54.0.0",
+      "platforms": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "androidStatusBar": {
+        "backgroundColor": "#008ACA"
+      },
+      "iconUrl": "https://2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/assets/./assets/images/icon.png",
+      "hostUri": "2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/ios"
+    },
+    "expoGo": {
+      "debuggerHost": "2e3e56ae-7e44-4321-9c4e-5decbf3563c2-00-5cz0on4qyc5n.janeway.replit.dev/ios",
+      "developer": {
+        "tool": "expo-cli",
+        "projectRoot": "/home/runner/workspace"
+      },
+      "packagerOpts": {
+        "dev": false
+      },
+      "mainModuleName": "client/index"
+    },
+    "scopeKey": "@anonymous/practa-starter-e0e73410-9fd3-4259-b1c0-9a184ba9e2a3"
+  }
+}

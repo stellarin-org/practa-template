@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform } from "react-native";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch } from "react-native";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -123,6 +123,7 @@ export default function MyPractaScreen() {
   const queryClient = useQueryClient();
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const transitionOpacity = useSharedValue(0);
+  const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setEnableSyncCheck(true), 500);
@@ -199,6 +200,25 @@ export default function MyPractaScreen() {
 
   const metadata = savedMetadata || practaMetadataJson;
   const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
+
+  useEffect(() => {
+    if (typedMetadata.configSchema?.fields) {
+      const defaults: Record<string, unknown> = {};
+      Object.entries(typedMetadata.configSchema.fields).forEach(([key, field]) => {
+        if (field.type === "string") {
+          defaults[key] = (field as StringField).default ?? "";
+        } else if (field.type === "number") {
+          defaults[key] = (field as NumberField).default ?? 0;
+        } else if (field.type === "boolean") {
+          defaults[key] = (field as BooleanField).default ?? false;
+        } else if (field.type === "select") {
+          const selectField = field as SelectField;
+          defaults[key] = (selectField as unknown as { default?: string }).default ?? selectField.options[0]?.value ?? "";
+        }
+      });
+      setConfigValues(defaults);
+    }
+  }, []);
 
   const navigateToHarness = useCallback(() => {
     navigation.navigate("HarnessPreview", { practaId: "my-practa" });
@@ -382,11 +402,6 @@ export default function MyPractaScreen() {
               {Object.entries(typedMetadata.configSchema?.fields || {}).map(([key, field]) => (
                 <View key={key} style={styles.configItem}>
                   <View style={styles.configItemHeader}>
-                    <View style={[styles.configTypeBadge, { backgroundColor: "rgba(0,0,0,0.05)" }]}>
-                      <ThemedText style={[styles.configTypeText, { color: theme.textSecondary }]}>
-                        {(field as ConfigField).type}
-                      </ThemedText>
-                    </View>
                     <ThemedText style={styles.configItemLabel}>
                       {(field as ConfigField).label}
                     </ThemedText>
@@ -399,30 +414,80 @@ export default function MyPractaScreen() {
                       {(field as ConfigField).description}
                     </ThemedText>
                   ) : null}
-                  <View style={styles.configItemDetails}>
-                    {(field as ConfigField).type === "number" ? (
-                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
-                        {(field as NumberField).min !== undefined && (field as NumberField).max !== undefined
-                          ? `Range: ${(field as NumberField).min} - ${(field as NumberField).max}`
-                          : (field as NumberField).min !== undefined
-                            ? `Min: ${(field as NumberField).min}`
-                            : (field as NumberField).max !== undefined
-                              ? `Max: ${(field as NumberField).max}`
-                              : null}
-                        {(field as NumberField).default !== undefined ? ` • Default: ${(field as NumberField).default}` : null}
-                      </ThemedText>
+                  <View style={styles.configInputContainer}>
+                    {(field as ConfigField).type === "string" ? (
+                      <TextInput
+                        style={[styles.configTextInput, { borderColor: theme.border, color: theme.text }]}
+                        value={String(configValues[key] ?? "")}
+                        onChangeText={(text) => setConfigValues(prev => ({ ...prev, [key]: text }))}
+                        placeholder={(field as StringField).placeholder || ""}
+                        placeholderTextColor={theme.textSecondary}
+                      />
+                    ) : (field as ConfigField).type === "number" ? (
+                      <View style={styles.numberInputRow}>
+                        <TextInput
+                          style={[styles.configTextInput, styles.numberInput, { borderColor: theme.border, color: theme.text }]}
+                          value={String(configValues[key] ?? "")}
+                          onChangeText={(text) => {
+                            const num = parseInt(text, 10);
+                            if (!isNaN(num)) {
+                              const nf = field as NumberField;
+                              const clamped = Math.min(Math.max(num, nf.min ?? -Infinity), nf.max ?? Infinity);
+                              setConfigValues(prev => ({ ...prev, [key]: clamped }));
+                            } else if (text === "") {
+                              setConfigValues(prev => ({ ...prev, [key]: "" }));
+                            }
+                          }}
+                          keyboardType="numeric"
+                          placeholder={String((field as NumberField).default ?? "")}
+                          placeholderTextColor={theme.textSecondary}
+                        />
+                        {(field as NumberField).min !== undefined || (field as NumberField).max !== undefined ? (
+                          <ThemedText style={[styles.numberRange, { color: theme.textSecondary }]}>
+                            {(field as NumberField).min !== undefined && (field as NumberField).max !== undefined
+                              ? `(${(field as NumberField).min}-${(field as NumberField).max})`
+                              : (field as NumberField).min !== undefined
+                                ? `(min: ${(field as NumberField).min})`
+                                : `(max: ${(field as NumberField).max})`}
+                          </ThemedText>
+                        ) : null}
+                      </View>
                     ) : (field as ConfigField).type === "boolean" ? (
-                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
-                        Default: {(field as BooleanField).default ? "On" : "Off"}
-                      </ThemedText>
+                      <View style={styles.switchRow}>
+                        <Switch
+                          value={Boolean(configValues[key])}
+                          onValueChange={(value) => setConfigValues(prev => ({ ...prev, [key]: value }))}
+                          trackColor={{ false: theme.border, true: theme.primary }}
+                          thumbColor="white"
+                        />
+                        <ThemedText style={[styles.switchLabel, { color: theme.textSecondary }]}>
+                          {configValues[key] ? "On" : "Off"}
+                        </ThemedText>
+                      </View>
                     ) : (field as ConfigField).type === "select" ? (
-                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
-                        Options: {(field as SelectField).options.map(o => o.label).join(", ")}
-                      </ThemedText>
-                    ) : (field as ConfigField).type === "string" && (field as StringField).default ? (
-                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
-                        Default: "{(field as StringField).default}"
-                      </ThemedText>
+                      <View style={styles.selectContainer}>
+                        {(field as SelectField).options.map((option) => {
+                          const isSelected = configValues[key] === option.value;
+                          return (
+                            <Pressable
+                              key={option.value}
+                              style={[
+                                styles.selectOption,
+                                { borderColor: isSelected ? theme.primary : theme.border },
+                                isSelected && { backgroundColor: theme.primary + "15" },
+                              ]}
+                              onPress={() => setConfigValues(prev => ({ ...prev, [key]: option.value }))}
+                            >
+                              <View style={[styles.selectRadio, { borderColor: isSelected ? theme.primary : theme.border }]}>
+                                {isSelected ? <View style={[styles.selectRadioInner, { backgroundColor: theme.primary }]} /> : null}
+                              </View>
+                              <ThemedText style={[styles.selectLabel, isSelected && { color: theme.primary }]}>
+                                {option.label}
+                              </ThemedText>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
                     ) : null}
                   </View>
                 </View>
@@ -718,5 +783,65 @@ const styles = StyleSheet.create({
   },
   configDetailText: {
     fontSize: 12,
+  },
+  configInputContainer: {
+    marginTop: Spacing.sm,
+  },
+  configTextInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 14,
+  },
+  numberInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  numberInput: {
+    width: 80,
+    textAlign: "center",
+  },
+  numberRange: {
+    fontSize: 12,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  switchLabel: {
+    fontSize: 14,
+  },
+  selectContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  selectOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  selectRadio: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  selectRadioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  selectLabel: {
+    fontSize: 14,
   },
 });
