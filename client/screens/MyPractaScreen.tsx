@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,9 +18,45 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
-import { validatePracta, ValidationResult } from "@/lib/practa-validator";
 import { apiRequest } from "@/lib/query-client";
 import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
+
+interface ConfigFieldBase {
+  type: string;
+  label: string;
+  description?: string;
+  required?: boolean;
+}
+
+interface StringField extends ConfigFieldBase {
+  type: "string";
+  placeholder?: string;
+  default?: string;
+}
+
+interface NumberField extends ConfigFieldBase {
+  type: "number";
+  default?: number;
+  min?: number;
+  max?: number;
+}
+
+interface BooleanField extends ConfigFieldBase {
+  type: "boolean";
+  default?: boolean;
+}
+
+interface SelectField extends ConfigFieldBase {
+  type: "select";
+  options: { value: string; label: string }[];
+}
+
+type ConfigField = StringField | NumberField | BooleanField | SelectField;
+
+interface ConfigSchema {
+  fields: Record<string, ConfigField>;
+  requiredConfig?: boolean;
+}
 
 interface PractaMetadata {
   name: string;
@@ -30,6 +66,7 @@ interface PractaMetadata {
   estimatedDuration?: number;
   category?: string;
   tags?: string[];
+  configSchema?: ConfigSchema;
 }
 
 interface SyncStatus {
@@ -78,43 +115,12 @@ function formatFullDateTime(dateString: string): string {
   return date.toLocaleString();
 }
 
-function ValidationItem({ result }: { result: ValidationResult }) {
-  const { theme } = useTheme();
-  
-  const iconName = result.severity === "error" 
-    ? "x-circle" 
-    : result.severity === "warning" 
-      ? "alert-circle" 
-      : "check-circle";
-      
-  const iconColor = result.severity === "error"
-    ? "#EF4444"
-    : result.severity === "warning"
-      ? "#F59E0B"
-      : "#10B981";
-
-  return (
-    <View style={styles.validationItem}>
-      <Feather name={iconName} size={16} color={iconColor} />
-      <ThemedText 
-        style={[
-          styles.validationText, 
-          { color: result.severity === "error" ? "#EF4444" : theme.textSecondary }
-        ]}
-      >
-        {result.message}
-      </ThemedText>
-    </View>
-  );
-}
-
 export default function MyPractaScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
-  const [showValidation, setShowValidation] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const transitionOpacity = useSharedValue(0);
 
@@ -192,10 +198,7 @@ export default function MyPractaScreen() {
   );
 
   const metadata = savedMetadata || practaMetadataJson;
-
-  const validationReport = useMemo(() => {
-    return validatePracta(MyPracta, practaMetadataJson);
-  }, []);
+  const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
 
   const navigateToHarness = useCallback(() => {
     navigation.navigate("HarnessPreview", { practaId: "my-practa" });
@@ -221,11 +224,6 @@ export default function MyPractaScreen() {
     opacity: transitionOpacity.value,
     pointerEvents: transitionOpacity.value > 0 ? "auto" as const : "none" as const,
   }));
-
-  const toggleValidation = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setShowValidation(!showValidation);
-  };
 
   return (
     <ThemedView style={styles.container}>
@@ -364,55 +362,74 @@ export default function MyPractaScreen() {
           </Pressable>
         </Card>
 
-        <Card style={styles.validationCard}>
-          <Pressable onPress={toggleValidation} style={styles.validationHeader}>
-            <View style={styles.validationHeaderLeft}>
-              <Feather 
-                name={validationReport.isValid ? "check-circle" : "alert-circle"} 
-                size={20} 
-                color={validationReport.isValid ? "#10B981" : "#EF4444"} 
-              />
-              <ThemedText style={styles.validationTitle}>
-                Validation {validationReport.isValid ? "Passed" : "Failed"}
-              </ThemedText>
-            </View>
-            <View style={styles.validationStats}>
-              {validationReport.errors.length > 0 ? (
-                <View style={[styles.statBadge, { backgroundColor: "#FEE2E2" }]}>
-                  <ThemedText style={[styles.statText, { color: "#EF4444" }]}>
-                    {validationReport.errors.length} errors
+        {typedMetadata.configSchema && Object.keys(typedMetadata.configSchema.fields || {}).length > 0 ? (
+          <Card style={styles.configCard}>
+            <View style={styles.configHeader}>
+              <Feather name="sliders" size={20} color={theme.primary} />
+              <ThemedText style={styles.configTitle}>Configuration Options</ThemedText>
+              {typedMetadata.configSchema?.requiredConfig ? (
+                <View style={[styles.statBadge, { backgroundColor: theme.primary + "20" }]}>
+                  <ThemedText style={[styles.statText, { color: theme.primary }]}>
+                    Required
                   </ThemedText>
                 </View>
               ) : null}
-              {validationReport.warnings.length > 0 ? (
-                <View style={[styles.statBadge, { backgroundColor: "#FEF3C7" }]}>
-                  <ThemedText style={[styles.statText, { color: "#D97706" }]}>
-                    {validationReport.warnings.length} warnings
-                  </ThemedText>
+            </View>
+            <ThemedText style={[styles.configDescription, { color: theme.textSecondary }]}>
+              Users can customize these settings when adding your Practa to a flow.
+            </ThemedText>
+            <View style={styles.configList}>
+              {Object.entries(typedMetadata.configSchema?.fields || {}).map(([key, field]) => (
+                <View key={key} style={styles.configItem}>
+                  <View style={styles.configItemHeader}>
+                    <View style={[styles.configTypeBadge, { backgroundColor: "rgba(0,0,0,0.05)" }]}>
+                      <ThemedText style={[styles.configTypeText, { color: theme.textSecondary }]}>
+                        {(field as ConfigField).type}
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={styles.configItemLabel}>
+                      {(field as ConfigField).label}
+                    </ThemedText>
+                    {(field as ConfigField).required ? (
+                      <ThemedText style={[styles.requiredMark, { color: "#EF4444" }]}>*</ThemedText>
+                    ) : null}
+                  </View>
+                  {(field as ConfigField).description ? (
+                    <ThemedText style={[styles.configItemDescription, { color: theme.textSecondary }]}>
+                      {(field as ConfigField).description}
+                    </ThemedText>
+                  ) : null}
+                  <View style={styles.configItemDetails}>
+                    {(field as ConfigField).type === "number" ? (
+                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
+                        {(field as NumberField).min !== undefined && (field as NumberField).max !== undefined
+                          ? `Range: ${(field as NumberField).min} - ${(field as NumberField).max}`
+                          : (field as NumberField).min !== undefined
+                            ? `Min: ${(field as NumberField).min}`
+                            : (field as NumberField).max !== undefined
+                              ? `Max: ${(field as NumberField).max}`
+                              : null}
+                        {(field as NumberField).default !== undefined ? ` • Default: ${(field as NumberField).default}` : null}
+                      </ThemedText>
+                    ) : (field as ConfigField).type === "boolean" ? (
+                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
+                        Default: {(field as BooleanField).default ? "On" : "Off"}
+                      </ThemedText>
+                    ) : (field as ConfigField).type === "select" ? (
+                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
+                        Options: {(field as SelectField).options.map(o => o.label).join(", ")}
+                      </ThemedText>
+                    ) : (field as ConfigField).type === "string" && (field as StringField).default ? (
+                      <ThemedText style={[styles.configDetailText, { color: theme.textSecondary }]}>
+                        Default: "{(field as StringField).default}"
+                      </ThemedText>
+                    ) : null}
+                  </View>
                 </View>
-              ) : null}
-              <Feather 
-                name={showValidation ? "chevron-up" : "chevron-down"} 
-                size={20} 
-                color={theme.textSecondary} 
-              />
-            </View>
-          </Pressable>
-          
-          {showValidation ? (
-            <View style={styles.validationList}>
-              {validationReport.errors.map((result, i) => (
-                <ValidationItem key={`error-${i}`} result={result} />
-              ))}
-              {validationReport.warnings.map((result, i) => (
-                <ValidationItem key={`warning-${i}`} result={result} />
-              ))}
-              {validationReport.successes.map((result, i) => (
-                <ValidationItem key={`success-${i}`} result={result} />
               ))}
             </View>
-          ) : null}
-        </Card>
+          </Card>
+        ) : null}
 
         {lastSubmit?.timestamp ? (
           <Card style={styles.lastSubmitCard}>
@@ -640,5 +657,66 @@ const styles = StyleSheet.create({
   },
   syncButtonPublish: {
     backgroundColor: "#3B82F6",
+  },
+  configCard: {
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  configHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  configTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
+  },
+  configDescription: {
+    fontSize: 13,
+    marginBottom: Spacing.md,
+  },
+  configList: {
+    gap: Spacing.md,
+  },
+  configItem: {
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.08)",
+  },
+  configItemHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  configTypeBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  configTypeText: {
+    fontSize: 11,
+    fontWeight: "500",
+    textTransform: "uppercase",
+  },
+  configItemLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  requiredMark: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  configItemDescription: {
+    fontSize: 13,
+    marginBottom: Spacing.xs,
+  },
+  configItemDetails: {
+    marginTop: Spacing.xs,
+  },
+  configDetailText: {
+    fontSize: 12,
   },
 });
