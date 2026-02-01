@@ -147,6 +147,19 @@ Single-choice selection from predefined options.
 | `options` | array | Yes | Array of `{ value, label }` objects |
 | `default` | string | **Yes** | Default selected value (must match one of the option values) |
 
+## Default Values
+
+All configuration fields (except `string`) require a `default` property. This ensures that every Practa can run correctly out-of-the-box without requiring user configuration, while still allowing customization when desired.
+
+| Field Type | Default Required | Notes |
+|------------|------------------|-------|
+| `number` | **Yes** | Practa needs a valid fallback value |
+| `boolean` | **Yes** | Must be explicitly `true` or `false` |
+| `select` | **Yes** | Must match one of the defined option values |
+| `string` | No | Implicitly defaults to empty string `""` if not specified |
+
+The `requiredConfig` schema-level flag can still be set to `true` if a Practa author wants to force users to review settings before use.
+
 ## Schema-Level Options
 
 | Property | Type | Default | Description |
