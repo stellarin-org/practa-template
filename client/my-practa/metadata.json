@@ -1,7 +1,7 @@
 {
   "id": "my-practa",
   "name": "My Practa",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A starter template for your custom wellbeing experience",
   "author": "Your Name",
   "estimatedDuration": 30,
@@ -11,7 +11,58 @@
     "template"
   ],
   "assets": {
+    "splash": "splash.mp4",
     "wellnessBg": "wellness-bg.png",
     "content": "content.json"
+  },
+  "configSchema": {
+    "fields": {
+      "sessionLength": {
+        "type": "number",
+        "label": "Session Length",
+        "description": "Duration of the session in minutes",
+        "default": 5,
+        "min": 1,
+        "max": 30
+      },
+      "enableSounds": {
+        "type": "boolean",
+        "label": "Enable Sounds",
+        "description": "Play ambient sounds during the session",
+        "default": true
+      },
+      "theme": {
+        "type": "select",
+        "label": "Visual Theme",
+        "description": "Choose a color theme for the experience",
+        "options": [
+          {
+            "value": "calm",
+            "label": "Calm Blue"
+          },
+          {
+            "value": "nature",
+            "label": "Nature Green"
+          },
+          {
+            "value": "sunset",
+            "label": "Sunset Orange"
+          },
+          {
+            "value": "night",
+            "label": "Night Mode"
+          }
+        ],
+        "default": "calm"
+      },
+      "intention": {
+        "type": "string",
+        "label": "Session Intention",
+        "description": "Set a personal intention for this session",
+        "placeholder": "e.g., Find inner peace",
+        "default": ""
+      }
+    },
+    "requiredConfig": false
   }
 }

@@ -34,6 +34,10 @@ interface PractaMetadata {
   category?: string;
   tags?: string[];
   assets?: Record<string, string>;
+  configSchema?: {
+    fields: Record<string, unknown>;
+    requiredConfig?: boolean;
+  };
 }
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
@@ -107,7 +111,7 @@ function readConfig(): PractaMetadata | null {
 }
 
 function writeConfig(metadata: PractaMetadata): boolean {
-  // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags
+  // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags, assets, configSchema
   const orderedMetadata = {
     id: metadata.id,
     name: metadata.name,
@@ -117,6 +121,8 @@ function writeConfig(metadata: PractaMetadata): boolean {
     ...(metadata.estimatedDuration !== undefined && { estimatedDuration: metadata.estimatedDuration }),
     ...(metadata.category && { category: metadata.category }),
     ...(metadata.tags && metadata.tags.length > 0 && { tags: metadata.tags }),
+    ...(metadata.assets && Object.keys(metadata.assets).length > 0 && { assets: metadata.assets }),
+    ...(metadata.configSchema && { configSchema: metadata.configSchema }),
   };
   
   try {
