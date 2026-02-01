@@ -68,7 +68,7 @@ Text input for free-form text.
 | `label` | string | Yes | Display label shown to users |
 | `description` | string | No | Help text below the label |
 | `placeholder` | string | No | Placeholder text in the input |
-| `default` | string | No | Default value |
+| `default` | string | No | Default value (defaults to empty string `""`) |
 | `required` | boolean | No | Whether the field must be filled |
 
 ### Number Field
@@ -93,10 +93,9 @@ Numeric input with optional min/max constraints.
 | `type` | `"number"` | Yes | Field type identifier |
 | `label` | string | Yes | Display label shown to users |
 | `description` | string | No | Help text below the label |
-| `default` | number | No | Default value |
+| `default` | number | **Yes** | Default value (required so practa has a fallback) |
 | `min` | number | No | Minimum allowed value |
 | `max` | number | No | Maximum allowed value |
-| `required` | boolean | No | Whether the field must be filled |
 
 ### Boolean Field
 
@@ -118,7 +117,7 @@ Toggle switch for on/off settings.
 | `type` | `"boolean"` | Yes | Field type identifier |
 | `label` | string | Yes | Display label shown to users |
 | `description` | string | No | Help text below the label |
-| `default` | boolean | No | Default value (defaults to `false`) |
+| `default` | boolean | **Yes** | Default value (`true` or `false`) |
 
 ### Select Field
 
@@ -135,7 +134,7 @@ Single-choice selection from predefined options.
       { "value": "medium", "label": "Medium" },
       { "value": "hard", "label": "Hard" }
     ],
-    "required": true
+    "default": "medium"
   }
 }
 ```
@@ -146,7 +145,7 @@ Single-choice selection from predefined options.
 | `label` | string | Yes | Display label shown to users |
 | `description` | string | No | Help text below the label |
 | `options` | array | Yes | Array of `{ value, label }` objects |
-| `required` | boolean | No | Whether a selection is required |
+| `default` | string | **Yes** | Default selected value (must match one of the option values) |
 
 ## Schema-Level Options
 
