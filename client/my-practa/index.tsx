@@ -15,7 +15,7 @@
  * See docs/practa-storage-system.md for full storage documentation.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Pressable, Platform, ImageSourcePropType } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,9 +26,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
-import { usePractaChrome } from "@/context/PractaChromeContext";
-import { useHeaderHeight } from "@/components/PractaChromeHeader";
+import { PractaContext, PractaCompleteHandler } from "@/types/flow";
 
 interface ContentData {
   title: string;
@@ -40,23 +38,16 @@ interface ContentData {
   buttonSkip: string;
 }
 
-interface MyPractaProps extends PractaProps {}
+interface MyPractaProps {
+  context: PractaContext;
+  onComplete: PractaCompleteHandler;
+  onSkip?: () => void;
+}
 
-export default function MyPracta({ context, onComplete, onSkip, onSettings, showSettings }: MyPractaProps) {
+export default function MyPracta({ context, onComplete, onSkip }: MyPractaProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { setConfig } = usePractaChrome();
-  const headerHeight = useHeaderHeight();
   const [isStarted, setIsStarted] = useState(false);
-
-  useEffect(() => {
-    setConfig({
-      headerMode: "default",
-      title: "My Practa",
-      showSettings,
-      onSettings,
-    });
-  }, [setConfig, showSettings, onSettings]);
 
   // Get assets from context
   const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;
@@ -93,16 +84,12 @@ export default function MyPracta({ context, onComplete, onSkip, onSettings, show
       },
       metadata: { 
         completedAt: Date.now(),
-        settings: {
-          difficulty: "medium",
-          soundEnabled: true
-        }
       },
     });
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
+    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
       <View style={styles.content}>
         {wellnessBgSource ? (
           <Image

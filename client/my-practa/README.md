@@ -29,6 +29,6 @@ The component receives context from the flow system and calls `onComplete` when 
 ## Output
 
 When completed, this Practa outputs:
-- `content.type`: "text"
+- `content.type`: "text" //
 - `content.value`: "Practa completed successfully!"
 - `metadata.completedAt`: Timestamp of completion
