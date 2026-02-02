@@ -783,7 +783,6 @@ ${config.version}
       const { execSync } = require("child_process");
       const demoDir = path.resolve(process.cwd(), "demo-template");
       const practaDir = path.resolve(process.cwd(), "client/my-practa");
-      const configPath = path.resolve(process.cwd(), "practa.config.json");
 
       if (!fs.existsSync(demoDir)) {
         return res.status(404).json({ error: "Demo template not found" });
@@ -805,7 +804,6 @@ ${config.version}
       // Write files by truncating and writing (keeps same inode)
       fs.writeFileSync(path.join(practaDir, "index.tsx"), demoIndexContent, { flag: "w" });
       fs.writeFileSync(path.join(practaDir, "metadata.json"), demoMetadataContent, { flag: "w" });
-      fs.writeFileSync(configPath, demoMetadataContent, { flag: "w" });
 
       // Copy assets
       const demoAssetsDir = path.join(demoDir, "assets");
