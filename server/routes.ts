@@ -482,6 +482,8 @@ ${config.version}
         estimatedDuration: config.estimatedDuration,
         requiredPermissions: [],
         assets: config.assets || {},
+        ...(config.dependencies && config.dependencies.length > 0 && { dependencies: config.dependencies }),
+        ...(config.configSchema && { configSchema: config.configSchema }),
       };
 
       const readme = `# ${config.name}
