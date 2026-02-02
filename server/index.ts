@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 import {
   bumpMetadataPatch,
   bumpTemplateVersion,
@@ -12,6 +13,7 @@ import {
   setLastProcessedTemplateCommit,
   getCurrentCommitSha,
 } from "../scripts/bump-version";
+import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 
 interface PractaAssetEntry {
   id: string;
@@ -508,8 +510,81 @@ function startGitVersionWatcher() {
   }
 }
 
+/**
+ * Check for missing dependencies on startup and auto-install them.
+ * Combines template-level requirements with Practa-level dependencies.
+ */
+function checkAndInstallDependencies(): void {
+  const projectRoot = process.cwd();
+  
+  // Get template-level required packages
+  const templatePackages = (TEMPLATE_SYNC_CONFIG as { requiredPackages?: string[] }).requiredPackages || [];
+  
+  // Get Practa-level dependencies from metadata.json
+  let practaPackages: string[] = [];
+  try {
+    const practaMetadataPath = path.join(projectRoot, "client/my-practa/metadata.json");
+    if (fs.existsSync(practaMetadataPath)) {
+      const practaMetadata = JSON.parse(fs.readFileSync(practaMetadataPath, "utf-8"));
+      if (Array.isArray(practaMetadata.dependencies)) {
+        practaPackages = practaMetadata.dependencies;
+      }
+    }
+  } catch (e) {
+    log("[Dependency Check] Error reading Practa dependencies:", e);
+  }
+  
+  // Merge and deduplicate
+  const allRequiredPackages = [...new Set([...templatePackages, ...practaPackages])];
+  
+  if (allRequiredPackages.length === 0) {
+    return;
+  }
+  
+  // Check which packages are missing
+  const missingPackages: string[] = [];
+  try {
+    const packageJsonPath = path.join(projectRoot, "package.json");
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+      const installedDeps = {
+        ...packageJson.dependencies,
+        ...packageJson.devDependencies,
+      };
+      
+      for (const pkg of allRequiredPackages) {
+        if (!installedDeps[pkg]) {
+          missingPackages.push(pkg);
+        }
+      }
+    }
+  } catch (e) {
+    log("[Dependency Check] Error checking packages:", e);
+    return;
+  }
+  
+  if (missingPackages.length === 0) {
+    log("[Dependency Check] All required packages are installed");
+    return;
+  }
+  
+  // Auto-install missing packages
+  log(`[Dependency Check] Installing missing packages: ${missingPackages.join(", ")}`);
+  try {
+    const installCmd = `npx expo install ${missingPackages.join(" ")}`;
+    execSync(installCmd, { 
+      stdio: "inherit",
+      cwd: projectRoot,
+    });
+    log("[Dependency Check] Successfully installed missing packages");
+  } catch (e) {
+    log("[Dependency Check] Failed to install packages:", e);
+  }
+}
+
 (async () => {
   updatePractaAssets();
+  checkAndInstallDependencies();
   
   setupCors(app);
   setupBodyParsing(app);
