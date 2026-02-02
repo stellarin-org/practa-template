@@ -1031,11 +1031,52 @@ ${config.version}
       console.log("[Template Update] Regenerating practa-assets.ts...");
       updatePractaAssets();
       
-      res.json({
+      // Check for missing required packages
+      const missingPackages: string[] = [];
+      const REQUIRED_PACKAGES = TEMPLATE_SYNC_CONFIG.requiredPackages || [];
+      
+      if (REQUIRED_PACKAGES.length > 0) {
+        try {
+          const packageJsonPath = path.join(projectRoot, "package.json");
+          if (fs.existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+            const installedDeps = {
+              ...packageJson.dependencies,
+              ...packageJson.devDependencies,
+            };
+            
+            for (const pkg of REQUIRED_PACKAGES) {
+              if (!installedDeps[pkg]) {
+                missingPackages.push(pkg);
+                console.log(`[Template Update] Missing required package: ${pkg}`);
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[Template Update] Error checking packages:", e);
+        }
+      }
+      
+      const response: {
+        success: boolean;
+        updatedTo: string;
+        message: string;
+        missingPackages?: string[];
+        installCommand?: string;
+      } = {
         success: true,
         updatedTo: latestSha,
-        message: "Template updated successfully. Restart the app to see changes."
-      });
+        message: missingPackages.length > 0
+          ? `Template updated. Install missing packages: ${missingPackages.join(", ")}`
+          : "Template updated successfully. Restart the app to see changes."
+      };
+      
+      if (missingPackages.length > 0) {
+        response.missingPackages = missingPackages;
+        response.installCommand = `npx expo install ${missingPackages.join(" ")}`;
+      }
+      
+      res.json(response);
     } catch (error) {
       console.error("Template update error:", error);
       res.status(500).json({

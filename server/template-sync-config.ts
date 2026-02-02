@@ -24,4 +24,9 @@ export const TEMPLATE_SYNC_CONFIG = {
   filesToDelete: [
     "practa.config.json",
   ],
+
+  // Packages required by the template - will warn if missing during update
+  requiredPackages: [
+    "expo-video",
+  ],
 };
