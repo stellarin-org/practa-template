@@ -19,4 +19,9 @@ export const TEMPLATE_SYNC_CONFIG = {
     "server",
     "shared",
   ],
+
+  // Files to delete during template update (deprecated files removed from template)
+  filesToDelete: [
+    "practa.config.json",
+  ],
 };

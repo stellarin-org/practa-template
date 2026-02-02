@@ -1019,6 +1019,16 @@ ${config.version}
       const syncFilePath = path.resolve(projectRoot, ".template-sync");
       fs.writeFileSync(syncFilePath, latestSha);
       
+      // Delete deprecated files that were removed from the template
+      const FILES_TO_DELETE = TEMPLATE_SYNC_CONFIG.filesToDelete || [];
+      for (const fileToDelete of FILES_TO_DELETE) {
+        const filePath = path.join(projectRoot, fileToDelete);
+        if (fs.existsSync(filePath)) {
+          console.log(`[Template Update] Deleting deprecated file: ${fileToDelete}`);
+          fs.unlinkSync(filePath);
+        }
+      }
+      
       // Regenerate practa-assets.ts to reflect any changes in demo-practa
       console.log("[Template Update] Regenerating practa-assets.ts...");
       updatePractaAssets();
