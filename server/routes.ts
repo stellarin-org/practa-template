@@ -112,7 +112,7 @@ function readConfig(): PractaMetadata | null {
 }
 
 function writeConfig(metadata: PractaMetadata): boolean {
-  // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags, assets, configSchema
+  // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags, assets, dependencies, configSchema
   const orderedMetadata = {
     id: metadata.id,
     name: metadata.name,
@@ -123,6 +123,7 @@ function writeConfig(metadata: PractaMetadata): boolean {
     ...(metadata.category && { category: metadata.category }),
     ...(metadata.tags && metadata.tags.length > 0 && { tags: metadata.tags }),
     ...(metadata.assets && Object.keys(metadata.assets).length > 0 && { assets: metadata.assets }),
+    ...(metadata.dependencies && metadata.dependencies.length > 0 && { dependencies: metadata.dependencies }),
     ...(metadata.configSchema && { configSchema: metadata.configSchema }),
   };
   
