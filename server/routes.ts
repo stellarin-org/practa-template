@@ -351,6 +351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       estimatedDuration: config.estimatedDuration,
       requiredPermissions: [],
       assets: config.assets || {},
+      ...(config.dependencies && config.dependencies.length > 0 && { dependencies: config.dependencies }),
+      ...(config.configSchema && { configSchema: config.configSchema }),
     } : null;
 
     const readme = config ? `# ${config.name}
