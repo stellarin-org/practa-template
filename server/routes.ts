@@ -38,6 +38,7 @@ interface PractaMetadata {
     fields: Record<string, unknown>;
     requiredConfig?: boolean;
   };
+  dependencies?: string[];
 }
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
@@ -1033,9 +1034,26 @@ ${config.version}
       
       // Check for missing required packages
       const missingPackages: string[] = [];
-      const REQUIRED_PACKAGES = TEMPLATE_SYNC_CONFIG.requiredPackages || [];
+      const templatePackages = TEMPLATE_SYNC_CONFIG.requiredPackages || [];
       
-      if (REQUIRED_PACKAGES.length > 0) {
+      // Also check Practa-level dependencies from metadata.json
+      let practaPackages: string[] = [];
+      try {
+        const practaMetadataPath = path.join(projectRoot, "client/my-practa/metadata.json");
+        if (fs.existsSync(practaMetadataPath)) {
+          const practaMetadata = JSON.parse(fs.readFileSync(practaMetadataPath, "utf-8"));
+          if (Array.isArray(practaMetadata.dependencies)) {
+            practaPackages = practaMetadata.dependencies;
+          }
+        }
+      } catch (e) {
+        console.error("[Template Update] Error reading Practa dependencies:", e);
+      }
+      
+      // Merge template and Practa requirements (deduplicated)
+      const allRequiredPackages = [...new Set([...templatePackages, ...practaPackages])];
+      
+      if (allRequiredPackages.length > 0) {
         try {
           const packageJsonPath = path.join(projectRoot, "package.json");
           if (fs.existsSync(packageJsonPath)) {
@@ -1045,7 +1063,7 @@ ${config.version}
               ...packageJson.devDependencies,
             };
             
-            for (const pkg of REQUIRED_PACKAGES) {
+            for (const pkg of allRequiredPackages) {
               if (!installedDeps[pkg]) {
                 missingPackages.push(pkg);
                 console.log(`[Template Update] Missing required package: ${pkg}`);

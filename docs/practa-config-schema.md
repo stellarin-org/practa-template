@@ -270,6 +270,24 @@ export default function FocusTimer({ context, onComplete }: PractaProps) {
 }
 ```
 
+## Package Dependencies
+
+If your Practa uses Expo packages that aren't part of the base template (like `expo-contacts`, `expo-haptics`, etc.), list them in the `dependencies` array:
+
+```json
+{
+  "id": "my-practa",
+  "name": "My Practa",
+  "version": "1.0.0",
+  ...
+  "dependencies": ["expo-contacts", "expo-haptics"]
+}
+```
+
+When developers run a template update, the system will check for these dependencies and notify them if any packages are missing, providing the install command.
+
+**Note:** Only include Expo-compatible packages. See the Expo Go compatible libraries list in the development guidelines.
+
 ## Best Practices
 
 1. **Always provide defaults** - Users may skip configuration, so handle missing values gracefully
