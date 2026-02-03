@@ -6,8 +6,9 @@ Everything you need to build, test, and submit a Practa for Stellarin.
 
 1. **Edit your Practa** in `client/my-practa/index.tsx`
 2. **Update metadata** in `client/my-practa/metadata.json`
-3. **Preview** in the app (Dev screen → Run Practa)
-4. **Submit** when ready (Dev screen → Submit)
+3. **Add dependencies** to metadata if using external packages (see Dependencies section)
+4. **Preview** in the app (Dev screen → Run Practa)
+5. **Submit** when ready (Dev screen → Submit)
 
 ---
 
@@ -188,6 +189,25 @@ Update `client/my-practa/metadata.json` with your Practa info:
 | `estimatedDuration` | number | Seconds to complete |
 | `tags` | string[] | `["journaling", "gratitude"]` |
 | `icon` | string | Feather icon name (`"heart"`) |
+| `dependencies` | string[] | npm packages to auto-install |
+| `configSchema` | object | User-configurable settings schema |
+
+### Dependencies
+
+If your Practa uses npm packages beyond the base template, list them in the `dependencies` array:
+
+```json
+{
+  "dependencies": [
+    "expo-sharing",
+    "react-native-view-shot"
+  ]
+}
+```
+
+The server automatically installs missing dependencies on startup and template updates. Only include packages that are Expo Go compatible.
+
+**Note:** If your Practa uses video assets (e.g., `splash.mp4`), include `expo-video` in dependencies.
 
 ### Example
 
@@ -200,7 +220,8 @@ Update `client/my-practa/metadata.json` with your Practa info:
   "version": "1.0.0",
   "estimatedDuration": 120,
   "tags": ["journaling", "gratitude"],
-  "icon": "heart"
+  "icon": "heart",
+  "dependencies": ["expo-sharing"]
 }
 ```
 
