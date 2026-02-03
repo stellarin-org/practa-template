@@ -7,26 +7,19 @@ const APP_JSON_PATH = path.resolve(process.cwd(), "app.json");
 const CACHE_PATH = path.resolve(process.cwd(), ".cache/last-version-commit.json");
 const TEMPLATE_CACHE_PATH = path.resolve(process.cwd(), ".cache/last-template-version-commit.json");
 
-// Known external packages that can be auto-detected
-const KNOWN_PACKAGES: Record<string, string[]> = {
-  "expo-linear-gradient": ["LinearGradient"],
-  "expo-blur": ["BlurView"],
-  "expo-haptics": ["Haptics"],
-  "expo-audio": ["Audio", "useAudioPlayer"],
-  "expo-av": ["Audio", "Video"],
-  "lottie-react-native": ["LottieView"],
-  "react-native-reanimated": ["Animated", "useAnimatedStyle", "useSharedValue", "withSpring", "withTiming", "withRepeat", "withSequence", "interpolate", "Easing"],
-  "react-native-gesture-handler": ["Gesture", "GestureDetector", "GestureHandlerRootView", "PanGestureHandler", "TapGestureHandler"],
-  "expo-sensors": ["Accelerometer", "Gyroscope", "DeviceMotion"],
-  "@shopify/flash-list": ["FlashList"],
-  "react-native-svg": ["Svg", "Circle", "Rect", "Path", "G", "Line", "Polygon"],
-  "expo-camera": ["Camera", "CameraView"],
-  "expo-image-picker": ["ImagePicker", "launchImageLibraryAsync", "launchCameraAsync"],
-  "expo-file-system": ["FileSystem"],
-  "expo-sharing": ["Sharing"],
-  "expo-clipboard": ["Clipboard"],
-  "expo-speech": ["Speech"],
-};
+// Packages to exclude from dependencies (built-in or provided by template)
+const EXCLUDED_PACKAGES = new Set([
+  "react",
+  "react-native",
+  "react-dom",
+  "@/",
+  "@shared/",
+  "./",
+  "../",
+]);
+
+// Prefixes that indicate local/relative imports
+const LOCAL_PREFIXES = ["./", "../", "@/", "@shared/"];
 
 export function detectDependencies(): string[] {
   if (!fs.existsSync(PRACTA_INDEX_PATH)) {
@@ -36,23 +29,36 @@ export function detectDependencies(): string[] {
   const content = fs.readFileSync(PRACTA_INDEX_PATH, "utf-8");
   const detectedDeps: Set<string> = new Set();
 
-  // Check for direct imports
-  for (const [pkg, identifiers] of Object.entries(KNOWN_PACKAGES)) {
-    // Check for import from package
-    const importRegex = new RegExp(`from\\s+['"]${pkg.replace("/", "\\/")}['"]`, "g");
-    if (importRegex.test(content)) {
-      detectedDeps.add(pkg);
+  // Match all import statements: import ... from "package" or import "package"
+  const importRegex = /(?:import\s+(?:[\s\S]*?)\s+from\s+|import\s+)['"]([^'"]+)['"]/g;
+  let match;
+  
+  while ((match = importRegex.exec(content)) !== null) {
+    const pkg = match[1];
+    
+    // Skip local/relative imports
+    if (LOCAL_PREFIXES.some(prefix => pkg.startsWith(prefix))) {
       continue;
     }
     
-    // Check for usage of known identifiers
-    for (const id of identifiers) {
-      const usageRegex = new RegExp(`\\b${id}\\b`, "g");
-      if (usageRegex.test(content)) {
-        detectedDeps.add(pkg);
-        break;
-      }
+    // Skip excluded packages
+    if (EXCLUDED_PACKAGES.has(pkg)) {
+      continue;
     }
+    
+    // For scoped packages (@org/pkg), keep full name
+    // For regular packages, extract the package name (before any subpath)
+    let packageName: string;
+    if (pkg.startsWith("@")) {
+      // Scoped package: @org/pkg or @org/pkg/subpath
+      const parts = pkg.split("/");
+      packageName = parts.slice(0, 2).join("/");
+    } else {
+      // Regular package: pkg or pkg/subpath
+      packageName = pkg.split("/")[0];
+    }
+    
+    detectedDeps.add(packageName);
   }
 
   return Array.from(detectedDeps).sort();
