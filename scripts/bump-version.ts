@@ -2,9 +2,61 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
+const PRACTA_INDEX_PATH = path.resolve(process.cwd(), "client/my-practa/index.tsx");
 const APP_JSON_PATH = path.resolve(process.cwd(), "app.json");
 const CACHE_PATH = path.resolve(process.cwd(), ".cache/last-version-commit.json");
 const TEMPLATE_CACHE_PATH = path.resolve(process.cwd(), ".cache/last-template-version-commit.json");
+
+// Known external packages that can be auto-detected
+const KNOWN_PACKAGES: Record<string, string[]> = {
+  "expo-linear-gradient": ["LinearGradient"],
+  "expo-blur": ["BlurView"],
+  "expo-haptics": ["Haptics"],
+  "expo-audio": ["Audio", "useAudioPlayer"],
+  "expo-av": ["Audio", "Video"],
+  "lottie-react-native": ["LottieView"],
+  "react-native-reanimated": ["Animated", "useAnimatedStyle", "useSharedValue", "withSpring", "withTiming", "withRepeat", "withSequence", "interpolate", "Easing"],
+  "react-native-gesture-handler": ["Gesture", "GestureDetector", "GestureHandlerRootView", "PanGestureHandler", "TapGestureHandler"],
+  "expo-sensors": ["Accelerometer", "Gyroscope", "DeviceMotion"],
+  "@shopify/flash-list": ["FlashList"],
+  "react-native-svg": ["Svg", "Circle", "Rect", "Path", "G", "Line", "Polygon"],
+  "expo-camera": ["Camera", "CameraView"],
+  "expo-image-picker": ["ImagePicker", "launchImageLibraryAsync", "launchCameraAsync"],
+  "expo-file-system": ["FileSystem"],
+  "expo-sharing": ["Sharing"],
+  "expo-clipboard": ["Clipboard"],
+  "expo-speech": ["Speech"],
+};
+
+export function detectDependencies(): string[] {
+  if (!fs.existsSync(PRACTA_INDEX_PATH)) {
+    return [];
+  }
+
+  const content = fs.readFileSync(PRACTA_INDEX_PATH, "utf-8");
+  const detectedDeps: Set<string> = new Set();
+
+  // Check for direct imports
+  for (const [pkg, identifiers] of Object.entries(KNOWN_PACKAGES)) {
+    // Check for import from package
+    const importRegex = new RegExp(`from\\s+['"]${pkg.replace("/", "\\/")}['"]`, "g");
+    if (importRegex.test(content)) {
+      detectedDeps.add(pkg);
+      continue;
+    }
+    
+    // Check for usage of known identifiers
+    for (const id of identifiers) {
+      const usageRegex = new RegExp(`\\b${id}\\b`, "g");
+      if (usageRegex.test(content)) {
+        detectedDeps.add(pkg);
+        break;
+      }
+    }
+  }
+
+  return Array.from(detectedDeps).sort();
+}
 
 interface PractaMetadata {
   id: string;
@@ -62,7 +114,7 @@ function bumpPatchVersion(version: string): string {
   return `${newMajor}.${newMinor}.${newPatch}${suffix || ""}`;
 }
 
-export function bumpMetadataPatch(): { success: boolean; newVersion?: string; error?: string } {
+export function bumpMetadataPatch(): { success: boolean; newVersion?: string; detectedDeps?: string[]; error?: string } {
   try {
     if (!fs.existsSync(METADATA_PATH)) {
       return { success: false, error: "metadata.json not found" };
@@ -75,13 +127,23 @@ export function bumpMetadataPatch(): { success: boolean; newVersion?: string; er
     const newVersion = bumpPatchVersion(oldVersion);
     metadata.version = newVersion;
 
+    // Auto-detect dependencies from practa source code
+    const detectedDeps = detectDependencies();
+    if (detectedDeps.length > 0) {
+      metadata.dependencies = detectedDeps;
+      console.log(`[Version Bump] Auto-detected dependencies: ${detectedDeps.join(", ")}`);
+    } else {
+      // Clear dependencies if none detected
+      delete metadata.dependencies;
+    }
+
     const ordered = getOrderedMetadata(metadata);
     const jsonContent = JSON.stringify(ordered, null, 2) + "\n";
 
     fs.writeFileSync(METADATA_PATH, jsonContent);
 
     console.log(`[Version Bump] ${oldVersion} -> ${newVersion}`);
-    return { success: true, newVersion };
+    return { success: true, newVersion, detectedDeps };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { success: false, error: message };
