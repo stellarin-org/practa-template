@@ -159,12 +159,10 @@ export default function MyPractaScreen() {
   const practaSlug = (practaMetadataJson as { id?: string }).id || "my-practa";
   
   const { data: publishedInfo, isLoading: publishedLoading } = useQuery<PublishedPractaInfo | null>({
-    queryKey: ["stellarin-published", practaSlug],
+    queryKey: ["/api/practa/published-info", practaSlug],
     queryFn: async () => {
       try {
-        const response = await fetch(
-          `https://stellarin-practa-verification.replit.app/api/practa/${practaSlug}/info`
-        );
+        const response = await apiRequest("GET", `/api/practa/published-info/${practaSlug}`);
         if (!response.ok) {
           if (response.status === 404) return null;
           throw new Error("Failed to fetch published info");

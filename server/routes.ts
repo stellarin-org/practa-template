@@ -611,6 +611,26 @@ ${config.version}
     }
   });
 
+  app.get("/api/practa/published-info/:slug", async (req, res) => {
+    const { slug } = req.params;
+    try {
+      const response = await fetch(
+        `https://stellarin-practa-verification.replit.app/api/practa/${slug}/info`
+      );
+      if (!response.ok) {
+        if (response.status === 404) {
+          return res.status(404).json({ error: "Not found" });
+        }
+        return res.status(response.status).json({ error: "Failed to fetch" });
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching published info:", error);
+      res.status(500).json({ error: "Failed to fetch published info" });
+    }
+  });
+
   app.get("/api/template/sync-status", async (req, res) => {
     try {
       // Check if this is the master template by looking for the MASTER_TEMPLATE_KEY secret
