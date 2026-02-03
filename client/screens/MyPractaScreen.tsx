@@ -80,12 +80,6 @@ interface SyncStatus {
   isMasterTemplate?: boolean;
 }
 
-interface LastSubmitData {
-  timestamp: string | null;
-  practaId?: string;
-  version?: string;
-}
-
 interface PublishedPractaInfo {
   slug: string;
   version: string;
@@ -160,11 +154,6 @@ export default function MyPractaScreen() {
     queryKey: ["/api/template/sync-status"],
     staleTime: 1000 * 60 * 5,
     enabled: enableSyncCheck,
-  });
-
-  const { data: lastSubmit } = useQuery<LastSubmitData>({
-    queryKey: ["/api/practa/last-submit"],
-    staleTime: 1000 * 60,
   });
 
   const practaSlug = (practaMetadataJson as { id?: string }).id || "my-practa";
@@ -561,24 +550,6 @@ export default function MyPractaScreen() {
           </Card>
         ) : null}
 
-        {lastSubmit?.timestamp ? (
-          <Card style={styles.lastSubmitCard}>
-            <View style={styles.lastSubmitRow}>
-              <Feather name="upload-cloud" size={18} color={theme.textSecondary} />
-              <View style={styles.lastSubmitInfo}>
-                <ThemedText style={[styles.lastSubmitLabel, { color: theme.textSecondary }]}>
-                  Last submitted to Stellarin
-                </ThemedText>
-                <ThemedText style={styles.lastSubmitTime}>
-                  {formatRelativeTime(lastSubmit.timestamp)}
-                </ThemedText>
-                <ThemedText style={[styles.lastSubmitFullTime, { color: theme.textSecondary }]}>
-                  {formatFullDateTime(lastSubmit.timestamp)}
-                </ThemedText>
-              </View>
-            </View>
-          </Card>
-        ) : null}
       </ScrollView>
       <Animated.View style={[styles.transitionOverlay, transitionStyle]} />
     </ThemedView>
@@ -744,30 +715,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-  },
-  lastSubmitCard: {
-    padding: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  lastSubmitRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: Spacing.sm,
-  },
-  lastSubmitInfo: {
-    flex: 1,
-  },
-  lastSubmitLabel: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  lastSubmitTime: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  lastSubmitFullTime: {
-    fontSize: 12,
-    marginTop: 2,
   },
   syncBanner: {
     backgroundColor: "#FEF3C7",
