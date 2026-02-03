@@ -174,8 +174,8 @@ export default function MyPractaScreen() {
         return null;
       }
     },
-    staleTime: (query) => query.state.data ? 1000 * 60 * 5 : 0,
-    gcTime: (query) => query.state.data ? 1000 * 60 * 10 : 0,
+    staleTime: 0,
+    gcTime: 0,
     retry: false,
   });
 
