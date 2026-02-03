@@ -86,6 +86,22 @@ interface LastSubmitData {
   version?: string;
 }
 
+interface PublishedPractaInfo {
+  slug: string;
+  version: string;
+  buildId: string;
+  name: string;
+  description: string;
+  author: string;
+  category: string;
+  practaType: string;
+  type: string;
+  estimatedDuration: number;
+  dependencies?: string[];
+  publishedAt: string;
+  createdAt: string;
+}
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 function formatRelativeTime(dateString: string): string {
@@ -149,6 +165,28 @@ export default function MyPractaScreen() {
   const { data: lastSubmit } = useQuery<LastSubmitData>({
     queryKey: ["/api/practa/last-submit"],
     staleTime: 1000 * 60,
+  });
+
+  const practaSlug = (practaMetadataJson as { id?: string }).id || "my-practa";
+  
+  const { data: publishedInfo, isLoading: publishedLoading } = useQuery<PublishedPractaInfo | null>({
+    queryKey: ["stellarin-published", practaSlug],
+    queryFn: async () => {
+      try {
+        const response = await fetch(
+          `https://stellarin-practa-verification.replit.app/api/practa/${practaSlug}/info`
+        );
+        if (!response.ok) {
+          if (response.status === 404) return null;
+          throw new Error("Failed to fetch published info");
+        }
+        return response.json();
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   const updateTemplateMutation = useMutation({
@@ -357,6 +395,56 @@ export default function MyPractaScreen() {
             <Feather name="play" size={20} color="white" />
             <ThemedText style={styles.previewButtonText}>Preview Practa</ThemedText>
           </Pressable>
+
+          {publishedLoading ? (
+            <View style={styles.publishedInfoRow}>
+              <ActivityIndicator size="small" color={theme.textSecondary} />
+              <ThemedText style={[styles.publishedInfoText, { color: theme.textSecondary }]}>
+                Checking published status...
+              </ThemedText>
+            </View>
+          ) : publishedInfo ? (
+            <View style={styles.publishedInfoContainer}>
+              <View style={styles.publishedInfoRow}>
+                <Feather name="globe" size={16} color={theme.textSecondary} />
+                <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
+                  Last Published:
+                </ThemedText>
+                <ThemedText style={styles.publishedInfoValue}>
+                  {formatRelativeTime(publishedInfo.publishedAt)}
+                </ThemedText>
+              </View>
+              <View style={styles.publishedInfoRow}>
+                <Feather name="tag" size={16} color={theme.textSecondary} />
+                <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
+                  Published Version:
+                </ThemedText>
+                <ThemedText style={styles.publishedInfoValue}>
+                  {publishedInfo.version}
+                </ThemedText>
+                {metadata.version !== publishedInfo.version ? (
+                  <View style={[styles.versionBadge, { backgroundColor: "#F59E0B20" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: "#D97706" }]}>
+                      Local: {metadata.version}
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <View style={[styles.versionBadge, { backgroundColor: "#10B98120" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: "#059669" }]}>
+                      Up to date
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.publishedInfoRow}>
+              <Feather name="globe" size={16} color={theme.textSecondary} />
+              <ThemedText style={[styles.publishedInfoText, { color: theme.textSecondary }]}>
+                Not yet published to Stellarin
+              </ThemedText>
+            </View>
+          )}
         </Card>
 
         {typedMetadata.configSchema && Object.keys(typedMetadata.configSchema.fields || {}).length > 0 ? (
@@ -575,6 +663,39 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  publishedInfoContainer: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.08)",
+    gap: Spacing.sm,
+  },
+  publishedInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  publishedInfoLabel: {
+    fontSize: 13,
+  },
+  publishedInfoValue: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  publishedInfoText: {
+    fontSize: 13,
+  },
+  versionBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+    marginLeft: Spacing.xs,
+  },
+  versionBadgeText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
   validationCard: {
     padding: Spacing.md,
