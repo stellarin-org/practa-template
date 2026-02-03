@@ -511,8 +511,53 @@ function startGitVersionWatcher() {
 }
 
 /**
+ * Detects external packages from practa source code imports.
+ */
+function detectDependenciesFromSource(): string[] {
+  const projectRoot = process.cwd();
+  const indexPath = path.join(projectRoot, "client/my-practa/index.tsx");
+  
+  if (!fs.existsSync(indexPath)) {
+    return [];
+  }
+
+  try {
+    const content = fs.readFileSync(indexPath, "utf-8");
+    const detectedDeps: Set<string> = new Set();
+    const localPrefixes = ["./", "../", "@/", "@shared/"];
+    const excludedPackages = new Set(["react", "react-native", "react-dom"]);
+
+    const importRegex = /(?:import\s+(?:[\s\S]*?)\s+from\s+|import\s+)['"]([^'"]+)['"]/g;
+    let match;
+    
+    while ((match = importRegex.exec(content)) !== null) {
+      const pkg = match[1];
+      
+      if (localPrefixes.some(prefix => pkg.startsWith(prefix))) continue;
+      if (excludedPackages.has(pkg)) continue;
+      
+      let packageName: string;
+      if (pkg.startsWith("@")) {
+        const parts = pkg.split("/");
+        packageName = parts.slice(0, 2).join("/");
+      } else {
+        packageName = pkg.split("/")[0];
+      }
+      
+      detectedDeps.add(packageName);
+    }
+
+    return Array.from(detectedDeps).sort();
+  } catch (e) {
+    log("[Dependency Check] Error scanning source:", e);
+    return [];
+  }
+}
+
+/**
  * Check for missing dependencies on startup and auto-install them.
  * Combines template-level requirements with Practa-level dependencies.
+ * Also scans source code for imports to catch uncommitted changes.
  */
 function checkAndInstallDependencies(): void {
   const projectRoot = process.cwd();
@@ -534,8 +579,11 @@ function checkAndInstallDependencies(): void {
     log("[Dependency Check] Error reading Practa dependencies:", e);
   }
   
-  // Merge and deduplicate
-  const allRequiredPackages = [...new Set([...templatePackages, ...practaPackages])];
+  // Also scan source code for imports (catches uncommitted changes)
+  const sourcePackages = detectDependenciesFromSource();
+  
+  // Merge and deduplicate all sources
+  const allRequiredPackages = [...new Set([...templatePackages, ...practaPackages, ...sourcePackages])];
   
   if (allRequiredPackages.length === 0) {
     return;
