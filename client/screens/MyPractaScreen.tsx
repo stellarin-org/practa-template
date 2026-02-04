@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch, Image } from "react-native";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -19,7 +19,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
-import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
+import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource, getIconSource } from "@/lib/practa-assets";
 
 interface ConfigFieldBase {
   type: string;
@@ -332,7 +332,12 @@ export default function MyPractaScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Practa Starter</ThemedText>
+          <View style={styles.titleRow}>
+            {getIconSource() && (
+              <Image source={getIconSource()!} style={styles.headerIcon} />
+            )}
+            <ThemedText style={styles.title}>Practa Starter</ThemedText>
+          </View>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
             Build and test your Practa
           </ThemedText>
@@ -641,6 +646,16 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   title: {
     fontSize: 32,

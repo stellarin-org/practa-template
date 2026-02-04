@@ -21,6 +21,7 @@ type AssetSource = number | { uri: string };
 
 const assetRegistry: Record<string, Record<string, AssetSource>> = {
   "my-practa": {
+    icon: require("../my-practa/assets/icon.png"),
     wellnessBg: require("../my-practa/assets/wellness-bg.png"),
     content: require("../my-practa/assets/content.json"),
   },
@@ -62,6 +63,14 @@ export function getSplashVideoSource(practaId: string = "my-practa"): number | {
   const assets = assetRegistry[practaId];
   if (assets && "splashVideo" in assets) {
     return assets.splashVideo as number | { uri: string };
+  }
+  return null;
+}
+
+export function getIconSource(practaId: string = "my-practa"): ImageSourcePropType | null {
+  const assets = assetRegistry[practaId];
+  if (assets && "icon" in assets) {
+    return assets.icon as ImageSourcePropType;
   }
   return null;
 }
