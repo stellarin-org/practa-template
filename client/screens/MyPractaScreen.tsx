@@ -224,6 +224,58 @@ export default function MyPractaScreen() {
     }, [queryClient])
   );
 
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoUploadMessage, setLogoUploadMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          if (!blob) continue;
+
+          setLogoUploading(true);
+          setLogoUploadMessage(null);
+
+          try {
+            const arrayBuffer = await blob.arrayBuffer();
+            const response = await fetch("/api/practa/upload-logo", {
+              method: "POST",
+              headers: { "Content-Type": "image/png" },
+              body: arrayBuffer,
+            });
+
+            if (response.ok) {
+              setLogoUploadMessage("Logo uploaded successfully!");
+              queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
+              if (Platform.OS !== "web") {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+            } else {
+              const data = await response.json();
+              setLogoUploadMessage(data.error || "Failed to upload logo");
+            }
+          } catch (err) {
+            setLogoUploadMessage("Failed to upload logo");
+          } finally {
+            setLogoUploading(false);
+            setTimeout(() => setLogoUploadMessage(null), 3000);
+          }
+          break;
+        }
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [queryClient]);
+
   const metadata = savedMetadata || practaMetadataJson;
   const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
 
@@ -286,6 +338,27 @@ export default function MyPractaScreen() {
             Build and test your Practa
           </ThemedText>
         </View>
+
+        {(logoUploading || logoUploadMessage) && (
+          <View style={[styles.syncBanner, { backgroundColor: logoUploadMessage?.includes("success") ? "#10B98120" : "#3B82F620" }]}>
+            <View style={styles.syncBannerContent}>
+              {logoUploading ? (
+                <ActivityIndicator size="small" color="#3B82F6" />
+              ) : (
+                <Feather 
+                  name={logoUploadMessage?.includes("success") ? "check-circle" : "alert-circle"} 
+                  size={20} 
+                  color={logoUploadMessage?.includes("success") ? "#10B981" : "#EF4444"} 
+                />
+              )}
+              <View style={styles.syncBannerText}>
+                <ThemedText style={styles.syncBannerTitle}>
+                  {logoUploading ? "Uploading Logo..." : logoUploadMessage}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+        )}
 
         {syncStatus && !syncStatus.isInSync && (syncStatus.isMasterTemplate || syncStatus.hasNewerVersion) ? (
           <View style={[
