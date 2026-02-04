@@ -18,7 +18,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
 
 interface ConfigFieldBase {
@@ -245,7 +245,9 @@ export default function MyPractaScreen() {
 
           try {
             const arrayBuffer = await blob.arrayBuffer();
-            const response = await fetch("/api/practa/upload-icon", {
+            const baseUrl = getApiUrl();
+            const url = new URL("/api/practa/upload-icon", baseUrl);
+            const response = await fetch(url.href, {
               method: "POST",
               headers: { "Content-Type": "image/png" },
               body: arrayBuffer,
