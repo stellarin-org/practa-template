@@ -224,8 +224,8 @@ export default function MyPractaScreen() {
     }, [queryClient])
   );
 
-  const [logoUploading, setLogoUploading] = useState(false);
-  const [logoUploadMessage, setLogoUploadMessage] = useState<string | null>(null);
+  const [iconUploading, setIconUploading] = useState(false);
+  const [iconUploadMessage, setIconUploadMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -240,32 +240,29 @@ export default function MyPractaScreen() {
           const blob = item.getAsFile();
           if (!blob) continue;
 
-          setLogoUploading(true);
-          setLogoUploadMessage(null);
+          setIconUploading(true);
+          setIconUploadMessage(null);
 
           try {
             const arrayBuffer = await blob.arrayBuffer();
-            const response = await fetch("/api/practa/upload-logo", {
+            const response = await fetch("/api/practa/upload-icon", {
               method: "POST",
               headers: { "Content-Type": "image/png" },
               body: arrayBuffer,
             });
 
             if (response.ok) {
-              setLogoUploadMessage("Logo uploaded successfully!");
+              setIconUploadMessage("Icon uploaded successfully!");
               queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
-              if (Platform.OS !== "web") {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              }
             } else {
               const data = await response.json();
-              setLogoUploadMessage(data.error || "Failed to upload logo");
+              setIconUploadMessage(data.error || "Failed to upload icon");
             }
           } catch (err) {
-            setLogoUploadMessage("Failed to upload logo");
+            setIconUploadMessage("Failed to upload icon");
           } finally {
-            setLogoUploading(false);
-            setTimeout(() => setLogoUploadMessage(null), 3000);
+            setIconUploading(false);
+            setTimeout(() => setIconUploadMessage(null), 3000);
           }
           break;
         }
@@ -339,21 +336,21 @@ export default function MyPractaScreen() {
           </ThemedText>
         </View>
 
-        {(logoUploading || logoUploadMessage) && (
-          <View style={[styles.syncBanner, { backgroundColor: logoUploadMessage?.includes("success") ? "#10B98120" : "#3B82F620" }]}>
+        {(iconUploading || iconUploadMessage) && (
+          <View style={[styles.syncBanner, { backgroundColor: iconUploadMessage?.includes("success") ? "#10B98120" : "#3B82F620" }]}>
             <View style={styles.syncBannerContent}>
-              {logoUploading ? (
+              {iconUploading ? (
                 <ActivityIndicator size="small" color="#3B82F6" />
               ) : (
                 <Feather 
-                  name={logoUploadMessage?.includes("success") ? "check-circle" : "alert-circle"} 
+                  name={iconUploadMessage?.includes("success") ? "check-circle" : "alert-circle"} 
                   size={20} 
-                  color={logoUploadMessage?.includes("success") ? "#10B981" : "#EF4444"} 
+                  color={iconUploadMessage?.includes("success") ? "#10B981" : "#EF4444"} 
                 />
               )}
               <View style={styles.syncBannerText}>
                 <ThemedText style={styles.syncBannerTitle}>
-                  {logoUploading ? "Uploading Logo..." : logoUploadMessage}
+                  {iconUploading ? "Uploading Icon..." : iconUploadMessage}
                 </ThemedText>
               </View>
             </View>

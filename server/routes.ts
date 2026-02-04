@@ -631,7 +631,7 @@ ${config.version}
     }
   });
 
-  app.post("/api/practa/upload-logo", (req, res) => {
+  app.post("/api/practa/upload-icon", (req, res) => {
     try {
       const contentType = req.headers["content-type"] || "";
       if (!contentType.startsWith("image/")) {
@@ -649,8 +649,8 @@ ${config.version}
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      const logoPath = path.join(assetsDir, "logo.png");
-      fs.writeFileSync(logoPath, imageBuffer);
+      const iconPath = path.join(assetsDir, "icon.png");
+      fs.writeFileSync(iconPath, imageBuffer);
 
       const metadataPath = path.join(process.cwd(), "client/my-practa/metadata.json");
       if (fs.existsSync(metadataPath)) {
@@ -658,10 +658,9 @@ ${config.version}
         if (!metadata.assets) {
           metadata.assets = {};
         }
-        metadata.assets.logo = "logo.png";
+        metadata.assets.icon = "icon.png";
         
         const orderedAssets: Record<string, string> = {};
-        if (metadata.assets.logo) orderedAssets.logo = metadata.assets.logo;
         if (metadata.assets.icon) orderedAssets.icon = metadata.assets.icon;
         if (metadata.assets.splash) orderedAssets.splash = metadata.assets.splash;
         for (const [key, value] of Object.entries(metadata.assets)) {
@@ -672,7 +671,7 @@ ${config.version}
         fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + "\n");
       }
 
-      res.json({ success: true, path: "assets/logo.png" });
+      res.json({ success: true, path: "assets/icon.png" });
     } catch (error) {
       console.error("Error uploading logo:", error);
       res.status(500).json({ error: "Failed to upload logo" });
