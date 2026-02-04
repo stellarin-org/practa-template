@@ -631,20 +631,16 @@ ${config.version}
     }
   });
 
-  app.post("/api/practa/upload-logo", async (req, res) => {
+  app.post("/api/practa/upload-logo", (req, res) => {
     try {
       const contentType = req.headers["content-type"] || "";
       if (!contentType.startsWith("image/")) {
         return res.status(400).json({ error: "Invalid content type. Expected image." });
       }
 
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(chunk);
-      }
-      const imageBuffer = Buffer.concat(chunks);
+      const imageBuffer = req.body as Buffer;
 
-      if (imageBuffer.length === 0) {
+      if (!imageBuffer || imageBuffer.length === 0) {
         return res.status(400).json({ error: "Empty image data" });
       }
 

@@ -258,6 +258,13 @@ function setupCors(app: express.Application) {
 
 function setupBodyParsing(app: express.Application) {
   app.use(
+    express.raw({
+      type: "image/*",
+      limit: "50mb",
+    }),
+  );
+
+  app.use(
     express.json({
       limit: "50mb",
       verify: (req, _res, buf) => {
