@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch, Image } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch } from "react-native";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -18,8 +18,8 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
-import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource, getIconSource } from "@/lib/practa-assets";
+import { apiRequest } from "@/lib/query-client";
+import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
 
 interface ConfigFieldBase {
   type: string;
@@ -224,57 +224,6 @@ export default function MyPractaScreen() {
     }, [queryClient])
   );
 
-  const [iconUploading, setIconUploading] = useState(false);
-  const [iconUploadMessage, setIconUploadMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (Platform.OS !== "web") return;
-
-    const handlePaste = async (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (const item of Array.from(items)) {
-        if (item.type.startsWith("image/")) {
-          e.preventDefault();
-          const blob = item.getAsFile();
-          if (!blob) continue;
-
-          setIconUploading(true);
-          setIconUploadMessage(null);
-
-          try {
-            const arrayBuffer = await blob.arrayBuffer();
-            const baseUrl = getApiUrl();
-            const url = new URL("/api/practa/upload-icon", baseUrl);
-            const response = await fetch(url.href, {
-              method: "POST",
-              headers: { "Content-Type": "image/png" },
-              body: arrayBuffer,
-            });
-
-            if (response.ok) {
-              setIconUploadMessage("Icon uploaded successfully!");
-              queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
-            } else {
-              const data = await response.json();
-              setIconUploadMessage(data.error || "Failed to upload icon");
-            }
-          } catch (err) {
-            setIconUploadMessage("Failed to upload icon");
-          } finally {
-            setIconUploading(false);
-            setTimeout(() => setIconUploadMessage(null), 3000);
-          }
-          break;
-        }
-      }
-    };
-
-    document.addEventListener("paste", handlePaste);
-    return () => document.removeEventListener("paste", handlePaste);
-  }, [queryClient]);
-
   const metadata = savedMetadata || practaMetadataJson;
   const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
 
@@ -332,37 +281,11 @@ export default function MyPractaScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.titleRow}>
-            {getIconSource() && (
-              <Image source={getIconSource()!} style={styles.headerIcon} />
-            )}
-            <ThemedText style={styles.title}>Practa Starter</ThemedText>
-          </View>
+          <ThemedText style={styles.title}>Practa Starter</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
             Build and test your Practa
           </ThemedText>
         </View>
-
-        {(iconUploading || iconUploadMessage) && (
-          <View style={[styles.syncBanner, { backgroundColor: iconUploadMessage?.includes("success") ? "#10B98120" : "#3B82F620" }]}>
-            <View style={styles.syncBannerContent}>
-              {iconUploading ? (
-                <ActivityIndicator size="small" color="#3B82F6" />
-              ) : (
-                <Feather 
-                  name={iconUploadMessage?.includes("success") ? "check-circle" : "alert-circle"} 
-                  size={20} 
-                  color={iconUploadMessage?.includes("success") ? "#10B981" : "#EF4444"} 
-                />
-              )}
-              <View style={styles.syncBannerText}>
-                <ThemedText style={styles.syncBannerTitle}>
-                  {iconUploading ? "Uploading Icon..." : iconUploadMessage}
-                </ThemedText>
-              </View>
-            </View>
-          </View>
-        )}
 
         {syncStatus && !syncStatus.isInSync && (syncStatus.isMasterTemplate || syncStatus.hasNewerVersion) ? (
           <View style={[
@@ -646,16 +569,6 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
   },
   title: {
     fontSize: 32,

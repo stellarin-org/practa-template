@@ -66,11 +66,3 @@ export function getSplashVideoSource(practaId: string = "my-practa"): number | {
   }
   return null;
 }
-
-export function getIconSource(practaId: string = "my-practa"): ImageSourcePropType | null {
-  const assets = assetRegistry[practaId];
-  if (assets && "icon" in assets) {
-    return assets.icon as ImageSourcePropType;
-  }
-  return null;
-}

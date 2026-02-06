@@ -631,53 +631,6 @@ ${config.version}
     }
   });
 
-  app.post("/api/practa/upload-icon", (req, res) => {
-    try {
-      const contentType = req.headers["content-type"] || "";
-      if (!contentType.startsWith("image/")) {
-        return res.status(400).json({ error: "Invalid content type. Expected image." });
-      }
-
-      const imageBuffer = req.body as Buffer;
-
-      if (!imageBuffer || imageBuffer.length === 0) {
-        return res.status(400).json({ error: "Empty image data" });
-      }
-
-      const assetsDir = path.join(process.cwd(), "client/my-practa/assets");
-      if (!fs.existsSync(assetsDir)) {
-        fs.mkdirSync(assetsDir, { recursive: true });
-      }
-
-      const iconPath = path.join(assetsDir, "icon.png");
-      fs.writeFileSync(iconPath, imageBuffer);
-
-      const metadataPath = path.join(process.cwd(), "client/my-practa/metadata.json");
-      if (fs.existsSync(metadataPath)) {
-        const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-        if (!metadata.assets) {
-          metadata.assets = {};
-        }
-        metadata.assets.icon = "icon.png";
-        
-        const orderedAssets: Record<string, string> = {};
-        if (metadata.assets.icon) orderedAssets.icon = metadata.assets.icon;
-        if (metadata.assets.splash) orderedAssets.splash = metadata.assets.splash;
-        for (const [key, value] of Object.entries(metadata.assets)) {
-          if (!orderedAssets[key]) orderedAssets[key] = value as string;
-        }
-        metadata.assets = orderedAssets;
-        
-        fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + "\n");
-      }
-
-      res.json({ success: true, path: "assets/icon.png" });
-    } catch (error) {
-      console.error("Error uploading logo:", error);
-      res.status(500).json({ error: "Failed to upload logo" });
-    }
-  });
-
   app.get("/api/template/sync-status", async (req, res) => {
     try {
       // Check if this is the master template by looking for the MASTER_TEMPLATE_KEY secret

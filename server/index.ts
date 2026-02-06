@@ -197,14 +197,6 @@ export function getSplashVideoSource(practaId: string = "my-practa"): number | {
   }
   return null;
 }
-
-export function getIconSource(practaId: string = "my-practa"): ImageSourcePropType | null {
-  const assets = assetRegistry[practaId];
-  if (assets && "icon" in assets) {
-    return assets.icon as ImageSourcePropType;
-  }
-  return null;
-}
 `;
 
   try {
@@ -265,13 +257,6 @@ function setupCors(app: express.Application) {
 }
 
 function setupBodyParsing(app: express.Application) {
-  app.use(
-    express.raw({
-      type: "image/*",
-      limit: "50mb",
-    }),
-  );
-
   app.use(
     express.json({
       limit: "50mb",
