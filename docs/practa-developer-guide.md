@@ -192,6 +192,74 @@ Update `client/my-practa/metadata.json` with your Practa info:
 | `dependencies` | string[] | npm packages to auto-install |
 | `configSchema` | object | User-configurable settings schema |
 
+### Config Schema
+
+Define configurable options for your Practa by adding a `configSchema` object to your metadata.json. Each field goes under `fields` with a unique key. Your Practa receives its config at runtime via `context.config`.
+
+#### Field Types
+
+| Type | Properties | Description |
+|------|-----------|-------------|
+| `string` | `placeholder`, `default`, `minLength`, `maxLength` | Text input. When `maxLength` is set, the UI shows a character counter and enforces the limit. |
+| `number` | `default`, `min`, `max` | Numeric input, clamped to min/max range |
+| `boolean` | `default` | Toggle switch |
+| `select` | `default`, `options` | Dropdown. `options` is an array of `{ value, label }` pairs |
+
+All field types support: `label` (required), `description` (optional), `required` (optional, marks field as mandatory).
+
+Set `requiredConfig: true` at the top level if the Practa cannot run without configuration.
+
+#### Example
+
+```json
+{
+  "configSchema": {
+    "fields": {
+      "duration": {
+        "type": "number",
+        "label": "Minutes",
+        "default": 25,
+        "min": 5,
+        "max": 60
+      },
+      "title": {
+        "type": "string",
+        "label": "Session Title",
+        "maxLength": 50,
+        "placeholder": "My Session"
+      },
+      "soundEnabled": {
+        "type": "boolean",
+        "label": "Play sounds",
+        "default": true
+      },
+      "difficulty": {
+        "type": "select",
+        "label": "Difficulty",
+        "default": "medium",
+        "options": [
+          { "value": "easy", "label": "Easy" },
+          { "value": "medium", "label": "Medium" },
+          { "value": "hard", "label": "Hard" }
+        ]
+      }
+    },
+    "requiredConfig": false
+  }
+}
+```
+
+#### Accessing Config at Runtime
+
+```typescript
+export default function MyPracta({ context, onComplete }: PractaProps) {
+  const duration = context.config?.duration ?? 25;
+  const title = context.config?.title ?? "Untitled";
+  const soundEnabled = context.config?.soundEnabled ?? true;
+  // ...
+}
+```
+
 ### Dependencies
 
 If your Practa uses npm packages beyond the base template, list them in the `dependencies` array:
