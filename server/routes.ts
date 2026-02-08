@@ -8,7 +8,7 @@ import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
 import type { PractaFileMetadata } from "@shared/schema";
-import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPractaRegistry, findInRegistry, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type RegistryEntry, type PractaRegistry } from "./github-sync";
+import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPractaRegistry, findInRegistry, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type RegistryEntry, type PractaRegistry, type PublishedPractaInfo } from "./github-sync";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
@@ -562,15 +562,11 @@ ${config.version}
   app.get("/api/practa/published-info/:slug", async (req, res) => {
     const { slug } = req.params;
     try {
-      const registry = await fetchPractaRegistry();
-      if (!registry) {
-        return res.status(503).json({ error: "Practa registry not available" });
-      }
-      const entry = findInRegistry(registry, slug);
-      if (!entry) {
+      const info = await fetchPublishedInfo(slug);
+      if (!info) {
         return res.status(404).json({ error: "Not found" });
       }
-      res.json(entry);
+      res.json(info);
     } catch (error) {
       console.error("Error fetching published info:", error);
       res.status(500).json({ error: "Failed to fetch published info" });
@@ -593,39 +589,34 @@ ${config.version}
       
       const localVersion = (localMetadata?.version as string) || "0.0.0";
       
-      const registry = await fetchPractaRegistry();
-      const registryAvailable = registry !== null;
-      const registryEntry = registry ? findInRegistry(registry, slug) : null;
+      const [publishedInfo, repoMetadata] = await Promise.all([
+        fetchPublishedInfo(slug),
+        fetchRepoPractaMetadata(slug),
+      ]);
       
-      const repoMetadata = await fetchRepoPractaMetadata(slug);
       const repoVersion = repoMetadata ? (repoMetadata.version as string) || null : null;
       
-      const publishedVersion = registryEntry?.version || null;
-      const isPublished = !!registryEntry;
+      const publishedVersion = publishedInfo?.version || null;
+      const isPublished = !!publishedInfo;
       
       const hasNewerPublished = publishedVersion ? compareVersions(publishedVersion, localVersion) > 0 : false;
       const hasNewerInRepo = repoVersion ? compareVersions(repoVersion, localVersion) > 0 : false;
       const localIsAhead = publishedVersion ? compareVersions(localVersion, publishedVersion) > 0 : false;
-
-      if (!registryAvailable) {
-        console.warn("Practa sync: Could not fetch registry from GitHub (possible rate limit or network issue)");
-      }
       
       res.json({
         hasLocalPracta: true,
         slug,
         localVersion,
         isPublished,
-        registryAvailable,
         publishedVersion,
-        publishedEntry: registryEntry,
+        publishedAt: publishedInfo?.publishedAt || null,
+        publishedEntry: publishedInfo,
         hasNewerPublished,
         localIsAhead,
         repoVersion,
         hasNewerInRepo,
         repoAvailable: !!repoMetadata,
         repoUrl: `https://github.com/stellarin-org/stellarin-practa/tree/main/practas/${slug}`,
-        registryUrl: "https://github.com/stellarin-org/stellarin-practa/blob/main/_registry.json",
       });
     } catch (error) {
       console.error("Practa sync status error:", error);

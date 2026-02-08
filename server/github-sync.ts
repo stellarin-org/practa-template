@@ -101,9 +101,34 @@ export interface RegistryEntry {
   dependencies?: string[];
 }
 
+export interface PublishedPractaInfo extends RegistryEntry {
+  publishedAt: string;
+  createdAt: string;
+}
+
 export interface PractaRegistry {
   registryVersion: string;
   practas: RegistryEntry[];
+}
+
+const VERIFICATION_SERVICE_URL = "https://stellarin-practa-verification.replit.app";
+
+export async function fetchPublishedInfo(slug: string): Promise<PublishedPractaInfo | null> {
+  try {
+    const response = await fetch(`${VERIFICATION_SERVICE_URL}/api/practa/${slug}/info`);
+    if (!response.ok) {
+      if (response.status !== 404) {
+        console.warn(`[Verification] Failed to fetch published info for ${slug} (${response.status})`);
+      }
+      return null;
+    }
+    const data = await response.json();
+    if (data.error) return null;
+    return data as PublishedPractaInfo;
+  } catch (err) {
+    console.warn(`[Verification] Network error fetching published info for ${slug}:`, err);
+    return null;
+  }
 }
 
 export async function fetchPractaRegistry(): Promise<PractaRegistry | null> {

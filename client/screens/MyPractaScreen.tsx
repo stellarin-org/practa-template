@@ -57,12 +57,11 @@ interface PractaSyncStatus {
   } | null;
   hasNewerPublished: boolean;
   localIsAhead: boolean;
-  registryAvailable: boolean;
+  publishedAt: string | null;
   repoVersion: string | null;
   hasNewerInRepo: boolean;
   repoAvailable: boolean;
   repoUrl: string;
-  registryUrl: string;
   error?: string;
 }
 
@@ -395,6 +394,17 @@ export default function MyPractaScreen() {
             </View>
           ) : practaSyncStatus?.isPublished ? (
             <View style={styles.publishedInfoContainer}>
+              {practaSyncStatus.publishedAt ? (
+                <View style={styles.publishedInfoRow}>
+                  <Feather name="globe" size={16} color={theme.textSecondary} />
+                  <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
+                    Last Published:
+                  </ThemedText>
+                  <ThemedText style={styles.publishedInfoValue}>
+                    {formatRelativeTime(practaSyncStatus.publishedAt)}
+                  </ThemedText>
+                </View>
+              ) : null}
               <View style={styles.publishedInfoRow}>
                 <Feather name="tag" size={16} color={theme.textSecondary} />
                 <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
@@ -441,13 +451,6 @@ export default function MyPractaScreen() {
                   ) : null}
                 </View>
               ) : null}
-            </View>
-          ) : practaSyncStatus && !practaSyncStatus.registryAvailable ? (
-            <View style={styles.publishedInfoRow}>
-              <Feather name="alert-circle" size={16} color="#D97706" />
-              <ThemedText style={[styles.publishedInfoText, { color: "#D97706" }]}>
-                Unable to check published status (registry unavailable)
-              </ThemedText>
             </View>
           ) : (
             <View style={styles.publishedInfoRow}>
