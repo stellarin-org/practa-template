@@ -78,6 +78,9 @@ server/                   # Express backend for preview
 |------|---------|
 | `client/my-practa/index.tsx` | Your Practa implementation |
 | `client/my-practa/metadata.json` | Your Practa metadata |
+| `shared/metadata-schema.ts` | **Single source of truth** for metadata field definitions & validation |
+| `shared/schema.ts` | Zod schema & TypeScript types for metadata |
+| `client/lib/practa-validator.ts` | Client-side validator (consumes shared schema) |
 | `client/types/flow.ts` | TypeScript types |
 | `docs/practa-developer-guide.md` | Full requirements & examples |
 | `docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
@@ -87,6 +90,18 @@ server/                   # Express backend for preview
 
 - `@/` → `./client/`
 - `@shared/` → `./shared/`
+
+## Metadata Schema Architecture
+
+Metadata field definitions live in `shared/metadata-schema.ts` — the single source of truth for what fields exist, whether they're required, their types, labels, and validation constraints. Both the client-side validator (`client/lib/practa-validator.ts`) and server-side validator (`server/routes.ts`) consume this shared schema.
+
+**To add a new metadata field:**
+1. Add a `FieldDefinition` entry to `METADATA_FIELDS` in `shared/metadata-schema.ts`
+2. For nested requirements (like `configSchema.fields.aiEnabled`), add to `NESTED_FIELD_REQUIREMENTS`
+3. Update `shared/schema.ts` (Zod types) to match
+4. Both validators automatically pick up the new field — no code changes needed in either
+
+**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
 
 ## Automatic Version Bumping
 
