@@ -4,6 +4,10 @@
  * Validates that a Practa component meets all requirements for submission.
  * Run-time validation that can be displayed in the PreviewScreen.
  * 
+ * Field definitions live in shared/metadata-schema.ts (single source of truth).
+ * This file converts schema results into the ValidationResult format used by
+ * the UI, and adds component / source-code checks that are client-only.
+ * 
  * Note: Asset validation (file sizes, formats) is done server-side via
  * the /api/practa/validate-assets endpoint since client-side code cannot
  * access the file system.
@@ -14,6 +18,8 @@
  * - Supported formats: Images (png, jpg, jpeg, gif, webp, svg), 
  *   Audio (mp3, wav, m4a, ogg), Video (mp4, webm), Data (json, txt)
  */
+
+import { validateMetadataFields } from "@shared/metadata-schema";
 
 export interface ValidationResult {
   passed: boolean;
@@ -30,17 +36,11 @@ export interface ValidationReport {
 }
 
 /**
- * Validates metadata object against required schema
- * 
- * Required fields: id, name, version, description, author, requiresAI, configSchema.fields.aiEnabled
- * Optional fields: estimatedDuration, category, tags
- * 
- * The `id` field is the unique Practa identifier (lowercase kebab-case).
+ * Validates metadata object against the shared schema
  */
 export function validateMetadata(metadata: unknown): ValidationResult[] {
   const results: ValidationResult[] = [];
 
-  // Check if metadata exists
   if (!metadata || typeof metadata !== "object") {
     results.push({
       passed: false,
@@ -51,174 +51,18 @@ export function validateMetadata(metadata: unknown): ValidationResult[] {
   }
 
   const meta = metadata as Record<string, unknown>;
+  const schemaResult = validateMetadataFields(meta);
 
-  // Validate id field first (required, kebab-case)
-  const idPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-  if (!meta.id) {
-    results.push({
-      passed: false,
-      message: "Missing required field: Practa ID (id)",
-      severity: "error",
-    });
-  } else if (typeof meta.id !== "string") {
-    results.push({
-      passed: false,
-      message: "Practa ID must be a string",
-      severity: "error",
-    });
-  } else if (meta.id.length < 3 || meta.id.length > 50) {
-    results.push({
-      passed: false,
-      message: "Practa ID must be 3-50 characters",
-      severity: "error",
-    });
-  } else if (!idPattern.test(meta.id)) {
-    results.push({
-      passed: false,
-      message: "Practa ID must be lowercase kebab-case (e.g., 'my-practa')",
-      severity: "error",
-    });
-  } else {
-    results.push({
-      passed: true,
-      message: "Practa ID is valid",
-      severity: "success",
-    });
+  for (const err of schemaResult.errors) {
+    results.push({ passed: false, message: err.message, severity: "error" });
   }
 
-  // Required fields
-  const requiredFields = [
-    { field: "name", label: "Display name" },
-    { field: "description", label: "Description" },
-    { field: "author", label: "Author name" },
-    { field: "version", label: "Version" },
-  ];
-
-  for (const { field, label } of requiredFields) {
-    if (!meta[field]) {
-      results.push({
-        passed: false,
-        message: `Missing required field: ${label} (${field})`,
-        severity: "error",
-      });
-    } else if (typeof meta[field] !== "string") {
-      results.push({
-        passed: false,
-        message: `${label} must be a string`,
-        severity: "error",
-      });
-    } else if ((meta[field] as string).trim() === "") {
-      results.push({
-        passed: false,
-        message: `${label} cannot be empty`,
-        severity: "error",
-      });
-    } else {
-      results.push({
-        passed: true,
-        message: `${label} is valid`,
-        severity: "success",
-      });
-    }
+  for (const warn of schemaResult.warnings) {
+    results.push({ passed: true, message: warn.message, severity: "warning" });
   }
 
-  // Validate version format (semver-like)
-  if (typeof meta.version === "string" && meta.version.trim() !== "") {
-    const versionPattern = /^\d+\.\d+\.\d+$/;
-    if (!versionPattern.test(meta.version)) {
-      results.push({
-        passed: false,
-        message: "Version must follow format X.Y.Z (e.g., '1.0.0')",
-        severity: "error",
-      });
-    }
-  }
-
-  // Validate requiresAI (required, must be boolean)
-  if (meta.requiresAI === undefined || meta.requiresAI === null) {
-    results.push({
-      passed: false,
-      message: "Missing required field: requiresAI (must be true or false)",
-      severity: "error",
-    });
-  } else if (typeof meta.requiresAI !== "boolean") {
-    results.push({
-      passed: false,
-      message: "requiresAI must be a boolean (true or false)",
-      severity: "error",
-    });
-  } else {
-    results.push({
-      passed: true,
-      message: "requiresAI is valid",
-      severity: "success",
-    });
-  }
-
-  // Validate configSchema.fields.aiEnabled (required)
-  const configSchema = meta.configSchema as Record<string, unknown> | undefined;
-  const fields = configSchema?.fields as Record<string, unknown> | undefined;
-  const aiEnabled = fields?.aiEnabled as Record<string, unknown> | undefined;
-
-  if (!configSchema || !fields || !aiEnabled) {
-    results.push({
-      passed: false,
-      message: "Missing required field: configSchema.fields.aiEnabled",
-      severity: "error",
-    });
-  } else if (aiEnabled.type !== "boolean") {
-    results.push({
-      passed: false,
-      message: "configSchema.fields.aiEnabled must have type \"boolean\"",
-      severity: "error",
-    });
-  } else {
-    results.push({
-      passed: true,
-      message: "configSchema.fields.aiEnabled is valid",
-      severity: "success",
-    });
-  }
-
-  // Optional field info
-  if (!meta.estimatedDuration) {
-    results.push({
-      passed: true,
-      message: "Consider adding estimatedDuration (in seconds)",
-      severity: "warning",
-    });
-  } else {
-    results.push({
-      passed: true,
-      message: "Estimated duration provided",
-      severity: "success",
-    });
-  }
-
-  // Validate optional category field
-  if (meta.category && typeof meta.category !== "string") {
-    results.push({
-      passed: false,
-      message: "category must be a string",
-      severity: "error",
-    });
-  }
-
-  // Validate optional tags field
-  if (meta.tags) {
-    if (!Array.isArray(meta.tags)) {
-      results.push({
-        passed: false,
-        message: "tags must be an array of strings",
-        severity: "error",
-      });
-    } else if (!meta.tags.every((t: unknown) => typeof t === "string")) {
-      results.push({
-        passed: false,
-        message: "All tags must be strings",
-        severity: "error",
-      });
-    }
+  for (const suc of schemaResult.successes) {
+    results.push({ passed: true, message: `${suc.label} is valid`, severity: "success" });
   }
 
   return results;
@@ -254,7 +98,6 @@ export function validateComponent(component: unknown): ValidationResult[] {
     severity: "success",
   });
 
-  // Check that component accepts props (function.length >= 1)
   const fn = component as Function;
   if (fn.length === 0) {
     results.push({
@@ -280,7 +123,6 @@ export function validateComponent(component: unknown): ValidationResult[] {
 export function validateSourceCode(source: string): ValidationResult[] {
   const results: ValidationResult[] = [];
 
-  // Check for onComplete usage
   if (!source.includes("onComplete")) {
     results.push({
       passed: false,
@@ -295,7 +137,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for context prop usage
   if (!source.includes("context")) {
     results.push({
       passed: true,
@@ -310,7 +151,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for useTheme usage
   if (!source.includes("useTheme")) {
     results.push({
       passed: true,
@@ -325,7 +165,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for haptics usage
   if (!source.includes("Haptics")) {
     results.push({
       passed: true,
@@ -340,7 +179,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for skip support
   if (!source.includes("onSkip")) {
     results.push({
       passed: true,
@@ -355,7 +193,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for safe area usage
   if (!source.includes("useSafeAreaInsets") && !source.includes("SafeAreaView")) {
     results.push({
       passed: true,
@@ -370,8 +207,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  // Check for direct require() usage in component code
-  // This pattern catches: require("./assets/...) or require('./assets/...)
   const requirePattern = /require\s*\(\s*["']\.\/assets\//;
   if (requirePattern.test(source)) {
     results.push({
