@@ -5,6 +5,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -67,6 +68,7 @@ export default function PreviewScreen() {
   const queryClient = useQueryClient();
   const [showValidation, setShowValidation] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
+  const [copiedValidation, setCopiedValidation] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setEnableSyncCheck(true), 500);
@@ -125,6 +127,18 @@ export default function PreviewScreen() {
   const handleSubmit = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.navigate("Submit");
+  };
+
+  const handleCopyValidationForAI = async () => {
+    const errors = validationReport.errors.map(e => `- ${e.message}`).join("\n");
+    const warnings = validationReport.warnings.map(w => `- ${w.message}`).join("\n");
+    let message = `Fix the following validation issues in my Practa (client/my-practa/):\n\n`;
+    if (errors) message += `Errors:\n${errors}\n\n`;
+    if (warnings) message += `Warnings:\n${warnings}\n`;
+    await Clipboard.setStringAsync(message.trim());
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedValidation(true);
+    setTimeout(() => setCopiedValidation(false), 2000);
   };
 
   return (
@@ -295,6 +309,17 @@ export default function PreviewScreen() {
               {validationReport.successes.map((result, i) => (
                 <ValidationItem key={`success-${i}`} result={result} />
               ))}
+              {validationReport.errors.length > 0 || validationReport.warnings.length > 0 ? (
+                <Pressable
+                  onPress={handleCopyValidationForAI}
+                  style={[styles.copyForAIButton, { backgroundColor: theme.primary + "15", borderColor: theme.primary + "30" }]}
+                >
+                  <Feather name={copiedValidation ? "check" : "copy"} size={14} color={theme.primary} />
+                  <ThemedText style={[styles.copyForAIText, { color: theme.primary }]}>
+                    {copiedValidation ? "Copied" : "Copy for AI"}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
         </Card>
@@ -488,6 +513,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  copyForAIButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  copyForAIText: {
+    fontSize: 13,
+    fontWeight: "500",
   },
   instructions: {
     marginTop: Spacing.md,
