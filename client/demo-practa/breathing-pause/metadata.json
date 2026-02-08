@@ -12,5 +12,35 @@
     "chime": "chime.mp3",
     "config": "config.json",
     "splash": "splash.png"
+  },
+  "configSchema": {
+    "fields": {
+      "breathCycles": {
+        "type": "number",
+        "label": "Breath Cycles",
+        "description": "Number of breathing cycles per session",
+        "default": 5,
+        "min": 1,
+        "max": 20
+      },
+      "playChime": {
+        "type": "boolean",
+        "label": "Play Chime",
+        "description": "Play a chime at the start and end",
+        "default": true
+      },
+      "breathPattern": {
+        "type": "select",
+        "label": "Breathing Pattern",
+        "description": "Choose a breathing rhythm",
+        "default": "4-4-4",
+        "options": [
+          { "value": "4-4-4", "label": "Box Breathing (4-4-4-4)" },
+          { "value": "4-7-8", "label": "Relaxing (4-7-8)" },
+          { "value": "5-5", "label": "Simple (5-5)" }
+        ]
+      }
+    },
+    "requiredConfig": false
   }
 }

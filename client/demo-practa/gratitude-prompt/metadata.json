@@ -9,5 +9,32 @@
   "tags": ["gratitude", "journaling", "reflection", "mindfulness"],
   "assets": {
     "prompts": "prompts.json"
+  },
+  "configSchema": {
+    "fields": {
+      "promptCount": {
+        "type": "number",
+        "label": "Number of Prompts",
+        "description": "How many gratitude prompts to show",
+        "default": 3,
+        "min": 1,
+        "max": 10
+      },
+      "responseLabel": {
+        "type": "string",
+        "label": "Response Label",
+        "description": "Custom label above the text input",
+        "placeholder": "e.g., I'm grateful for...",
+        "default": "I'm grateful for...",
+        "maxLength": 60
+      },
+      "showInspiration": {
+        "type": "boolean",
+        "label": "Show Inspiration Quote",
+        "description": "Display an inspiring quote before prompts",
+        "default": true
+      }
+    },
+    "requiredConfig": false
   }
 }
