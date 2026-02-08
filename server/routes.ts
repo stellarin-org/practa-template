@@ -1041,6 +1041,9 @@ ${config.version}
       }
       
       const syncFilePath = path.resolve(projectRoot, ".template-sync");
+      const previousSha = fs.existsSync(syncFilePath) 
+        ? fs.readFileSync(syncFilePath, "utf-8").trim() 
+        : null;
       fs.writeFileSync(syncFilePath, latestSha);
       
       // Delete deprecated files that were removed from the template
@@ -1103,12 +1106,16 @@ ${config.version}
       const response: {
         success: boolean;
         updatedTo: string;
+        previousSha: string | null;
+        repoName: string;
         message: string;
         missingPackages?: string[];
         installCommand?: string;
       } = {
         success: true,
         updatedTo: latestSha,
+        previousSha: previousSha !== latestSha ? previousSha : null,
+        repoName: TEMPLATE_REPO,
         message: missingPackages.length > 0
           ? `Template updated. Install missing packages: ${missingPackages.join(", ")}`
           : "Template updated successfully. Restart the app to see changes."

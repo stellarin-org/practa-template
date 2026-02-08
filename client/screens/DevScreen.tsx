@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, ActivityIndicator, Modal, Platform } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -96,12 +97,16 @@ function AlertModal({
   message,
   onClose,
   buttonText = "OK",
+  secondaryButtonText,
+  onSecondaryPress,
 }: {
   visible: boolean;
   title: string;
   message: string;
   onClose: () => void;
   buttonText?: string;
+  secondaryButtonText?: string;
+  onSecondaryPress?: () => void;
 }) {
   const { theme } = useTheme();
 
@@ -113,6 +118,17 @@ function AlertModal({
           <ThemedText style={[styles.modalMessage, { color: theme.textSecondary }]}>
             {message}
           </ThemedText>
+          {secondaryButtonText && onSecondaryPress ? (
+            <View style={{ gap: Spacing.sm, marginBottom: Spacing.xs }}>
+              <Pressable
+                onPress={onSecondaryPress}
+                style={[styles.modalButton, { backgroundColor: theme.backgroundSecondary, borderWidth: 1, borderColor: theme.border }]}
+              >
+                <Feather name="copy" size={14} color={theme.textSecondary} style={{ marginRight: Spacing.xs }} />
+                <ThemedText style={[styles.modalButtonText, { color: theme.text }]}>{secondaryButtonText}</ThemedText>
+              </Pressable>
+            </View>
+          ) : null}
           <View style={styles.modalButtons}>
             <Pressable
               onPress={onClose}
@@ -139,7 +155,7 @@ export default function DevScreen() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showAppSyncModal, setShowAppSyncModal] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
-  const [alertModal, setAlertModal] = useState<{ visible: boolean; title: string; message: string; onClose?: () => void; buttonText?: string }>({
+  const [alertModal, setAlertModal] = useState<{ visible: boolean; title: string; message: string; onClose?: () => void; buttonText?: string; secondaryButtonText?: string; onSecondaryPress?: () => void }>({
     visible: false,
     title: "",
     message: "",
@@ -162,8 +178,8 @@ export default function DevScreen() {
     enabled: enableSyncCheck && syncStatus?.isMasterTemplate,
   });
 
-  const showAlert = (title: string, message: string, options?: { onClose?: () => void; buttonText?: string }) => {
-    setAlertModal({ visible: true, title, message, onClose: options?.onClose, buttonText: options?.buttonText });
+  const showAlert = (title: string, message: string, options?: { onClose?: () => void; buttonText?: string; secondaryButtonText?: string; onSecondaryPress?: () => void }) => {
+    setAlertModal({ visible: true, title, message, onClose: options?.onClose, buttonText: options?.buttonText, secondaryButtonText: options?.secondaryButtonText, onSecondaryPress: options?.onSecondaryPress });
   };
 
   const updateTemplateMutation = useMutation({
@@ -176,9 +192,14 @@ export default function DevScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       queryClient.invalidateQueries();
+
+      const reviewPrompt = data.previousSha
+        ? `The Practa template just updated from commit ${data.previousSha} to ${data.updatedTo} in the ${data.repoName} repo. Can you review the changes between these commits, fix any breaking changes in my Practa (client/my-practa/), and suggest any new features I might want to use.`
+        : null;
+
       showAlert(
         "Template Updated",
-        `Successfully updated to the latest template (${data.filesUpdated || 0} files). Tap to reload the app.`,
+        `Successfully updated to the latest template. Tap to reload the app.`,
         {
           buttonText: "Reload App",
           onClose: async () => {
@@ -188,6 +209,15 @@ export default function DevScreen() {
               await reloadAppAsync();
             }
           },
+          secondaryButtonText: reviewPrompt ? "Copy Review Prompt" : undefined,
+          onSecondaryPress: reviewPrompt
+            ? async () => {
+                await Clipboard.setStringAsync(reviewPrompt);
+                if (Platform.OS !== "web") {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }
+              }
+            : undefined,
         }
       );
     },
@@ -619,6 +649,8 @@ export default function DevScreen() {
         title={alertModal.title}
         message={alertModal.message}
         buttonText={alertModal.buttonText}
+        secondaryButtonText={alertModal.secondaryButtonText}
+        onSecondaryPress={alertModal.onSecondaryPress}
         onClose={() => {
           setAlertModal({ ...alertModal, visible: false });
           if (alertModal.onClose) {
