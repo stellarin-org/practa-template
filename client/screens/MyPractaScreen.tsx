@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch, Alert } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -130,23 +131,17 @@ export default function MyPractaScreen() {
     enabled: enableSyncCheck,
   });
 
-  const updateTemplateMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/template/update");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/template/sync-status"] });
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    },
-    onError: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    },
-  });
+  const [copiedUpdateInstructions, setCopiedUpdateInstructions] = useState(false);
+
+  const copyUpdateInstructions = useCallback(async () => {
+    const message = `My Practa template is out of date (${syncStatus?.localTemplateVersion || "?"} → ${syncStatus?.latestTemplateVersion || "?"}). Please update it by following the instructions in .agents/skills/update-practa-template/SKILL.md — then run the post-update review from .agents/skills/post-template-update/SKILL.md using the SHA values returned by the update.`;
+    await Clipboard.setStringAsync(message);
+    setCopiedUpdateInstructions(true);
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setTimeout(() => setCopiedUpdateInstructions(false), 3000);
+  }, [syncStatus]);
 
   const syncPractaMutation = useMutation({
     mutationFn: async () => {
@@ -282,31 +277,27 @@ export default function MyPractaScreen() {
                 ]}>
                   {syncStatus.isMasterTemplate
                     ? "Push your changes to GitHub to publish the template."
-                    : "A new version of the Practa template is available."}
+                    : "Your template is out of date. Copy the instructions below and paste them to your AI agent to run the update."}
                 </ThemedText>
               </View>
             </View>
             {syncStatus.isMasterTemplate ? null : (
               <Pressable
-                onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  }
-                  updateTemplateMutation.mutate();
-                }}
-                disabled={updateTemplateMutation.isPending}
+                onPress={copyUpdateInstructions}
                 style={[
                   styles.syncButton,
-                  updateTemplateMutation.isPending && styles.syncButtonDisabled,
+                  copiedUpdateInstructions && styles.syncButtonCopied,
                 ]}
               >
-                {updateTemplateMutation.isPending ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <ThemedText style={styles.syncButtonText}>
-                    Update Template
-                  </ThemedText>
-                )}
+                <Feather 
+                  name={copiedUpdateInstructions ? "check" : "copy"} 
+                  size={14} 
+                  color="white" 
+                  style={{ marginRight: 6 }}
+                />
+                <ThemedText style={styles.syncButtonText}>
+                  {copiedUpdateInstructions ? "Copied" : "Copy Instructions for AI"}
+                </ThemedText>
               </Pressable>
             )}
           </View>
@@ -773,6 +764,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  syncButtonCopied: {
+    backgroundColor: "#059669",
   },
   syncButtonDisabled: {
     opacity: 0.7,
