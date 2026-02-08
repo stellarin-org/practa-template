@@ -30,15 +30,7 @@ interface PractaMetadata {
   description: string;
   author: string;
   version: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-  assets?: Record<string, string>;
-  configSchema?: {
-    fields: Record<string, unknown>;
-    requiredConfig?: boolean;
-  };
-  dependencies?: string[];
+  [key: string]: unknown;
 }
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
@@ -111,24 +103,13 @@ function readConfig(): PractaMetadata | null {
   return null;
 }
 
-function writeConfig(metadata: PractaMetadata): boolean {
-  // Order fields consistently: id, name, version, description, author, estimatedDuration, category, tags, assets, dependencies, configSchema
-  const orderedMetadata = {
-    id: metadata.id,
-    name: metadata.name,
-    version: metadata.version,
-    description: metadata.description,
-    author: metadata.author,
-    ...(metadata.estimatedDuration !== undefined && { estimatedDuration: metadata.estimatedDuration }),
-    ...(metadata.category && { category: metadata.category }),
-    ...(metadata.tags && metadata.tags.length > 0 && { tags: metadata.tags }),
-    ...(metadata.assets && Object.keys(metadata.assets).length > 0 && { assets: metadata.assets }),
-    ...(metadata.dependencies && metadata.dependencies.length > 0 && { dependencies: metadata.dependencies }),
-    ...(metadata.configSchema && { configSchema: metadata.configSchema }),
-  };
-  
+function writeConfig(updates: Partial<PractaMetadata>): boolean {
   try {
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(orderedMetadata, null, 2) + "\n");
+    const existing = fs.existsSync(METADATA_PATH)
+      ? JSON.parse(fs.readFileSync(METADATA_PATH, "utf-8"))
+      : {};
+    const merged = { ...existing, ...updates };
+    fs.writeFileSync(METADATA_PATH, JSON.stringify(merged, null, 2) + "\n");
     return true;
   } catch (error) {
     console.error("Error writing metadata.json:", error);
@@ -308,19 +289,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
     
-    const metadata: PractaMetadata = {
-      id: req.body.id,
-      name: req.body.name,
-      description: req.body.description,
-      author: req.body.author,
-      version: req.body.version,
-      estimatedDuration: req.body.estimatedDuration,
-      category: req.body.category,
-      tags: req.body.tags,
-    };
-    
-    if (writeConfig(metadata)) {
-      res.json(metadata);
+    if (writeConfig(req.body)) {
+      const saved = readConfig();
+      res.json(saved || req.body);
     } else {
       res.status(500).json({ error: "Failed to save configuration" });
     }
@@ -347,12 +318,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       author: config.author,
       type: "widget",
       category: config.category || "wellbeing",
-      tags: config.tags || ["practa", "wellbeing"],
+      tags: (config.tags as string[]) || ["practa", "wellbeing"],
       estimatedDuration: config.estimatedDuration,
       requiredPermissions: [],
-      assets: config.assets || {},
-      ...(config.dependencies && config.dependencies.length > 0 && { dependencies: config.dependencies }),
-      ...(config.configSchema && { configSchema: config.configSchema }),
+      assets: (config.assets as Record<string, string>) || {},
+      ...(Array.isArray(config.dependencies) && config.dependencies.length > 0 ? { dependencies: config.dependencies } : {}),
+      ...(config.configSchema ? { configSchema: config.configSchema } : {}),
     } : null;
 
     const readme = config ? `# ${config.name}
@@ -478,12 +449,12 @@ ${config.version}
         author: config.author,
         type: "widget",
         category: config.category || "wellbeing",
-        tags: config.tags || ["practa", "wellbeing"],
+        tags: (config.tags as string[]) || ["practa", "wellbeing"],
         estimatedDuration: config.estimatedDuration,
         requiredPermissions: [],
-        assets: config.assets || {},
-        ...(config.dependencies && config.dependencies.length > 0 && { dependencies: config.dependencies }),
-        ...(config.configSchema && { configSchema: config.configSchema }),
+        assets: (config.assets as Record<string, string>) || {},
+        ...(Array.isArray(config.dependencies) && config.dependencies.length > 0 ? { dependencies: config.dependencies } : {}),
+        ...(config.configSchema ? { configSchema: config.configSchema } : {}),
       };
 
       const readme = `# ${config.name}
