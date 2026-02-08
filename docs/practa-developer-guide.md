@@ -174,13 +174,14 @@ Update `client/my-practa/metadata.json` with your Practa info:
 
 ### Required Fields
 
-| Field | Type | Example |
-|-------|------|---------|
-| `type` | string | `"gratitude-journal"` |
-| `name` | string | `"Gratitude Journal"` |
-| `description` | string | `"Write three things you're grateful for"` |
-| `author` | string | `"Your Name"` |
-| `version` | string | `"1.0.0"` |
+| Field | Type | Example | Description |
+|-------|------|---------|-------------|
+| `type` | string | `"gratitude-journal"` | Unique identifier |
+| `name` | string | `"Gratitude Journal"` | Display name |
+| `description` | string | `"Write three things you're grateful for"` | Short summary |
+| `author` | string | `"Your Name"` | Creator name |
+| `version` | string | `"1.0.0"` | Semver version |
+| `requiresAI` | boolean | `false` | Whether this Practa **requires** AI to function at all. Set `true` if the Practa cannot work without AI (e.g., AI-generated content is the core experience). Set `false` if it can operate without AI. Every Practa must declare this. |
 
 ### Optional Fields
 
@@ -208,6 +209,38 @@ Define configurable options for your Practa by adding a `configSchema` object to
 All field types support: `label` (required), `description` (optional), `required` (optional, marks field as mandatory).
 
 Set `requiredConfig: true` at the top level if the Practa cannot run without configuration.
+
+#### Standard Field: `aiEnabled`
+
+Every Practa should include an `aiEnabled` boolean in its configSchema. This lets the user toggle AI-powered enhancements on or off at runtime. This is separate from the top-level `requiresAI` flag:
+
+- **`requiresAI`** (metadata) = "Can this Practa function at all without AI?" (a fact about the Practa)
+- **`aiEnabled`** (configSchema) = "Should AI features be turned on right now?" (a user preference)
+
+Even Practas that don't require AI should include this toggle so they can optionally leverage AI features (e.g., personalized prompts, adaptive pacing) when available.
+
+```json
+"aiEnabled": {
+  "type": "boolean",
+  "label": "Enable AI Features",
+  "description": "Allow this Practa to use AI-powered enhancements when available",
+  "default": true
+}
+```
+
+At runtime, check both values to decide behavior:
+
+```typescript
+export default function MyPracta({ context }: PractaProps) {
+  const aiEnabled = context.config?.aiEnabled ?? true;
+  
+  if (aiEnabled) {
+    // Use AI-powered content generation, adaptive pacing, etc.
+  } else {
+    // Fall back to static content or manual configuration
+  }
+}
+```
 
 #### Example
 
