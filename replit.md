@@ -107,18 +107,79 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 
 The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on each git commit. No setup required.
 
-## GitHub Sync System
+## Three Sync Systems
 
-The template uses a unified GitHub-based sync system (`server/github-sync.ts`) for both template updates and Practa collaboration:
+This project has **three distinct sync systems**. Each pulls files from a different GitHub repo, targets different files, and serves a different purpose. Do not confuse them.
 
-- **Template Sync**: Checks `stellarin-org/practa-template` for newer template versions. Endpoints: `GET /api/template/sync-status`, `POST /api/template/update`
-- **Practa Sync**: Checks `stellarin-org/stellarin-practa` for collaboration updates (when collaborators push newer versions). Endpoints: `GET /api/practa/sync-status`, `POST /api/practa/sync`
-- **Three version sources**: Local (metadata.json), Published (registry in stellarin-practa repo), Repo (latest committed code)
+### 1. App Sync (Test Harness Sync) — Master Template Only
 
-If the app is having issues or is failing to load it may be helpful to do a POST to /api/template/update
-to manually trigger an update which will restore the template to it's original files without changing /my-practa/
+**Purpose:** Keeps the template's core components in sync with the main Stellarin app. These are the "source of truth" files that originate in Stellarin — design system, types, test harness, chrome, and storage.
 
-**Template update flow**: When the template is out of date, the app shows a "Copy Instructions for AI" button instead of updating directly. The copied message tells the AI agent to follow `.agents/skills/update-practa-template/SKILL.md` and then `.agents/skills/post-template-update/SKILL.md` using the SHA values returned by the update.
+| Detail | Value |
+|--------|-------|
+| Source repo | `stellarin-org/stellarin-app` |
+| Config file | `.config/app-sync.config.json` |
+| Endpoints | `GET /api/app-sync/status`, `POST /api/app-sync/sync` |
+| Guard | Requires `MASTER_TEMPLATE_KEY` env var |
+| Auth | Uses Replit GitHub connector (private repo) |
+| Manifest | `.config/.app-sync-manifest.json` (tracks synced files for stale detection) |
+
+**Files synced** (defined in `.config/app-sync.config.json`):
+- `client/types/flow.ts` — Practa contract types
+- `client/components/PractaTestHarness.tsx` — Test harness
+- `client/components/PractaSplashScreen.tsx` — Splash screen
+- `client/components/PractaChromeHeader.tsx` — Chrome header
+- `client/context/PractaChromeContext.tsx` — Chrome context
+- `client/lib/practa-storage.ts` — Storage API
+- `client/constants/theme.ts` — Design tokens
+- `client/hooks/useTheme.ts` — Theme hook
+- `client/components/ThemedText.tsx`, `ThemedView.tsx`, `Card.tsx` — UI primitives
+- `server/cdn_routes.ts` — CDN backend routes
+- `docs/practa-test-harness.md`, `design_guidelines.md` — Documentation
+
+**Flow:** `stellarin-app` → (App Sync into master template) → master template commits to `practa-template` repo → (Template Update into user templates)
+
+### 2. Template Update — Available to All Users
+
+**Purpose:** Updates template infrastructure files from the published template repo. Keeps user templates up to date with the latest tooling, validation, screens, navigation, server code, etc. Protects `client/my-practa/` (never overwrites user's Practa).
+
+| Detail | Value |
+|--------|-------|
+| Source repo | `stellarin-org/practa-template` |
+| Config file | `server/template-sync-config.ts` |
+| Endpoints | `GET /api/template/sync-status`, `POST /api/template/update` |
+| Guard | None (available to all) |
+| Protected paths | `client/my-practa/` |
+
+**Directories synced:** `assets/`, `client/` (except `my-practa/`), `demo-template/`, `docs/`, `scripts/`, `server/`, `shared/`
+
+If the app is broken or failing to load, `POST /api/template/update` will restore template files without touching `client/my-practa/`.
+
+**Template update flow:** When out of date, the app shows a "Copy Instructions for AI" button. The copied message tells the AI agent to follow `.agents/skills/update-practa-template/SKILL.md` and then `.agents/skills/post-template-update/SKILL.md` using the SHA values returned by the update.
+
+### 3. Practa Sync — Collaboration Updates
+
+**Purpose:** Pulls the latest version of the user's specific Practa from the shared Practa repo. Used when a collaborator pushes a newer version of the same Practa.
+
+| Detail | Value |
+|--------|-------|
+| Source repo | `stellarin-org/stellarin-practa` |
+| Endpoints | `GET /api/practa/sync-status`, `POST /api/practa/sync` |
+| Guard | Requires a published Practa with a valid `id` in `metadata.json` |
+| Target | `client/my-practa/` only |
+
+**Three version sources compared:** Local (`metadata.json` version), Published (registry in `stellarin-practa` repo), Repo (latest committed code in repo).
+
+### File Ownership Rules
+
+**DO NOT edit files managed by App Sync or Template Update** unless explicitly requested. Changes to these files will be overwritten on the next sync. If a change is needed, it should be made upstream.
+
+| Owner | Files | Editable locally? |
+|-------|-------|-------------------|
+| App Sync | Files listed in `.config/app-sync.config.json` | No (master template only; changes go to `stellarin-app`) |
+| Template Update | Everything in `client/` (except `my-practa/`), `server/`, `shared/`, `docs/`, `scripts/`, `assets/` | No (changes go to `practa-template` repo) |
+| User | `client/my-practa/` | Yes — this is the developer's workspace |
+| Practa Sync | `client/my-practa/` | Yes, but may be overwritten by collaboration sync |
 
 ## Header Configuration
 
