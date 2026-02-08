@@ -7,10 +7,11 @@ description: Build, create, or scaffold a Practa (wellness/mindfulness component
 
 Before writing any code, read the full documentation to understand the contract:
 
-1. **Read `docs/practa-developer-guide.md`** — the complete Practa contract, props, header config, assets, storage, metadata schema, and validation checklist
-2. **Read `docs/practa-storage-system.md`** — if the Practa needs to persist user state across sessions
-3. **Read `client/types/flow.ts`** — TypeScript types for PractaProps, PractaContext, PractaOutput
-4. **Browse `client/demo-practa/`** — working examples to reference for patterns
+1. **Read `docs/practa-developer-guide.md`** — the complete Practa contract, props, header config, assets, storage, and validation checklist
+2. **Read `docs/practa-metadata-schema.md`** — dedicated metadata.json reference (required fields, assets, configSchema, AI flags)
+3. **Read `docs/practa-storage-system.md`** — if the Practa needs to persist user state across sessions
+4. **Read `client/types/flow.ts`** — TypeScript types for PractaProps, PractaContext, PractaOutput
+5. **Browse `client/demo-practa/`** — working examples to reference for patterns
 
 ## File Constraints
 
@@ -32,7 +33,7 @@ Before writing any code, read the full documentation to understand the contract:
 
 1. Read the docs above
 2. Edit `client/my-practa/index.tsx` with the component
-3. Update `client/my-practa/metadata.json` (id, name, version, description, author, assets, dependencies)
+3. Update `client/my-practa/metadata.json` (id, name, version, description, author, requiresAI, assets, configSchema with aiEnabled, dependencies)
 4. Place any asset files in `client/my-practa/assets/`
 5. Restart the app so assets regenerate
 6. Verify against the validation checklist in the developer guide
