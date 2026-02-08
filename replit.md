@@ -78,6 +78,7 @@ server/                   # Express backend for preview
 | `client/my-practa/metadata.json` | Your Practa metadata |
 | `client/types/flow.ts` | TypeScript types |
 | `docs/practa-developer-guide.md` | Full requirements & examples |
+| `docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
 
 ## Path Aliases
 

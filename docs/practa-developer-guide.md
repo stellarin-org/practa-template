@@ -170,6 +170,8 @@ See `docs/practa-storage-system.md` for full API reference.
 
 ## Metadata Schema
 
+> Full standalone reference: [`docs/practa-metadata-schema.md`](./practa-metadata-schema.md)
+
 Update `client/my-practa/metadata.json` with your Practa info:
 
 ### Required Fields
