@@ -33,20 +33,35 @@ interface SyncStatus {
   isMasterTemplate?: boolean;
 }
 
-interface PublishedPractaInfo {
-  slug: string;
-  version: string;
-  buildId: string;
-  name: string;
-  description: string;
-  author: string;
-  category: string;
-  practaType: string;
-  type: string;
-  estimatedDuration: number;
-  dependencies?: string[];
-  publishedAt: string;
-  createdAt: string;
+interface PractaSyncStatus {
+  hasLocalPracta: boolean;
+  slug: string | null;
+  localVersion: string;
+  isPublished: boolean;
+  publishedVersion: string | null;
+  publishedEntry: {
+    slug: string;
+    version: string;
+    buildId: string;
+    name: string;
+    description: string;
+    author: string;
+    category: string;
+    practaType: string;
+    type: string;
+    requiresAI: boolean;
+    estimatedDuration: number;
+    assets?: Record<string, string>;
+    dependencies?: string[];
+  } | null;
+  hasNewerPublished: boolean;
+  localIsAhead: boolean;
+  repoVersion: string | null;
+  hasNewerInRepo: boolean;
+  repoAvailable: boolean;
+  repoUrl: string;
+  registryUrl: string;
+  error?: string;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -109,25 +124,10 @@ export default function MyPractaScreen() {
     enabled: enableSyncCheck,
   });
 
-  const practaSlug = (practaMetadataJson as { id?: string }).id || "my-practa";
-  
-  const { data: publishedInfo, isLoading: publishedLoading } = useQuery<PublishedPractaInfo | null>({
-    queryKey: ["/api/practa/published-info", practaSlug],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", `/api/practa/published-info/${practaSlug}`);
-        if (!response.ok) {
-          if (response.status === 404) return null;
-          throw new Error("Failed to fetch published info");
-        }
-        return response.json();
-      } catch {
-        return null;
-      }
-    },
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
+  const { data: practaSyncStatus, isLoading: practaSyncLoading } = useQuery<PractaSyncStatus>({
+    queryKey: ["/api/practa/sync-status"],
+    staleTime: 1000 * 60 * 5,
+    enabled: enableSyncCheck,
   });
 
   const updateTemplateMutation = useMutation({
@@ -137,6 +137,25 @@ export default function MyPractaScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/template/sync-status"] });
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    },
+    onError: () => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    },
+  });
+
+  const syncPractaMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/practa/sync");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/practa/sync-status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -255,7 +274,7 @@ export default function MyPractaScreen() {
                 <ThemedText style={styles.syncBannerTitle}>
                   {syncStatus.isMasterTemplate 
                     ? "Unpublished Changes" 
-                    : `Update Available: ${syncStatus.localTemplateVersion || "?"} → ${syncStatus.latestTemplateVersion || "?"}`}
+                    : `Template Update: ${syncStatus.localTemplateVersion || "?"} → ${syncStatus.latestTemplateVersion || "?"}`}
                 </ThemedText>
                 <ThemedText style={[
                   styles.syncBannerMessage,
@@ -285,11 +304,49 @@ export default function MyPractaScreen() {
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <ThemedText style={styles.syncButtonText}>
-                    Update Now
+                    Update Template
                   </ThemedText>
                 )}
               </Pressable>
             )}
+          </View>
+        ) : null}
+
+        {practaSyncStatus?.hasNewerInRepo ? (
+          <View style={[styles.syncBanner, styles.practaSyncBanner]}>
+            <View style={styles.syncBannerContent}>
+              <Feather name="git-pull-request" size={20} color="#7C3AED" />
+              <View style={styles.syncBannerText}>
+                <ThemedText style={[styles.syncBannerTitle, { color: "#5B21B6" }]}>
+                  Newer Version in Repo: {practaSyncStatus.localVersion} → {practaSyncStatus.repoVersion}
+                </ThemedText>
+                <ThemedText style={[styles.syncBannerMessage, { color: "#5B21B6" }]}>
+                  A collaborator has pushed a newer version. Pull to update your local files.
+                </ThemedText>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => {
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                }
+                syncPractaMutation.mutate();
+              }}
+              disabled={syncPractaMutation.isPending}
+              style={[
+                styles.syncButton,
+                styles.practaSyncButton,
+                syncPractaMutation.isPending && styles.syncButtonDisabled,
+              ]}
+            >
+              {syncPractaMutation.isPending ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <ThemedText style={styles.syncButtonText}>
+                  Pull Latest
+                </ThemedText>
+              )}
+            </Pressable>
           </View>
         ) : null}
 
@@ -337,36 +394,33 @@ export default function MyPractaScreen() {
             <ThemedText style={styles.previewButtonText}>Preview Practa</ThemedText>
           </Pressable>
 
-          {publishedLoading ? (
+          {practaSyncLoading ? (
             <View style={styles.publishedInfoRow}>
               <ActivityIndicator size="small" color={theme.textSecondary} />
               <ThemedText style={[styles.publishedInfoText, { color: theme.textSecondary }]}>
                 Checking published status...
               </ThemedText>
             </View>
-          ) : publishedInfo ? (
+          ) : practaSyncStatus?.isPublished ? (
             <View style={styles.publishedInfoContainer}>
-              <View style={styles.publishedInfoRow}>
-                <Feather name="globe" size={16} color={theme.textSecondary} />
-                <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
-                  Last Published:
-                </ThemedText>
-                <ThemedText style={styles.publishedInfoValue}>
-                  {formatRelativeTime(publishedInfo.publishedAt)}
-                </ThemedText>
-              </View>
               <View style={styles.publishedInfoRow}>
                 <Feather name="tag" size={16} color={theme.textSecondary} />
                 <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
                   Published Version:
                 </ThemedText>
                 <ThemedText style={styles.publishedInfoValue}>
-                  {publishedInfo.version}
+                  {practaSyncStatus.publishedVersion}
                 </ThemedText>
-                {metadata.version !== publishedInfo.version ? (
+                {practaSyncStatus.localIsAhead ? (
                   <View style={[styles.versionBadge, { backgroundColor: "#F59E0B20" }]}>
                     <ThemedText style={[styles.versionBadgeText, { color: "#D97706" }]}>
-                      Local: {metadata.version}
+                      Local: {practaSyncStatus.localVersion}
+                    </ThemedText>
+                  </View>
+                ) : practaSyncStatus.hasNewerPublished ? (
+                  <View style={[styles.versionBadge, { backgroundColor: "#EF444420" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: "#DC2626" }]}>
+                      Behind
                     </ThemedText>
                   </View>
                 ) : (
@@ -377,6 +431,24 @@ export default function MyPractaScreen() {
                   </View>
                 )}
               </View>
+              {practaSyncStatus.repoAvailable ? (
+                <View style={styles.publishedInfoRow}>
+                  <Feather name="git-branch" size={16} color={theme.textSecondary} />
+                  <ThemedText style={[styles.publishedInfoLabel, { color: theme.textSecondary }]}>
+                    Repo Version:
+                  </ThemedText>
+                  <ThemedText style={styles.publishedInfoValue}>
+                    {practaSyncStatus.repoVersion}
+                  </ThemedText>
+                  {practaSyncStatus.hasNewerInRepo ? (
+                    <View style={[styles.versionBadge, { backgroundColor: "#7C3AED20" }]}>
+                      <ThemedText style={[styles.versionBadgeText, { color: "#7C3AED" }]}>
+                        Update available
+                      </ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           ) : (
             <View style={styles.publishedInfoRow}>
@@ -725,6 +797,13 @@ const styles = StyleSheet.create({
   },
   syncBannerMessageMaster: {
     color: "#1E40AF",
+  },
+  practaSyncBanner: {
+    backgroundColor: "#F5F3FF",
+    borderColor: "#7C3AED",
+  },
+  practaSyncButton: {
+    backgroundColor: "#7C3AED",
   },
   syncButtonPublish: {
     backgroundColor: "#3B82F6",
