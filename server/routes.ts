@@ -117,6 +117,19 @@ function writeConfig(updates: Partial<PractaMetadata>): boolean {
   }
 }
 
+function buildManifest(config: PractaMetadata): Record<string, unknown> {
+  const { id, category, tags, assets, ...rest } = config;
+  return {
+    ...rest,
+    id,
+    type: "widget",
+    category: category || "wellbeing",
+    tags: Array.isArray(tags) && tags.length > 0 ? tags : ["practa", "wellbeing"],
+    requiredPermissions: [],
+    assets: (assets && typeof assets === "object") ? assets : {},
+  };
+}
+
 interface AssetValidationResult {
   valid: boolean;
   errors: string[];
@@ -310,21 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const componentName = config ? config.name.replace(/[^a-zA-Z0-9]/g, "") : "MyPracta";
     
-    const manifest = config ? {
-      id: practaId,
-      name: config.name,
-      version: config.version,
-      description: config.description,
-      author: config.author,
-      type: "widget",
-      category: config.category || "wellbeing",
-      tags: (config.tags as string[]) || ["practa", "wellbeing"],
-      estimatedDuration: config.estimatedDuration,
-      requiredPermissions: [],
-      assets: (config.assets as Record<string, string>) || {},
-      ...(Array.isArray(config.dependencies) && config.dependencies.length > 0 ? { dependencies: config.dependencies } : {}),
-      ...(config.configSchema ? { configSchema: config.configSchema } : {}),
-    } : null;
+    const manifest = config ? buildManifest(config) : null;
 
     const readme = config ? `# ${config.name}
 
@@ -441,21 +440,7 @@ ${config.version}
       const componentName = config.name.replace(/[^a-zA-Z0-9]/g, "");
       const practaIdSubmit = config.id;
 
-      const manifest = {
-        id: practaIdSubmit,
-        name: config.name,
-        version: config.version,
-        description: config.description,
-        author: config.author,
-        type: "widget",
-        category: config.category || "wellbeing",
-        tags: (config.tags as string[]) || ["practa", "wellbeing"],
-        estimatedDuration: config.estimatedDuration,
-        requiredPermissions: [],
-        assets: (config.assets as Record<string, string>) || {},
-        ...(Array.isArray(config.dependencies) && config.dependencies.length > 0 ? { dependencies: config.dependencies } : {}),
-        ...(config.configSchema ? { configSchema: config.configSchema } : {}),
-      };
+      const manifest = buildManifest(config);
 
       const readme = `# ${config.name}
 
