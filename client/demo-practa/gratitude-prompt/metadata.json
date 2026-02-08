@@ -34,6 +34,12 @@
         "label": "Show Inspiration Quote",
         "description": "Display an inspiring quote before prompts",
         "default": true
+      },
+      "aiEnabled": {
+        "type": "boolean",
+        "label": "Enable AI Features",
+        "description": "Allow this Practa to use AI-powered enhancements when available",
+        "default": true
       }
     },
     "requiredConfig": false

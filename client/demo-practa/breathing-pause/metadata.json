@@ -40,6 +40,12 @@
           { "value": "4-7-8", "label": "Relaxing (4-7-8)" },
           { "value": "5-5", "label": "Simple (5-5)" }
         ]
+      },
+      "aiEnabled": {
+        "type": "boolean",
+        "label": "Enable AI Features",
+        "description": "Allow this Practa to use AI-powered enhancements when available",
+        "default": true
       }
     },
     "requiredConfig": false
