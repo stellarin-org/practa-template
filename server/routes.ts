@@ -64,6 +64,24 @@ function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
     errors.push("version must follow semantic versioning (e.g., '1.0.0')");
   }
   
+  // Validate requiresAI (required, must be boolean)
+  if (metadata.requiresAI === undefined || metadata.requiresAI === null) {
+    errors.push("requiresAI is required and must be a boolean (true or false)");
+  } else if (typeof metadata.requiresAI !== "boolean") {
+    errors.push("requiresAI must be a boolean (true or false)");
+  }
+
+  // Validate configSchema.fields.aiEnabled (required)
+  const configSchema = metadata.configSchema as Record<string, unknown> | undefined;
+  const csFields = configSchema?.fields as Record<string, unknown> | undefined;
+  const aiEnabled = csFields?.aiEnabled as Record<string, unknown> | undefined;
+
+  if (!configSchema || !csFields || !aiEnabled) {
+    errors.push("configSchema.fields.aiEnabled is required");
+  } else if (aiEnabled.type !== "boolean") {
+    errors.push("configSchema.fields.aiEnabled must have type \"boolean\"");
+  }
+
   if (metadata.estimatedDuration !== undefined) {
     if (typeof metadata.estimatedDuration !== "number" || metadata.estimatedDuration < 0) {
       errors.push("estimatedDuration must be a positive number");

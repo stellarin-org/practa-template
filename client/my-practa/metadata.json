@@ -1,11 +1,12 @@
 {
   "id": "my-practa",
   "name": "My Practa",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "A starter template for your custom wellbeing experience",
   "author": null,
   "estimatedDuration": 30,
   "category": "wellness",
+  "requiresAI": false,
   "tags": [
     "starter",
     "template"

@@ -32,7 +32,7 @@ export interface ValidationReport {
 /**
  * Validates metadata object against required schema
  * 
- * Required fields: id, name, version, description, author
+ * Required fields: id, name, version, description, author, requiresAI, configSchema.fields.aiEnabled
  * Optional fields: estimatedDuration, category, tags
  * 
  * The `id` field is the unique Practa identifier (lowercase kebab-case).
@@ -132,6 +132,52 @@ export function validateMetadata(metadata: unknown): ValidationResult[] {
         severity: "error",
       });
     }
+  }
+
+  // Validate requiresAI (required, must be boolean)
+  if (meta.requiresAI === undefined || meta.requiresAI === null) {
+    results.push({
+      passed: false,
+      message: "Missing required field: requiresAI (must be true or false)",
+      severity: "error",
+    });
+  } else if (typeof meta.requiresAI !== "boolean") {
+    results.push({
+      passed: false,
+      message: "requiresAI must be a boolean (true or false)",
+      severity: "error",
+    });
+  } else {
+    results.push({
+      passed: true,
+      message: "requiresAI is valid",
+      severity: "success",
+    });
+  }
+
+  // Validate configSchema.fields.aiEnabled (required)
+  const configSchema = meta.configSchema as Record<string, unknown> | undefined;
+  const fields = configSchema?.fields as Record<string, unknown> | undefined;
+  const aiEnabled = fields?.aiEnabled as Record<string, unknown> | undefined;
+
+  if (!configSchema || !fields || !aiEnabled) {
+    results.push({
+      passed: false,
+      message: "Missing required field: configSchema.fields.aiEnabled",
+      severity: "error",
+    });
+  } else if (aiEnabled.type !== "boolean") {
+    results.push({
+      passed: false,
+      message: "configSchema.fields.aiEnabled must have type \"boolean\"",
+      severity: "error",
+    });
+  } else {
+    results.push({
+      passed: true,
+      message: "configSchema.fields.aiEnabled is valid",
+      severity: "success",
+    });
   }
 
   // Optional field info
