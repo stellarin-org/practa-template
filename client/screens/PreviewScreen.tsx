@@ -18,16 +18,7 @@ import practaMetadataJson from "@/my-practa/metadata.json";
 import { ValidationResult } from "@/lib/practa-validator";
 import { usePractaValidation } from "@/hooks/usePractaValidation";
 import { apiRequest } from "@/lib/query-client";
-
-interface PractaMetadata {
-  name: string;
-  description: string;
-  author: string;
-  version: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-}
+import { PractaFileMetadata } from "@/types/flow";
 
 interface SyncStatus {
   isInSync: boolean;
@@ -82,7 +73,7 @@ export default function PreviewScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const { data: savedMetadata } = useQuery<PractaMetadata>({
+  const { data: savedMetadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
 

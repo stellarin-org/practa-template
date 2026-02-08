@@ -15,17 +15,9 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import codeMetadata from "@/my-practa/metadata.json";
 import { usePractaValidation, ValidationReport } from "@/hooks/usePractaValidation";
 import { getApiUrl } from "@/lib/query-client";
+import { PractaFileMetadata } from "@/types/flow";
 
 const VERIFICATION_SERVICE_URL = "https://stellarin-practa-verification.replit.app";
-
-interface PractaMetadata {
-  type: string;
-  name: string;
-  description: string;
-  author: string;
-  version: string;
-  estimatedDuration?: number;
-}
 
 interface ValidationCheck {
   name: string;
@@ -57,7 +49,7 @@ export default function PublishScreen() {
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { data: metadata } = useQuery<PractaMetadata>({
+  const { data: metadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
 
@@ -136,7 +128,7 @@ export default function PublishScreen() {
     return `${diffMins} min`;
   };
 
-  const displayMetadata = (metadata || codeMetadata) as PractaMetadata;
+  const displayMetadata = (metadata || codeMetadata) as PractaFileMetadata;
   const canSubmit = !hasErrors && submitState !== "submitting";
 
   return (
@@ -163,7 +155,7 @@ export default function PublishScreen() {
             <View style={styles.practaInfo}>
               <ThemedText style={styles.practaName}>{displayMetadata.name}</ThemedText>
               <ThemedText style={[styles.practaType, { color: theme.textSecondary }]}>
-                {displayMetadata.type} v{displayMetadata.version}
+                {String(displayMetadata.type || "practa")} v{displayMetadata.version}
               </ThemedText>
             </View>
           </View>

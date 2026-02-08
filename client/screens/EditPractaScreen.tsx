@@ -13,17 +13,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
-
-interface PractaMetadata {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-}
+import { PractaFileMetadata } from "@/types/flow";
 
 function FormField({
   label,
@@ -91,7 +81,7 @@ export default function EditPractaScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const { data: metadata, isLoading } = useQuery<PractaMetadata>({
+  const { data: metadata, isLoading } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
 
@@ -112,13 +102,13 @@ export default function EditPractaScreen() {
   }, [metadata]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: PractaMetadata) => {
+    mutationFn: async (data: PractaFileMetadata) => {
       const res = await apiRequest("PUT", "/api/practa/metadata", data);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to save");
       }
-      return res.json() as Promise<PractaMetadata>;
+      return res.json() as Promise<PractaFileMetadata>;
     },
     onSuccess: (savedData) => {
       queryClient.setQueryData(["/api/practa/metadata"], savedData);
@@ -191,7 +181,7 @@ export default function EditPractaScreen() {
       ? tags.split(",").map(t => t.trim()).filter(Boolean)
       : undefined;
 
-    const data: PractaMetadata = {
+    const data: PractaFileMetadata = {
       id: id.trim(),
       name: name.trim(),
       version: version.trim(),

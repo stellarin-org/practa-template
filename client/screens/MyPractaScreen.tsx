@@ -20,54 +20,7 @@ import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { apiRequest } from "@/lib/query-client";
 import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
-
-interface ConfigFieldBase {
-  type: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-}
-
-interface StringField extends ConfigFieldBase {
-  type: "string";
-  placeholder?: string;
-  default?: string;
-}
-
-interface NumberField extends ConfigFieldBase {
-  type: "number";
-  default?: number;
-  min?: number;
-  max?: number;
-}
-
-interface BooleanField extends ConfigFieldBase {
-  type: "boolean";
-  default?: boolean;
-}
-
-interface SelectField extends ConfigFieldBase {
-  type: "select";
-  options: { value: string; label: string }[];
-}
-
-type ConfigField = StringField | NumberField | BooleanField | SelectField;
-
-interface ConfigSchema {
-  fields: Record<string, ConfigField>;
-  requiredConfig?: boolean;
-}
-
-interface PractaMetadata {
-  name: string;
-  description: string;
-  author: string;
-  version: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-  configSchema?: ConfigSchema;
-}
+import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
 
 interface SyncStatus {
   isInSync: boolean;
@@ -146,7 +99,7 @@ export default function MyPractaScreen() {
     }, [transitionOpacity])
   );
 
-  const { data: savedMetadata } = useQuery<PractaMetadata>({
+  const { data: savedMetadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
 
@@ -225,7 +178,7 @@ export default function MyPractaScreen() {
   );
 
   const metadata = savedMetadata || practaMetadataJson;
-  const typedMetadata = practaMetadataJson as unknown as PractaMetadata;
+  const typedMetadata = practaMetadataJson as unknown as PractaFileMetadata;
 
   useEffect(() => {
     if (typedMetadata.configSchema?.fields) {

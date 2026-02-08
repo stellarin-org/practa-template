@@ -15,19 +15,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { apiRequest } from "@/lib/query-client";
+import { PractaFileMetadata } from "@/types/flow";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface PractaMetadata {
-  id: string;
-  name: string;
-  description: string;
-  author: string;
-  version: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-}
 
 function FormField({
   label,
@@ -96,7 +86,7 @@ export default function MetadataEditorScreen() {
   const [tags, setTags] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: metadata, isLoading } = useQuery<PractaMetadata>({
+  const { data: metadata, isLoading } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
 
@@ -122,7 +112,7 @@ export default function MetadataEditorScreen() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (data: PractaMetadata) => {
+    mutationFn: async (data: PractaFileMetadata) => {
       const res = await apiRequest("PUT", "/api/practa/metadata", data);
       if (!res.ok) {
         const errorData = await res.json();
@@ -130,7 +120,7 @@ export default function MetadataEditorScreen() {
         error.fieldErrors = errorData.fieldErrors;
         throw error;
       }
-      return res.json() as Promise<PractaMetadata>;
+      return res.json() as Promise<PractaFileMetadata>;
     },
     onSuccess: (savedData) => {
       queryClient.setQueryData(["/api/practa/metadata"], savedData);
@@ -195,7 +185,7 @@ export default function MetadataEditorScreen() {
       ? tags.split(",").map(t => t.trim()).filter(Boolean)
       : undefined;
 
-    const data: PractaMetadata = {
+    const data: PractaFileMetadata = {
       id: id.trim(),
       name: name.trim(),
       description: description.trim(),
