@@ -65,36 +65,9 @@ export function detectDependencies(): string[] {
 }
 
 interface PractaMetadata {
-  id: string;
-  name: string;
   version: string;
-  description: string;
-  author: string;
-  estimatedDuration?: number;
-  category?: string;
-  tags?: string[];
-  assets?: Record<string, string>;
   dependencies?: string[];
-  configSchema?: {
-    fields: Record<string, unknown>;
-    requiredConfig?: boolean;
-  };
-}
-
-function getOrderedMetadata(metadata: PractaMetadata): Record<string, unknown> {
-  return {
-    id: metadata.id,
-    name: metadata.name,
-    version: metadata.version,
-    description: metadata.description,
-    author: metadata.author,
-    ...(metadata.estimatedDuration !== undefined && { estimatedDuration: metadata.estimatedDuration }),
-    ...(metadata.category && { category: metadata.category }),
-    ...(metadata.tags && metadata.tags.length > 0 && { tags: metadata.tags }),
-    ...(metadata.assets && Object.keys(metadata.assets).length > 0 && { assets: metadata.assets }),
-    ...(metadata.dependencies && metadata.dependencies.length > 0 && { dependencies: metadata.dependencies }),
-    ...(metadata.configSchema && { configSchema: metadata.configSchema }),
-  };
+  [key: string]: unknown;
 }
 
 function bumpPatchVersion(version: string): string {
@@ -133,18 +106,15 @@ export function bumpMetadataPatch(): { success: boolean; newVersion?: string; de
     const newVersion = bumpPatchVersion(oldVersion);
     metadata.version = newVersion;
 
-    // Auto-detect dependencies from practa source code
     const detectedDeps = detectDependencies();
     if (detectedDeps.length > 0) {
       metadata.dependencies = detectedDeps;
       console.log(`[Version Bump] Auto-detected dependencies: ${detectedDeps.join(", ")}`);
     } else {
-      // Clear dependencies if none detected
       delete metadata.dependencies;
     }
 
-    const ordered = getOrderedMetadata(metadata);
-    const jsonContent = JSON.stringify(ordered, null, 2) + "\n";
+    const jsonContent = JSON.stringify(metadata, null, 2) + "\n";
 
     fs.writeFileSync(METADATA_PATH, jsonContent);
 
