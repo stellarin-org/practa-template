@@ -68,6 +68,8 @@ docs/
   practa-storage-system.md    # Storage API reference
 
 server/                   # Express backend for preview
+  github-sync.ts          # Shared GitHub sync utilities (fetch repo info, download zip, etc.)
+  routes.ts               # API routes (template sync, practa sync, validation, submission)
 ```
 
 ## Key Files
@@ -79,6 +81,7 @@ server/                   # Express backend for preview
 | `client/types/flow.ts` | TypeScript types |
 | `docs/practa-developer-guide.md` | Full requirements & examples |
 | `docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
+| `server/github-sync.ts` | Shared GitHub sync utilities |
 
 ## Path Aliases
 
@@ -89,7 +92,14 @@ server/                   # Express backend for preview
 
 The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on each git commit. No setup required.
 
-## Template Updating
+## GitHub Sync System
+
+The template uses a unified GitHub-based sync system (`server/github-sync.ts`) for both template updates and Practa collaboration:
+
+- **Template Sync**: Checks `stellarin-org/practa-template` for newer template versions. Endpoints: `GET /api/template/sync-status`, `POST /api/template/update`
+- **Practa Sync**: Checks `stellarin-org/stellarin-practa` for collaboration updates (when collaborators push newer versions). Endpoints: `GET /api/practa/sync-status`, `POST /api/practa/sync`
+- **Three version sources**: Local (metadata.json), Published (registry in stellarin-practa repo), Repo (latest committed code)
+
 If the app is having issues or is failing to load it may be helpful to do a POST to /api/template/update
 to manually trigger an update which will restore the template to it's original files without changing /my-practa/
 
