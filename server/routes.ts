@@ -7,6 +7,7 @@ import archiver from "archiver";
 import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
+import type { PractaFileMetadata } from "@shared/schema";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
@@ -23,15 +24,6 @@ const ALLOWED_ASSET_EXTENSIONS = [
   ".mp4", ".webm",
   ".json", ".txt"
 ];
-
-interface PractaMetadata {
-  id: string;
-  name: string;
-  description: string;
-  author: string;
-  version: string;
-  [key: string]: unknown;
-}
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -91,7 +83,7 @@ function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
   return { valid: errors.length === 0, errors };
 }
 
-function readConfig(): PractaMetadata | null {
+function readConfig(): PractaFileMetadata | null {
   try {
     if (fs.existsSync(METADATA_PATH)) {
       const content = fs.readFileSync(METADATA_PATH, "utf-8");
@@ -103,7 +95,7 @@ function readConfig(): PractaMetadata | null {
   return null;
 }
 
-function writeConfig(updates: Partial<PractaMetadata>): boolean {
+function writeConfig(updates: Partial<PractaFileMetadata>): boolean {
   try {
     const existing = fs.existsSync(METADATA_PATH)
       ? JSON.parse(fs.readFileSync(METADATA_PATH, "utf-8"))
@@ -117,7 +109,7 @@ function writeConfig(updates: Partial<PractaMetadata>): boolean {
   }
 }
 
-function buildManifest(config: PractaMetadata): Record<string, unknown> {
+function buildManifest(config: PractaFileMetadata): Record<string, unknown> {
   const { id, category, tags, assets, ...rest } = config;
   return {
     ...rest,

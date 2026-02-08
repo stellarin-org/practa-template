@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { PractaFileMetadata } from "@shared/schema";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const PRACTA_INDEX_PATH = path.resolve(process.cwd(), "client/my-practa/index.tsx");
@@ -64,11 +65,6 @@ export function detectDependencies(): string[] {
   return Array.from(detectedDeps).sort();
 }
 
-interface PractaMetadata {
-  version: string;
-  dependencies?: string[];
-  [key: string]: unknown;
-}
 
 function bumpPatchVersion(version: string): string {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)(.*)$/);
@@ -100,7 +96,7 @@ export function bumpMetadataPatch(): { success: boolean; newVersion?: string; de
     }
 
     const content = fs.readFileSync(METADATA_PATH, "utf-8");
-    const metadata: PractaMetadata = JSON.parse(content);
+    const metadata: PractaFileMetadata = JSON.parse(content);
     
     const oldVersion = metadata.version;
     const newVersion = bumpPatchVersion(oldVersion);
