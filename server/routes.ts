@@ -8,6 +8,7 @@ import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
 import type { PractaFileMetadata } from "@shared/schema";
+import { validateMetadataFields } from "@shared/metadata-schema";
 import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type PublishedPractaInfo } from "./github-sync";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
@@ -26,80 +27,20 @@ const ALLOWED_ASSET_EXTENSIONS = [
 ];
 
 function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
   if (!data || typeof data !== "object") {
     return { valid: false, errors: ["Invalid data format"] };
   }
-  
+
   const metadata = data as Record<string, unknown>;
-  
-  // Validate id field (required, lowercase kebab-case)
-  const idPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-  if (!metadata.id || typeof metadata.id !== "string") {
-    errors.push("id is required and must be a string");
-  } else if (metadata.id.length < 3 || metadata.id.length > 50) {
-    errors.push("id must be 3-50 characters");
-  } else if (!idPattern.test(metadata.id)) {
-    errors.push("id must be lowercase kebab-case (e.g., 'my-practa')");
-  }
-  
-  if (!metadata.name || typeof metadata.name !== "string") {
-    errors.push("name is required and must be a string");
-  }
-  
-  if (!metadata.description || typeof metadata.description !== "string") {
-    errors.push("description is required and must be a string");
-  }
-  
+
+  const skipFields: string[] = [];
   if (metadata.author === null && isMasterTemplate()) {
-    // Master template allows null author
-  } else if (!metadata.author || typeof metadata.author !== "string") {
-    errors.push("author is required and must be a string");
-  }
-  
-  if (!metadata.version || typeof metadata.version !== "string") {
-    errors.push("version is required and must be a string");
-  } else if (!/^\d+\.\d+\.\d+$/.test(metadata.version)) {
-    errors.push("version must follow semantic versioning (e.g., '1.0.0')");
-  }
-  
-  // Validate requiresAI (required, must be boolean)
-  if (metadata.requiresAI === undefined || metadata.requiresAI === null) {
-    errors.push("requiresAI is required and must be a boolean (true or false)");
-  } else if (typeof metadata.requiresAI !== "boolean") {
-    errors.push("requiresAI must be a boolean (true or false)");
+    skipFields.push("author");
   }
 
-  // Validate configSchema.fields.aiEnabled (required)
-  const configSchema = metadata.configSchema as Record<string, unknown> | undefined;
-  const csFields = configSchema?.fields as Record<string, unknown> | undefined;
-  const aiEnabled = csFields?.aiEnabled as Record<string, unknown> | undefined;
+  const result = validateMetadataFields(metadata, skipFields);
+  const errors = result.errors.map((e) => e.message);
 
-  if (!configSchema || !csFields || !aiEnabled) {
-    errors.push("configSchema.fields.aiEnabled is required");
-  } else if (aiEnabled.type !== "boolean") {
-    errors.push("configSchema.fields.aiEnabled must have type \"boolean\"");
-  }
-
-  if (metadata.estimatedDuration !== undefined) {
-    if (typeof metadata.estimatedDuration !== "number" || metadata.estimatedDuration < 0) {
-      errors.push("estimatedDuration must be a positive number");
-    }
-  }
-  
-  if (metadata.category !== undefined && typeof metadata.category !== "string") {
-    errors.push("category must be a string");
-  }
-  
-  if (metadata.tags !== undefined) {
-    if (!Array.isArray(metadata.tags)) {
-      errors.push("tags must be an array");
-    } else if (!metadata.tags.every((t: unknown) => typeof t === "string")) {
-      errors.push("all tags must be strings");
-    }
-  }
-  
   return { valid: errors.length === 0, errors };
 }
 
