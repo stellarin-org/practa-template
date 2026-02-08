@@ -102,7 +102,7 @@ export default function EditPractaScreen() {
   }, [metadata]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: PractaFileMetadata) => {
+    mutationFn: async (data: Partial<PractaFileMetadata>) => {
       const res = await apiRequest("PUT", "/api/practa/metadata", data);
       if (!res.ok) {
         const errorData = await res.json();
@@ -181,7 +181,7 @@ export default function EditPractaScreen() {
       ? tags.split(",").map(t => t.trim()).filter(Boolean)
       : undefined;
 
-    const data: PractaFileMetadata = {
+    const data: Partial<PractaFileMetadata> = {
       id: id.trim(),
       name: name.trim(),
       version: version.trim(),

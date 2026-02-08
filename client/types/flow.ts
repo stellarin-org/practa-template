@@ -67,8 +67,8 @@ export interface PractaFileMetadata {
   tags?: string[];
   assets?: Record<string, string>;
   dependencies?: string[];
-  requiresAI?: boolean;
-  configSchema?: ConfigSchema;
+  requiresAI: boolean;
+  configSchema: ConfigSchema;
   [key: string]: unknown;
 }
 

@@ -259,7 +259,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/practa/metadata", (req, res) => {
-    const validation = validateMetadata(req.body);
+    const existing = readConfig() || {};
+    const merged = { ...existing, ...req.body };
+    const validation = validateMetadata(merged);
     
     if (!validation.valid) {
       return res.status(400).json({ 
@@ -268,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
     
-    if (writeConfig(req.body)) {
+    if (writeConfig(merged)) {
       const saved = readConfig();
       res.json(saved || req.body);
     } else {
