@@ -103,6 +103,8 @@ The template uses a unified GitHub-based sync system (`server/github-sync.ts`) f
 If the app is having issues or is failing to load it may be helpful to do a POST to /api/template/update
 to manually trigger an update which will restore the template to it's original files without changing /my-practa/
 
+**Template update flow**: When the template is out of date, the app shows a "Copy Instructions for AI" button instead of updating directly. The copied message tells the AI agent to follow `.agents/skills/update-practa-template/SKILL.md` and then `.agents/skills/post-template-update/SKILL.md` using the SHA values returned by the update.
+
 ## Header Configuration
 
 Every Practa should use `usePractaChrome` and `useHeaderHeight`:
