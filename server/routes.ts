@@ -1276,14 +1276,14 @@ ${config.version}
   });
 
   // ============================================
-  // APP SYNC ROUTES (Master Template Only)
-  // Syncs critical files from main Stellarin app
+  // HARNESS IMPORT ROUTES (Master Template Only)
+  // Imports critical files from main Stellarin app
   // Uses Replit GitHub connector for authentication
   // ============================================
   
-  const APP_SYNC_CONFIG_PATH = path.resolve(process.cwd(), ".config/app-sync.config.json");
+  const HARNESS_IMPORT_CONFIG_PATH = path.resolve(process.cwd(), ".config/harness-import.config.json");
   
-  interface AppSyncConfig {
+  interface HarnessImportConfig {
     mainAppRepo: string;
     mainAppBranch: string;
     githubConnectionId?: string;
@@ -1362,18 +1362,18 @@ ${config.version}
     }
   }
   
-  function readAppSyncConfig(): AppSyncConfig | null {
+  function readHarnessImportConfig(): HarnessImportConfig | null {
     try {
-      if (fs.existsSync(APP_SYNC_CONFIG_PATH)) {
-        return JSON.parse(fs.readFileSync(APP_SYNC_CONFIG_PATH, "utf-8"));
+      if (fs.existsSync(HARNESS_IMPORT_CONFIG_PATH)) {
+        return JSON.parse(fs.readFileSync(HARNESS_IMPORT_CONFIG_PATH, "utf-8"));
       }
     } catch (error) {
-      console.error("Error reading app-sync.config.json:", error);
+      console.error("Error reading harness-import.config.json:", error);
     }
     return null;
   }
 
-  app.get("/api/app-sync/status", async (req, res) => {
+  app.get("/api/harness-import/status", async (req, res) => {
     try {
       const masterKey = process.env.MASTER_TEMPLATE_KEY;
       const isMasterTemplate = typeof masterKey === "string" && masterKey.length > 0;
@@ -1381,15 +1381,15 @@ ${config.version}
       if (!isMasterTemplate) {
         return res.json({
           available: false,
-          reason: "App sync is only available for the master template"
+          reason: "Harness import is only available for the master template"
         });
       }
       
-      const config = readAppSyncConfig();
+      const config = readHarnessImportConfig();
       if (!config) {
         return res.json({
           available: false,
-          reason: "App sync configuration not found"
+          reason: "Harness import configuration not found"
         });
       }
       
@@ -1409,7 +1409,7 @@ ${config.version}
       const hasGithubConnector = githubToken !== null;
       
       // Get last sync timestamp if exists
-      const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
+      const syncLogPath = path.resolve(process.cwd(), ".config/.harness-import-log");
       let lastSync: string | null = null;
       if (fs.existsSync(syncLogPath)) {
         lastSync = fs.readFileSync(syncLogPath, "utf-8").trim();
@@ -1426,29 +1426,29 @@ ${config.version}
         lastSync
       });
     } catch (error) {
-      console.error("App sync status error:", error);
+      console.error("Harness import status error:", error);
       res.status(500).json({
         available: false,
-        reason: "Failed to check app sync status"
+        reason: "Failed to check harness import status"
       });
     }
   });
 
-  app.post("/api/app-sync/sync", async (req, res) => {
+  app.post("/api/harness-import/sync", async (req, res) => {
     try {
       const masterKey = process.env.MASTER_TEMPLATE_KEY;
       const isMasterTemplate = typeof masterKey === "string" && masterKey.length > 0;
       
       if (!isMasterTemplate) {
         return res.status(403).json({
-          error: "App sync is only available for the master template"
+          error: "Harness import is only available for the master template"
         });
       }
       
-      const config = readAppSyncConfig();
+      const config = readHarnessImportConfig();
       if (!config) {
         return res.status(404).json({
-          error: "App sync configuration not found"
+          error: "Harness import configuration not found"
         });
       }
       
@@ -1462,7 +1462,7 @@ ${config.version}
       };
       
       // Load manifest of previously synced files
-      const manifestPath = path.resolve(projectRoot, ".config/.app-sync-manifest.json");
+      const manifestPath = path.resolve(projectRoot, ".config/.harness-import-manifest.json");
       let previouslySyncedFiles: string[] = [];
       if (fs.existsSync(manifestPath)) {
         try {
@@ -1488,10 +1488,10 @@ ${config.version}
                 file: staleFile,
                 status: "deleted"
               });
-              console.log(`[App Sync] Deleted stale file: ${staleFile}`);
+              console.log(`[Harness Import] Deleted stale file: ${staleFile}`);
             }
           } catch (deleteError) {
-            console.error(`[App Sync] Failed to delete stale file ${staleFile}:`, deleteError);
+            console.error(`[Harness Import] Failed to delete stale file ${staleFile}:`, deleteError);
           }
         }
       }
@@ -1562,14 +1562,14 @@ ${config.version}
       fs.writeFileSync(manifestPath, JSON.stringify(syncedFiles, null, 2), "utf-8");
       
       // Log the sync
-      const syncLogPath = path.resolve(process.cwd(), ".config/.app-sync-log");
+      const syncLogPath = path.resolve(process.cwd(), ".config/.harness-import-log");
       fs.writeFileSync(syncLogPath, new Date().toISOString(), "utf-8");
       
       const successCount = results.filter(r => r.status === "success").length;
       const failedCount = results.filter(r => r.status === "failed").length;
       const deletedCount = results.filter(r => r.status === "deleted").length;
       
-      let message = `Synced ${successCount}/${config.syncItems.length} files from main app`;
+      let message = `Imported ${successCount}/${config.syncItems.length} files from main app`;
       if (deletedCount > 0) {
         message += `, deleted ${deletedCount} stale files`;
       }
@@ -1581,9 +1581,9 @@ ${config.version}
         syncedAt: new Date().toISOString()
       });
     } catch (error) {
-      console.error("App sync error:", error);
+      console.error("Harness import error:", error);
       res.status(500).json({
-        error: "Failed to sync from main app",
+        error: "Failed to import from main app",
         details: error instanceof Error ? error.message : "Unknown error"
       });
     }

@@ -111,20 +111,20 @@ The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on ea
 
 This project has **three distinct sync systems**. Each pulls files from a different GitHub repo, targets different files, and serves a different purpose. Do not confuse them.
 
-### 1. App Sync (Test Harness Sync) — Master Template Only
+### 1. Test Harness Import — Master Template Only
 
 **Purpose:** Keeps the template's core components in sync with the main Stellarin app. These are the "source of truth" files that originate in Stellarin — design system, types, test harness, chrome, and storage.
 
 | Detail | Value |
 |--------|-------|
 | Source repo | `stellarin-org/stellarin-app` |
-| Config file | `.config/app-sync.config.json` |
-| Endpoints | `GET /api/app-sync/status`, `POST /api/app-sync/sync` |
+| Config file | `.config/harness-import.config.json` |
+| Endpoints | `GET /api/harness-import/status`, `POST /api/harness-import/sync` |
 | Guard | Requires `MASTER_TEMPLATE_KEY` env var |
 | Auth | Uses Replit GitHub connector (private repo) |
-| Manifest | `.config/.app-sync-manifest.json` (tracks synced files for stale detection) |
+| Manifest | `.config/.harness-import-manifest.json` (tracks synced files for stale detection) |
 
-**Files synced** (defined in `.config/app-sync.config.json`):
+**Files imported** (defined in `.config/harness-import.config.json`):
 - `client/types/flow.ts` — Practa contract types
 - `client/components/PractaTestHarness.tsx` — Test harness
 - `client/components/PractaSplashScreen.tsx` — Splash screen
@@ -137,7 +137,7 @@ This project has **three distinct sync systems**. Each pulls files from a differ
 - `server/cdn_routes.ts` — CDN backend routes
 - `docs/practa-test-harness.md`, `design_guidelines.md` — Documentation
 
-**Flow:** `stellarin-app` → (App Sync into master template) → master template commits to `practa-template` repo → (Template Update into user templates)
+**Flow:** `stellarin-app` → (Harness Import into master template) → master template commits to `practa-template` repo → (Template Update into user templates)
 
 ### 2. Template Update — Available to All Users
 
@@ -172,11 +172,11 @@ If the app is broken or failing to load, `POST /api/template/update` will restor
 
 ### File Ownership Rules
 
-**DO NOT edit files managed by App Sync or Template Update** unless explicitly requested. Changes to these files will be overwritten on the next sync. If a change is needed, it should be made upstream.
+**DO NOT edit files managed by Harness Import or Template Update** unless explicitly requested. Changes to these files will be overwritten on the next sync. If a change is needed, it should be made upstream.
 
 | Owner | Files | Editable locally? |
 |-------|-------|-------------------|
-| App Sync | Files listed in `.config/app-sync.config.json` | No (master template only; changes go to `stellarin-app`) |
+| Harness Import | Files listed in `.config/harness-import.config.json` | No (master template only; changes go to `stellarin-app`) |
 | Template Update | Everything in `client/` (except `my-practa/`), `server/`, `shared/`, `docs/`, `scripts/`, `assets/` | No (changes go to `practa-template` repo) |
 | User | `client/my-practa/` | Yes — this is the developer's workspace |
 | Practa Sync | `client/my-practa/` | Yes, but may be overwritten by collaboration sync |

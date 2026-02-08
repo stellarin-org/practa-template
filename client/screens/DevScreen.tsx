@@ -26,7 +26,7 @@ interface SyncStatus {
   isMasterTemplate?: boolean;
 }
 
-interface AppSyncStatus {
+interface HarnessImportStatus {
   available: boolean;
   reason?: string;
   isMasterTemplate?: boolean;
@@ -150,10 +150,10 @@ export default function DevScreen() {
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [isUpdatingTemplate, setIsUpdatingTemplate] = useState(false);
-  const [isAppSyncing, setIsAppSyncing] = useState(false);
+  const [isHarnessImporting, setIsHarnessImporting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [showAppSyncModal, setShowAppSyncModal] = useState(false);
+  const [showHarnessImportModal, setShowHarnessImportModal] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const [alertModal, setAlertModal] = useState<{ visible: boolean; title: string; message: string; onClose?: () => void; buttonText?: string; secondaryButtonText?: string; onSecondaryPress?: () => void }>({
     visible: false,
@@ -172,8 +172,8 @@ export default function DevScreen() {
     enabled: enableSyncCheck,
   });
 
-  const { data: appSyncStatus } = useQuery<AppSyncStatus>({
-    queryKey: ["/api/app-sync/status"],
+  const { data: harnessImportStatus } = useQuery<HarnessImportStatus>({
+    queryKey: ["/api/harness-import/status"],
     staleTime: 1000 * 60 * 5,
     enabled: enableSyncCheck && syncStatus?.isMasterTemplate,
   });
@@ -294,28 +294,28 @@ export default function DevScreen() {
     resetMutation.mutate();
   };
 
-  const appSyncMutation = useMutation({
+  const harnessImportMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/app-sync/sync");
+      const response = await apiRequest("POST", "/api/harness-import/sync");
       return response.json();
     },
     onSuccess: (data) => {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/app-sync/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/harness-import/status"] });
       const successCount = data.results?.filter((r: { status: string }) => r.status === "success").length || 0;
       const failedCount = data.results?.filter((r: { status: string }) => r.status === "failed").length || 0;
       
       if (failedCount > 0) {
         showAlert(
-          "Sync Partially Complete",
-          `Synced ${successCount} files. ${failedCount} files failed. Check console for details.`
+          "Import Partially Complete",
+          `Imported ${successCount} files. ${failedCount} files failed. Check console for details.`
         );
       } else {
         showAlert(
-          "Sync Complete",
-          `Successfully synced ${successCount} files from the main app. Restart the app to see changes.`,
+          "Import Complete",
+          `Successfully imported ${successCount} files from the main app. Restart the app to see changes.`,
           {
             buttonText: "Reload App",
             onClose: async () => {
@@ -333,24 +333,24 @@ export default function DevScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      showAlert("Sync Failed", error.message || "Failed to sync from main app");
+      showAlert("Import Failed", error.message || "Failed to import from main app");
     },
     onSettled: () => {
-      setIsAppSyncing(false);
+      setIsHarnessImporting(false);
     },
   });
 
-  const handleAppSync = () => {
+  const handleHarnessImport = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    setShowAppSyncModal(true);
+    setShowHarnessImportModal(true);
   };
 
-  const handleConfirmAppSync = () => {
-    setShowAppSyncModal(false);
-    setIsAppSyncing(true);
-    appSyncMutation.mutate();
+  const handleConfirmHarnessImport = () => {
+    setShowHarnessImportModal(false);
+    setIsHarnessImporting(true);
+    harnessImportMutation.mutate();
   };
 
   return (
@@ -532,11 +532,11 @@ export default function DevScreen() {
           </Pressable>
         </Card>
 
-        {appSyncStatus?.available ? (
+        {harnessImportStatus?.available ? (
           <Card style={styles.section}>
             <View style={styles.sectionHeader}>
               <Feather name="git-pull-request" size={20} color={theme.primary} />
-              <ThemedText style={styles.sectionTitle}>Sync from Main App</ThemedText>
+              <ThemedText style={styles.sectionTitle}>Test Harness Import</ThemedText>
               <View style={[styles.versionBadge, { backgroundColor: "#10B981" + "20" }]}>
                 <ThemedText style={[styles.versionBadgeText, { color: "#10B981" }]}>
                   Master
@@ -544,14 +544,14 @@ export default function DevScreen() {
               </View>
             </View>
 
-            {appSyncStatus.lastSync ? (
+            {harnessImportStatus.lastSync ? (
               <View style={styles.versionInfo}>
                 <View style={styles.versionRow}>
                   <ThemedText style={[styles.versionLabel, { color: theme.textSecondary }]}>
-                    Last Sync
+                    Last Import
                   </ThemedText>
                   <ThemedText style={styles.versionValue}>
-                    {new Date(appSyncStatus.lastSync).toLocaleDateString()}
+                    {new Date(harnessImportStatus.lastSync).toLocaleDateString()}
                   </ThemedText>
                 </View>
                 <View style={styles.versionRow}>
@@ -559,15 +559,15 @@ export default function DevScreen() {
                     Source
                   </ThemedText>
                   <ThemedText style={[styles.versionValue, { fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: 12 }]}>
-                    {appSyncStatus.mainAppRepo}
+                    {harnessImportStatus.mainAppRepo}
                   </ThemedText>
                 </View>
               </View>
             ) : null}
 
             <Pressable
-              onPress={handleAppSync}
-              disabled={isAppSyncing || !appSyncStatus.repoAccessible}
+              onPress={handleHarnessImport}
+              disabled={isHarnessImporting || !harnessImportStatus.repoAccessible}
               style={({ pressed }) => [
                 styles.optionButton,
                 {
@@ -581,13 +581,13 @@ export default function DevScreen() {
                 <Feather
                   name="download"
                   size={20}
-                  color={isAppSyncing ? theme.textSecondary : "#10B981"}
+                  color={isHarnessImporting ? theme.textSecondary : "#10B981"}
                 />
                 <View style={styles.optionText}>
                   <ThemedText
                     style={[
                       styles.optionTitle,
-                      { color: isAppSyncing ? theme.textSecondary : "#10B981" },
+                      { color: isHarnessImporting ? theme.textSecondary : "#10B981" },
                     ]}
                   >
                     Import from Stellarin
@@ -595,11 +595,11 @@ export default function DevScreen() {
                   <ThemedText
                     style={[styles.optionDescription, { color: theme.textSecondary }]}
                   >
-                    Sync design system, components, and types ({appSyncStatus.syncItems?.length || 0} files)
+                    Import design system, components, and types ({harnessImportStatus.syncItems?.length || 0} files)
                   </ThemedText>
                 </View>
               </View>
-              {isAppSyncing ? (
+              {isHarnessImporting ? (
                 <ActivityIndicator size="small" color={theme.textSecondary} />
               ) : (
                 <Feather name="chevron-right" size={20} color={theme.textSecondary} />
@@ -635,13 +635,13 @@ export default function DevScreen() {
       />
 
       <ConfirmModal
-        visible={showAppSyncModal}
-        title="Sync from Main App"
-        message={`This will import ${appSyncStatus?.syncItems?.length || 0} files from the Stellarin app (design system, components, types). Existing files will be overwritten. Continue?`}
-        confirmText="Sync"
+        visible={showHarnessImportModal}
+        title="Import Test Harness"
+        message={`This will import ${harnessImportStatus?.syncItems?.length || 0} files from the Stellarin app (design system, components, types). Existing files will be overwritten. Continue?`}
+        confirmText="Import"
         cancelText="Cancel"
-        onConfirm={handleConfirmAppSync}
-        onCancel={() => setShowAppSyncModal(false)}
+        onConfirm={handleConfirmHarnessImport}
+        onCancel={() => setShowHarnessImportModal(false)}
       />
 
       <AlertModal
