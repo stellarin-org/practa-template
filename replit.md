@@ -121,12 +121,19 @@ export default function MyPracta({ showSettings, onSettings }: PractaProps) {
 }
 ```
 
+## AI Metadata
+
+Every Practa must declare two AI-related values:
+
+1. **`requiresAI`** (top-level, required) — `true` if the Practa cannot function without AI, `false` otherwise. This is a factual declaration about the Practa.
+2. **`aiEnabled`** (in `configSchema.fields`, required) — A boolean toggle that lets users turn AI features on/off at runtime. Default `true`. Even Practas that don't require AI should include this so they can optionally leverage AI enhancements.
+
 ## Documentation
 
 See `docs/practa-developer-guide.md` for:
 - Component contract (props, onComplete, onSkip, showSettings, onSettings)
 - Header configuration (usePractaChrome, useHeaderHeight)
-- Metadata schema
+- Metadata schema (including `requiresAI` and `aiEnabled`)
 - Storage API
 - Best practices
 - Complete examples
