@@ -85,7 +85,7 @@ export async function downloadRepoZip(repo: string, branch: string): Promise<Buf
   }
 }
 
-export interface RegistryEntry {
+export interface PublishedPractaInfo {
   slug: string;
   version: string;
   buildId: string;
@@ -99,16 +99,8 @@ export interface RegistryEntry {
   estimatedDuration: number;
   assets?: Record<string, string>;
   dependencies?: string[];
-}
-
-export interface PublishedPractaInfo extends RegistryEntry {
   publishedAt: string;
   createdAt: string;
-}
-
-export interface PractaRegistry {
-  registryVersion: string;
-  practas: RegistryEntry[];
 }
 
 const VERIFICATION_SERVICE_URL = "https://stellarin-practa-verification.replit.app";
@@ -129,14 +121,6 @@ export async function fetchPublishedInfo(slug: string): Promise<PublishedPractaI
     console.warn(`[Verification] Network error fetching published info for ${slug}:`, err);
     return null;
   }
-}
-
-export async function fetchPractaRegistry(): Promise<PractaRegistry | null> {
-  return fetchJsonFile<PractaRegistry>(PRACTA_REPO, "_registry.json");
-}
-
-export function findInRegistry(registry: PractaRegistry, slug: string): RegistryEntry | null {
-  return registry.practas.find(p => p.slug === slug) || null;
 }
 
 export async function fetchRepoPractaMetadata(slug: string): Promise<Record<string, unknown> | null> {

@@ -8,7 +8,7 @@ import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
 import type { PractaFileMetadata } from "@shared/schema";
-import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPractaRegistry, findInRegistry, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type RegistryEntry, type PractaRegistry, type PublishedPractaInfo } from "./github-sync";
+import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type PublishedPractaInfo } from "./github-sync";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
