@@ -594,6 +594,7 @@ ${config.version}
       const localVersion = (localMetadata?.version as string) || "0.0.0";
       
       const registry = await fetchPractaRegistry();
+      const registryAvailable = registry !== null;
       const registryEntry = registry ? findInRegistry(registry, slug) : null;
       
       const repoMetadata = await fetchRepoPractaMetadata(slug);
@@ -605,12 +606,17 @@ ${config.version}
       const hasNewerPublished = publishedVersion ? compareVersions(publishedVersion, localVersion) > 0 : false;
       const hasNewerInRepo = repoVersion ? compareVersions(repoVersion, localVersion) > 0 : false;
       const localIsAhead = publishedVersion ? compareVersions(localVersion, publishedVersion) > 0 : false;
+
+      if (!registryAvailable) {
+        console.warn("Practa sync: Could not fetch registry from GitHub (possible rate limit or network issue)");
+      }
       
       res.json({
         hasLocalPracta: true,
         slug,
         localVersion,
         isPublished,
+        registryAvailable,
         publishedVersion,
         publishedEntry: registryEntry,
         hasNewerPublished,

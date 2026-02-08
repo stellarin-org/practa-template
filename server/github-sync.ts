@@ -48,9 +48,17 @@ export async function fetchFileContent(repo: string, filePath: string, branch?: 
       `https://api.github.com/repos/${repo}/contents/${filePath}${ref}`,
       { headers: { ...GITHUB_HEADERS, "Accept": "application/vnd.github.raw+json" } }
     );
-    if (!response.ok) return null;
+    if (!response.ok) {
+      if (response.status === 403) {
+        console.warn(`[GitHub] Rate limited fetching ${repo}/${filePath} (${response.status})`);
+      } else if (response.status !== 404) {
+        console.warn(`[GitHub] Failed to fetch ${repo}/${filePath} (${response.status})`);
+      }
+      return null;
+    }
     return await response.text();
-  } catch {
+  } catch (err) {
+    console.warn(`[GitHub] Network error fetching ${repo}/${filePath}:`, err);
     return null;
   }
 }

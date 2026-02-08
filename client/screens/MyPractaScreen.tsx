@@ -57,6 +57,7 @@ interface PractaSyncStatus {
   } | null;
   hasNewerPublished: boolean;
   localIsAhead: boolean;
+  registryAvailable: boolean;
   repoVersion: string | null;
   hasNewerInRepo: boolean;
   repoAvailable: boolean;
@@ -440,6 +441,13 @@ export default function MyPractaScreen() {
                   ) : null}
                 </View>
               ) : null}
+            </View>
+          ) : practaSyncStatus && !practaSyncStatus.registryAvailable ? (
+            <View style={styles.publishedInfoRow}>
+              <Feather name="alert-circle" size={16} color="#D97706" />
+              <ThemedText style={[styles.publishedInfoText, { color: "#D97706" }]}>
+                Unable to check published status (registry unavailable)
+              </ThemedText>
             </View>
           ) : (
             <View style={styles.publishedInfoRow}>
