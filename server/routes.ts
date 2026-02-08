@@ -52,7 +52,9 @@ function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
     errors.push("description is required and must be a string");
   }
   
-  if (!metadata.author || typeof metadata.author !== "string") {
+  if (metadata.author === null && isMasterTemplate()) {
+    // Master template allows null author
+  } else if (!metadata.author || typeof metadata.author !== "string") {
     errors.push("author is required and must be a string");
   }
   
@@ -83,11 +85,24 @@ function validateMetadata(data: unknown): { valid: boolean; errors: string[] } {
   return { valid: errors.length === 0, errors };
 }
 
+function resolveAuthor(): string {
+  return process.env.REPL_OWNER || "Anonymous";
+}
+
+function isMasterTemplate(): boolean {
+  const masterKey = process.env.MASTER_TEMPLATE_KEY;
+  return typeof masterKey === "string" && masterKey.length > 0;
+}
+
 function readConfig(): PractaFileMetadata | null {
   try {
     if (fs.existsSync(METADATA_PATH)) {
       const content = fs.readFileSync(METADATA_PATH, "utf-8");
-      return JSON.parse(content);
+      const config = JSON.parse(content);
+      if (!config.author && !isMasterTemplate()) {
+        config.author = resolveAuthor();
+      }
+      return config;
     }
   } catch (error) {
     console.error("Error reading metadata.json:", error);
