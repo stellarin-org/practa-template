@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -52,6 +53,7 @@ export default function SubmitScreen() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [copiedValidation, setCopiedValidation] = useState(false);
 
   const { data: metadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -62,6 +64,18 @@ export default function SubmitScreen() {
   const hasErrors = !validationReport.isValid;
   const errorCount = validationReport.errors.length;
   const warningCount = validationReport.warnings.length;
+
+  const handleCopyValidationForAI = async () => {
+    const errors = validationReport.errors.map(e => `- ${e.message}`).join("\n");
+    const warnings = validationReport.warnings.map(w => `- ${w.message}`).join("\n");
+    let message = `Fix the following validation issues in my Practa (client/my-practa/):\n\n`;
+    if (errors) message += `Errors:\n${errors}\n\n`;
+    if (warnings) message += `Warnings:\n${warnings}\n`;
+    await Clipboard.setStringAsync(message.trim());
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedValidation(true);
+    setTimeout(() => setCopiedValidation(false), 2000);
+  };
 
   const handleSubmit = async () => {
     if (hasErrors) return;
@@ -191,16 +205,33 @@ export default function SubmitScreen() {
             ) : null}
           </View>
 
-          {validationReport.errors.length > 0 ? (
+          {validationReport.errors.length > 0 || validationReport.warnings.length > 0 ? (
             <View style={styles.errorList}>
               {validationReport.errors.map((error, index) => (
-                <View key={index} style={styles.errorItem}>
+                <View key={`err-${index}`} style={styles.errorItem}>
                   <Feather name="x-circle" size={14} color={theme.error} />
                   <ThemedText style={[styles.errorMessage, { color: theme.error }]}>
                     {error.message}
                   </ThemedText>
                 </View>
               ))}
+              {validationReport.warnings.map((warning, index) => (
+                <View key={`warn-${index}`} style={styles.errorItem}>
+                  <Feather name="alert-circle" size={14} color={theme.warning} />
+                  <ThemedText style={[styles.errorMessage, { color: theme.textSecondary }]}>
+                    {warning.message}
+                  </ThemedText>
+                </View>
+              ))}
+              <Pressable
+                onPress={handleCopyValidationForAI}
+                style={[styles.copyForAIButton, { backgroundColor: theme.primary + "15", borderColor: theme.primary + "30" }]}
+              >
+                <Feather name={copiedValidation ? "check" : "copy"} size={14} color={theme.primary} />
+                <ThemedText style={[styles.copyForAIText, { color: theme.primary }]}>
+                  {copiedValidation ? "Copied" : "Copy for AI"}
+                </ThemedText>
+              </Pressable>
             </View>
           ) : null}
         </Card>
@@ -523,5 +554,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  copyForAIButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  copyForAIText: {
+    fontSize: 13,
+    fontWeight: "500",
   },
 });

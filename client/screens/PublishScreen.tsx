@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 import * as WebBrowser from "expo-web-browser";
 import { useQuery } from "@tanstack/react-query";
 
@@ -48,6 +49,7 @@ export default function PublishScreen() {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [copiedValidation, setCopiedValidation] = useState(false);
 
   const { data: metadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -58,6 +60,18 @@ export default function PublishScreen() {
   const hasErrors = !validationReport.isValid;
   const errorCount = validationReport.errors.length;
   const warningCount = validationReport.warnings.length;
+
+  const handleCopyValidationForAI = async () => {
+    const errors = validationReport.errors.map(e => `- ${e.message}`).join("\n");
+    const warnings = validationReport.warnings.map(w => `- ${w.message}`).join("\n");
+    let message = `Fix the following validation issues in my Practa (client/my-practa/):\n\n`;
+    if (errors) message += `Errors:\n${errors}\n\n`;
+    if (warnings) message += `Warnings:\n${warnings}\n`;
+    await Clipboard.setStringAsync(message.trim());
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setCopiedValidation(true);
+    setTimeout(() => setCopiedValidation(false), 2000);
+  };
 
   const handleSubmit = async () => {
     if (hasErrors) return;
@@ -196,6 +210,36 @@ export default function PublishScreen() {
               </View>
             ) : null}
           </View>
+
+          {errorCount > 0 || warningCount > 0 ? (
+            <View style={styles.errorDetails}>
+              {validationReport.errors.map((result, i) => (
+                <View key={`err-${i}`} style={styles.errorDetailRow}>
+                  <Feather name="x-circle" size={14} color={theme.error} />
+                  <ThemedText style={[styles.errorDetailText, { color: theme.error }]}>
+                    {result.message}
+                  </ThemedText>
+                </View>
+              ))}
+              {validationReport.warnings.map((result, i) => (
+                <View key={`warn-${i}`} style={styles.errorDetailRow}>
+                  <Feather name="alert-circle" size={14} color={theme.warning} />
+                  <ThemedText style={[styles.errorDetailText, { color: theme.textSecondary }]}>
+                    {result.message}
+                  </ThemedText>
+                </View>
+              ))}
+              <Pressable
+                onPress={handleCopyValidationForAI}
+                style={[styles.copyForAIButton, { backgroundColor: theme.primary + "15", borderColor: theme.primary + "30" }]}
+              >
+                <Feather name={copiedValidation ? "check" : "copy"} size={14} color={theme.primary} />
+                <ThemedText style={[styles.copyForAIText, { color: theme.primary }]}>
+                  {copiedValidation ? "Copied" : "Copy for AI"}
+                </ThemedText>
+              </Pressable>
+            </View>
+          ) : null}
         </Card>
 
         {submitState === "success" && submitResult ? (
@@ -547,6 +591,38 @@ const styles = StyleSheet.create({
   },
   downloadLinkText: {
     fontSize: 14,
+    fontWeight: "500",
+  },
+  errorDetails: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.1)",
+  },
+  errorDetailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  errorDetailText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  copyForAIButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  copyForAIText: {
+    fontSize: 13,
     fontWeight: "500",
   },
 });
