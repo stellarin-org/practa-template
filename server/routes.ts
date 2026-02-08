@@ -8,10 +8,10 @@ import AdmZip from "adm-zip";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
 import { updatePractaAssets } from "./index";
 import type { PractaFileMetadata } from "@shared/schema";
+import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPractaRegistry, findInRegistry, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type RegistryEntry, type PractaRegistry } from "./github-sync";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
-const TEMPLATE_REPO = "stellarin-org/practa-template";
 const PROTECTED_PATHS = TEMPLATE_SYNC_CONFIG.protectedPaths;
 const MY_PRACTA_PATH = "client/my-practa";
 const DEMO_TEMPLATE_PATH = "demo-template";
@@ -562,20 +562,200 @@ ${config.version}
   app.get("/api/practa/published-info/:slug", async (req, res) => {
     const { slug } = req.params;
     try {
-      const response = await fetch(
-        `https://stellarin-practa-verification.replit.app/api/practa/${slug}/info`
-      );
-      if (!response.ok) {
-        if (response.status === 404) {
-          return res.status(404).json({ error: "Not found" });
-        }
-        return res.status(response.status).json({ error: "Failed to fetch" });
+      const registry = await fetchPractaRegistry();
+      if (!registry) {
+        return res.status(503).json({ error: "Practa registry not available" });
       }
-      const data = await response.json();
-      res.json(data);
+      const entry = findInRegistry(registry, slug);
+      if (!entry) {
+        return res.status(404).json({ error: "Not found" });
+      }
+      res.json(entry);
     } catch (error) {
       console.error("Error fetching published info:", error);
       res.status(500).json({ error: "Failed to fetch published info" });
+    }
+  });
+
+  app.get("/api/practa/sync-status", async (req, res) => {
+    try {
+      const localMetadata = readLocalMetadata();
+      const slug = localMetadata?.id as string;
+      
+      if (!slug) {
+        return res.json({
+          hasLocalPracta: true,
+          isPublished: false,
+          repoAvailable: false,
+          slug: null,
+        });
+      }
+      
+      const localVersion = (localMetadata?.version as string) || "0.0.0";
+      
+      const registry = await fetchPractaRegistry();
+      const registryEntry = registry ? findInRegistry(registry, slug) : null;
+      
+      const repoMetadata = await fetchRepoPractaMetadata(slug);
+      const repoVersion = repoMetadata ? (repoMetadata.version as string) || null : null;
+      
+      const publishedVersion = registryEntry?.version || null;
+      const isPublished = !!registryEntry;
+      
+      const hasNewerPublished = publishedVersion ? compareVersions(publishedVersion, localVersion) > 0 : false;
+      const hasNewerInRepo = repoVersion ? compareVersions(repoVersion, localVersion) > 0 : false;
+      const localIsAhead = publishedVersion ? compareVersions(localVersion, publishedVersion) > 0 : false;
+      
+      res.json({
+        hasLocalPracta: true,
+        slug,
+        localVersion,
+        isPublished,
+        publishedVersion,
+        publishedEntry: registryEntry,
+        hasNewerPublished,
+        localIsAhead,
+        repoVersion,
+        hasNewerInRepo,
+        repoAvailable: !!repoMetadata,
+        repoUrl: `https://github.com/stellarin-org/stellarin-practa/tree/main/practas/${slug}`,
+        registryUrl: "https://github.com/stellarin-org/stellarin-practa/blob/main/_registry.json",
+      });
+    } catch (error) {
+      console.error("Practa sync status error:", error);
+      res.json({
+        hasLocalPracta: true,
+        isPublished: false,
+        repoAvailable: false,
+        slug: null,
+        error: "Failed to check sync status",
+      });
+    }
+  });
+
+  const TEXT_EXTENSIONS = new Set([".tsx", ".ts", ".json", ".txt", ".md", ".js", ".jsx", ".css"]);
+  const BINARY_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".mp3", ".wav", ".mp4", ".webm", ".m4a", ".ogg", ".mov"]);
+
+  app.post("/api/practa/sync", async (req, res) => {
+    try {
+      const localMetadata = readLocalMetadata();
+      const slug = localMetadata?.id as string;
+      
+      if (!slug) {
+        return res.status(400).json({ error: "No Practa ID found in local metadata.json" });
+      }
+      
+      const repoFiles = await listPractaFiles(slug);
+      if (!repoFiles || repoFiles.length === 0) {
+        return res.status(404).json({ error: `Practa "${slug}" not found in repository` });
+      }
+      
+      const practaDir = path.resolve(process.cwd(), "client/my-practa");
+      const assetsDir = path.join(practaDir, "assets");
+      
+      if (!fs.existsSync(practaDir)) {
+        fs.mkdirSync(practaDir, { recursive: true });
+      }
+      if (!fs.existsSync(assetsDir)) {
+        fs.mkdirSync(assetsDir, { recursive: true });
+      }
+      
+      const updatedFiles: string[] = [];
+      const errors: string[] = [];
+
+      async function downloadFile(filePath: string, destPath: string, fileName: string, displayName: string) {
+        const ext = path.extname(fileName).toLowerCase();
+        const isText = TEXT_EXTENSIONS.has(ext);
+        const isBinary = BINARY_EXTENSIONS.has(ext);
+
+        if (isText || (!isBinary && !ext)) {
+          const content = await fetchFileContent(PRACTA_REPO, filePath);
+          if (content !== null) {
+            fs.writeFileSync(destPath, content);
+            updatedFiles.push(displayName);
+          }
+        } else {
+          const rawUrl = `https://raw.githubusercontent.com/${PRACTA_REPO}/main/${filePath}`;
+          const resp = await fetch(rawUrl);
+          if (resp.ok) {
+            const arrayBuf = await resp.arrayBuffer();
+            fs.writeFileSync(destPath, Buffer.from(arrayBuf));
+            updatedFiles.push(displayName);
+          }
+        }
+      }
+      
+      for (const file of repoFiles) {
+        if (file.type === "dir") {
+          const subFiles = await listPractaFiles(`${slug}/${file.name}`);
+          if (subFiles) {
+            const subDir = path.join(practaDir, file.name);
+            if (!fs.existsSync(subDir)) {
+              fs.mkdirSync(subDir, { recursive: true });
+            }
+            for (const subFile of subFiles) {
+              if (subFile.type !== "file") continue;
+              try {
+                await downloadFile(subFile.path, path.join(subDir, subFile.name), subFile.name, `${file.name}/${subFile.name}`);
+              } catch (e) {
+                errors.push(`Failed to fetch ${file.name}/${subFile.name}`);
+              }
+            }
+          }
+          continue;
+        }
+        
+        if (file.type !== "file") continue;
+        
+        try {
+          await downloadFile(file.path, path.join(practaDir, file.name), file.name, file.name);
+        } catch (e) {
+          errors.push(`Failed to fetch ${file.name}`);
+        }
+      }
+      
+      const { updatePractaAssets } = await import("./index");
+      updatePractaAssets();
+      
+      const missingPackages: string[] = [];
+      try {
+        const newMetadata = readLocalMetadata();
+        const deps = (newMetadata?.dependencies as string[]) || [];
+        if (deps.length > 0) {
+          const packageJsonPath = path.resolve(process.cwd(), "package.json");
+          if (fs.existsSync(packageJsonPath)) {
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+            const installed = { ...packageJson.dependencies, ...packageJson.devDependencies };
+            for (const pkg of deps) {
+              if (!installed[pkg]) {
+                missingPackages.push(pkg);
+              }
+            }
+          }
+        }
+      } catch {}
+      
+      const syncResponse: Record<string, unknown> = {
+        success: true,
+        updatedFiles,
+        errors: errors.length > 0 ? errors : undefined,
+        message: errors.length > 0
+          ? `Synced ${updatedFiles.length} files with ${errors.length} errors`
+          : `Successfully synced ${updatedFiles.length} files from repository`,
+      };
+      
+      if (missingPackages.length > 0) {
+        syncResponse.missingPackages = missingPackages;
+        syncResponse.installCommand = `npx expo install ${missingPackages.join(" ")}`;
+      }
+      
+      res.json(syncResponse);
+    } catch (error) {
+      console.error("Practa sync error:", error);
+      res.status(500).json({
+        error: "Failed to sync Practa",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   });
 
@@ -586,12 +766,9 @@ ${config.version}
       const masterKey = process.env.MASTER_TEMPLATE_KEY;
       const isMasterTemplate = typeof masterKey === "string" && masterKey.length > 0;
       
-      const repoResponse = await fetch(
-        `https://api.github.com/repos/${TEMPLATE_REPO}`,
-        { headers: { "Accept": "application/vnd.github+json" } }
-      );
+      const repoInfo = await fetchRepoInfo(TEMPLATE_REPO);
       
-      if (!repoResponse.ok) {
+      if (!repoInfo || !repoInfo.available) {
         return res.json({
           isInSync: true,
           localVersion: null,
@@ -602,15 +779,11 @@ ${config.version}
         });
       }
       
-      const repoData = await repoResponse.json();
-      const defaultBranch = repoData.default_branch || "main";
+      const defaultBranch = repoInfo.defaultBranch;
       
-      const branchResponse = await fetch(
-        `https://api.github.com/repos/${TEMPLATE_REPO}/branches/${defaultBranch}`,
-        { headers: { "Accept": "application/vnd.github+json" } }
-      );
+      const latestSha = await fetchLatestSha(TEMPLATE_REPO, defaultBranch);
       
-      if (!branchResponse.ok) {
+      if (!latestSha) {
         return res.json({
           isInSync: true,
           localVersion: null,
@@ -620,9 +793,6 @@ ${config.version}
           isMasterTemplate,
         });
       }
-      
-      const branchData = await branchResponse.json();
-      const latestSha = branchData.commit.sha;
       
       // Get local template version from app.json
       let localTemplateVersion = "1.0.0";
@@ -634,18 +804,10 @@ ${config.version}
         }
       } catch {}
       
-      // Get latest template version from GitHub (use API to avoid raw.githubusercontent CDN cache)
       let latestTemplateVersion = localTemplateVersion;
       try {
-        const appJsonUrl = `https://api.github.com/repos/${TEMPLATE_REPO}/contents/app.json?ref=${defaultBranch}`;
-        const appJsonResponse = await fetch(appJsonUrl, {
-          headers: { 
-            "Accept": "application/vnd.github.raw+json",
-            "Cache-Control": "no-cache"
-          }
-        });
-        if (appJsonResponse.ok) {
-          const remoteAppJson = await appJsonResponse.json();
+        const remoteAppJson = await fetchJsonFile<{ expo?: { version?: string } }>(TEMPLATE_REPO, "app.json", defaultBranch);
+        if (remoteAppJson) {
           latestTemplateVersion = remoteAppJson.expo?.version || localTemplateVersion;
         }
       } catch {}
@@ -700,17 +862,6 @@ ${config.version}
       const isInSync = isMasterTemplate 
         ? (gitHeadSha === latestSha)
         : (localSha === latestSha);
-      
-      // Compare semantic versions to determine if update is actually newer
-      const compareVersions = (a: string, b: string): number => {
-        const pa = a.split('.').map(Number);
-        const pb = b.split('.').map(Number);
-        for (let i = 0; i < 3; i++) {
-          if ((pa[i] || 0) > (pb[i] || 0)) return 1;
-          if ((pa[i] || 0) < (pb[i] || 0)) return -1;
-        }
-        return 0;
-      };
       
       const hasNewerVersion = compareVersions(latestTemplateVersion, localTemplateVersion) > 0;
       
@@ -814,53 +965,31 @@ ${config.version}
 
   app.post("/api/template/update", async (req, res) => {
     try {
-      // Add cache-busting headers to bypass GitHub CDN cache
-      const githubHeaders = { 
-        "Accept": "application/vnd.github+json",
-        "Cache-Control": "no-cache, no-store, must-revalidate"
-      };
+      const repoInfo = await fetchRepoInfo(TEMPLATE_REPO);
       
-      const repoResponse = await fetch(
-        `https://api.github.com/repos/${TEMPLATE_REPO}`,
-        { headers: githubHeaders }
-      );
-      
-      if (!repoResponse.ok) {
+      if (!repoInfo || !repoInfo.available) {
         return res.status(500).json({ 
           error: "Template repository not available" 
         });
       }
       
-      const repoData = await repoResponse.json();
-      const defaultBranch = repoData.default_branch || "main";
+      const defaultBranch = repoInfo.defaultBranch;
       
-      const branchResponse = await fetch(
-        `https://api.github.com/repos/${TEMPLATE_REPO}/branches/${defaultBranch}`,
-        { headers: githubHeaders }
-      );
+      const latestSha = await fetchLatestSha(TEMPLATE_REPO, defaultBranch);
       
-      if (!branchResponse.ok) {
+      if (!latestSha) {
         return res.status(500).json({ 
           error: "Failed to fetch template info" 
         });
       }
       
-      const branchData = await branchResponse.json();
-      const latestSha = branchData.commit.sha;
+      const zipBuffer = await downloadRepoZip(TEMPLATE_REPO, defaultBranch);
       
-      const archiveUrl = `https://api.github.com/repos/${TEMPLATE_REPO}/zipball/${defaultBranch}`;
-      const archiveResponse = await fetch(archiveUrl, {
-        headers: githubHeaders
-      });
-      
-      if (!archiveResponse.ok) {
+      if (!zipBuffer) {
         return res.status(500).json({ 
           error: "Failed to download template" 
         });
       }
-      
-      const arrayBuffer = await archiveResponse.arrayBuffer();
-      const zipBuffer = Buffer.from(arrayBuffer);
       
       const zip = new AdmZip(zipBuffer);
       const zipEntries = zip.getEntries();
