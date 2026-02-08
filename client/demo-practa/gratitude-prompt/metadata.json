@@ -5,6 +5,7 @@
   "description": "A simple reflection exercise to cultivate gratitude and appreciation",
   "author": "Stellarin",
   "estimatedDuration": 30,
+  "requiresAI": false,
   "category": "reflection",
   "tags": ["gratitude", "journaling", "reflection", "mindfulness"],
   "assets": {

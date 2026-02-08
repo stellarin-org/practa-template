@@ -5,6 +5,7 @@
   "description": "A calming breathing exercise to help you center yourself and find peace",
   "author": "Stellarin",
   "estimatedDuration": 60,
+  "requiresAI": false,
   "category": "breathwork",
   "tags": ["breathing", "calm", "mindfulness", "relaxation"],
   "assets": {
