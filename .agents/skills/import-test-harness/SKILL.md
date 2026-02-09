@@ -101,7 +101,38 @@ For each breaking change found:
 3. Pay special attention to `client/my-practa/index.tsx` and `client/my-practa/metadata.json`
 4. Also check `client/screens/`, `client/components/`, and `server/` for usages
 
-### 3b: Identify New Features and Enhancements
+### 3b: Check for Missing Dependencies (New Files Needed)
+
+After diffing, scan every imported file for `@/` imports and check whether each dependency is either:
+1. Already in the harness import config (`.config/harness-import.config.json`)
+2. A file that exists locally in the template
+
+```bash
+# Extract all @/ imports from harness-managed files
+for f in <list of harness files>; do
+  grep -E "^import .* from ['\"]@/" "$f" 2>/dev/null | sed "s/.*from ['\"]//;s/['\"].*//"
+done | sort -u
+```
+
+Compare this list against the `syncItems[].to` paths in the harness config (strip `client/` prefix to match `@/` aliases).
+
+For each dependency that is **not** in the config and **does not** exist locally:
+
+1. **Evaluate whether it should be imported** — Is it a core utility the template needs? Or is it Stellarin-app-specific logic that doesn't belong in the template?
+2. **If it should be imported**: Add a request to `docs/harness-dev-change-requests.md` asking the harness dev to add it to the import config
+3. **If a stub is appropriate**: Create a minimal stub locally with just the exports the imported file needs. Document the stub in the change requests file so the harness dev knows we're maintaining it
+4. **If it should be removed from the imported file**: Add a request asking the harness dev to remove the import or make it conditional
+
+**Decision criteria:**
+
+| Situation | Action |
+|---|---|
+| File contains types/interfaces used by template screens | Request import |
+| File contains business logic specific to Stellarin flows | Create stub with just the types/exports needed |
+| File is a utility used by one harness file in a minor way | Create stub |
+| File is a new core module (storage, config, theme) | Request import |
+
+### 3c: Identify New Features and Enhancements
 
 Look for:
 - New exported types, interfaces, or components
