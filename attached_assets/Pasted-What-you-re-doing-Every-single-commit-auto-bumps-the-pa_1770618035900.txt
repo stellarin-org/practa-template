@@ -1,0 +1,25 @@
+What you're doing: Every single commit auto-bumps the patch version. You're at 2.5.2+ already, which implies dozens of "releases" — but most of those commits are just development work, not meaningful version changes.
+
+Why this is non-standard: In industry practice, version numbers are meaningful. Semantic versioning (semver) says:
+
+Patch (1.0.X) = bug fix
+Minor (1.X.0) = new feature, backward compatible
+Major (X.0.0) = breaking change
+Bumping on every commit treats the version like a build counter, not a version. You lose the ability to communicate "this update matters" vs "I fixed a typo."
+
+What the industry actually does:
+
+Conventional Commits — Commit messages follow a pattern (feat: add breathing timer, fix: splash screen crash). Tools like semantic-release or changesets read those messages and decide what kind of bump to do. No bump for chore: or docs: commits.
+
+Version on release, not on commit — You might have 30 commits between v1.0.0 and v1.1.0. The version bumps when you publish, not while you're developing.
+
+Separate version vs. build number — Mobile apps do this: version 1.2.0 is human-meaningful, build number 147 auto-increments. What you're calling "version" is actually behaving like a build number.
+
+For your specific case (Practa components that get published to a registry), I think the right approach is:
+
+Stop bumping on every commit. It creates noise and inflates version numbers.
+Bump at publish/submit time. When the developer hits "Submit Practa," that's when the version should increment — because that's when a new version actually matters to the outside world.
+Let the developer choose bump type. On submit, ask: "Is this a patch, minor, or major update?" Or infer it from conventional commit messages since the last publish.
+This way version 1.3.0 actually means something — it's the third feature release, not the 130th random commit.
+
+Want me to refactor the versioning system to bump on submission rather than on every commit? I can also add conventional commit parsing if you want automatic bump-type detection.
