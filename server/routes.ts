@@ -12,6 +12,7 @@ import { validateMetadataFields } from "@shared/metadata-schema";
 import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type PublishedPractaInfo } from "./github-sync";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
+const VERSION_PATH = path.resolve(process.cwd(), "client/my-practa/version.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
 const PROTECTED_PATHS = TEMPLATE_SYNC_CONFIG.protectedPaths;
 const MY_PRACTA_PATH = "client/my-practa";
@@ -53,11 +54,23 @@ function isMasterTemplate(): boolean {
   return typeof masterKey === "string" && masterKey.length > 0;
 }
 
+function readVersion(): string {
+  try {
+    if (fs.existsSync(VERSION_PATH)) {
+      const data = JSON.parse(fs.readFileSync(VERSION_PATH, "utf-8"));
+      return data.version || "1.0.0";
+    }
+  } catch {
+  }
+  return "1.0.0";
+}
+
 function readConfig(): PractaFileMetadata | null {
   try {
     if (fs.existsSync(METADATA_PATH)) {
       const content = fs.readFileSync(METADATA_PATH, "utf-8");
       const config = JSON.parse(content);
+      config.version = readVersion();
       if (!config.author && !isMasterTemplate()) {
         config.author = resolveAuthor();
       }
@@ -74,8 +87,8 @@ function writeConfig(updates: Partial<PractaFileMetadata>): boolean {
     const existing = fs.existsSync(METADATA_PATH)
       ? JSON.parse(fs.readFileSync(METADATA_PATH, "utf-8"))
       : {};
-    const merged = { ...existing, ...updates };
-    fs.writeFileSync(METADATA_PATH, JSON.stringify(merged, null, 2) + "\n");
+    const { version: _version, ...rest } = { ...existing, ...updates };
+    fs.writeFileSync(METADATA_PATH, JSON.stringify(rest, null, 2) + "\n");
     return true;
   } catch (error) {
     console.error("Error writing metadata.json:", error);
@@ -247,6 +260,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Check name error:", error);
       res.status(500).json({ error: "Failed to check name availability" });
     }
+  });
+
+  app.get("/api/practa/version", (_req, res) => {
+    res.json({ version: readVersion() });
   });
 
   app.get("/api/practa/metadata", (req, res) => {
