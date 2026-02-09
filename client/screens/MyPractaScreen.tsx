@@ -20,7 +20,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { apiRequest } from "@/lib/query-client";
-import { hasSplash, isSplashVideo, getSplashSource, getSplashVideoSource } from "@/lib/practa-assets";
+import { hasSplash, getSplashSource } from "@/lib/practa-assets";
 import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
 
 interface SyncStatus {

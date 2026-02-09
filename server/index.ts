@@ -115,12 +115,7 @@ export function updatePractaAssets() {
         try {
           const stat = fs.statSync(assetPath);
           if (stat.isFile()) {
-            // If splash key points to a video file, register as splashVideo
-            const ext = path.extname(filename).toLowerCase();
-            const isVideoFile = [".mp4", ".webm", ".mov"].includes(ext);
-            const registryKey = key === "splash" && isVideoFile ? "splashVideo" : key;
-            
-            assetLines.push(`    ${registryKey}: require("${practa.relativePath}/assets/${filename}"),`);
+            assetLines.push(`    ${key}: require("${practa.relativePath}/assets/${filename}"),`);
             totalAssets++;
           } else {
             console.warn(`[Assets] ${practa.id}: Path "${filename}" for key "${key}" is a directory, not a file`);
@@ -159,9 +154,9 @@ export function updatePractaAssets() {
  */
 
 import { ImageSourcePropType } from "react-native";
-import { ResolvedAssets } from "@/types/flow";
 
 type AssetSource = number | { uri: string };
+type ResolvedAssets = Record<string, AssetSource>;
 
 const assetRegistry: Record<string, Record<string, AssetSource>> = {
 ${registryBlock}
@@ -174,26 +169,13 @@ export function resolveAssets(practaId: string = "my-practa"): ResolvedAssets {
 
 export function hasSplash(practaId: string = "my-practa"): boolean {
   const assets = assetRegistry[practaId];
-  return assets ? ("splash" in assets || "splashVideo" in assets) : false;
+  return assets ? "splash" in assets : false;
 }
 
-export function isSplashVideo(practaId: string = "my-practa"): boolean {
-  const assets = assetRegistry[practaId];
-  return assets ? "splashVideo" in assets : false;
-}
-
-export function getSplashSource(practaId: string = "my-practa"): ImageSourcePropType | null {
+export function getSplashSource(practaId: string = "my-practa"): AssetSource | null {
   const assets = assetRegistry[practaId];
   if (assets && "splash" in assets) {
-    return assets.splash as ImageSourcePropType;
-  }
-  return null;
-}
-
-export function getSplashVideoSource(practaId: string = "my-practa"): number | { uri: string } | null {
-  const assets = assetRegistry[practaId];
-  if (assets && "splashVideo" in assets) {
-    return assets.splashVideo as number | { uri: string };
+    return assets.splash;
   }
   return null;
 }
