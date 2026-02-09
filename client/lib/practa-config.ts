@@ -1,19 +1,95 @@
-export interface JournalConfig {
-  promptStyle?: "guided" | "free" | "structured";
-  maxEntryLength?: number;
+import { z } from "zod";
+import React from "react";
+
+export const JournalConfigSchema = z.object({
+  prompt: z.string().max(100).optional(),
+  aiEnabled: z.boolean().optional(),
+});
+
+export const PractaPickerConfigSchema = z.object({
+  title: z.string().optional(),
+  eligiblePracta: z.array(z.string()).min(1, "Select at least one activity"),
+  autoPickRandom: z.boolean().optional(),
+  aiEnabled: z.boolean().optional(),
+});
+
+export type JournalConfig = z.infer<typeof JournalConfigSchema>;
+export type PractaPickerConfig = z.infer<typeof PractaPickerConfigSchema>;
+
+export interface PractaConfigMeta<T = unknown> {
+  schema: z.ZodType<T>;
+  defaultConfig: T;
+  isRequired: boolean;
+  Editor: React.ComponentType<ConfigEditorProps<T>>;
 }
 
-export interface PractaPickerConfig {
-  allowMultiple?: boolean;
-  categories?: string[];
+export interface ConfigEditorProps<T = unknown> {
+  config: T;
+  onChange: (config: T) => void;
 }
 
-const PRACTA_TYPES_REQUIRING_CONFIG: string[] = ["journal", "practa-picker"];
+const CONFIG_REGISTRY: Record<string, PractaConfigMeta<unknown>> = {};
 
-export function practaHasConfig(type: string): boolean {
-  return PRACTA_TYPES_REQUIRING_CONFIG.includes(type);
+export function registerPractaConfig<T>(
+  practaType: string,
+  meta: PractaConfigMeta<T>
+): void {
+  CONFIG_REGISTRY[practaType] = meta as PractaConfigMeta<unknown>;
 }
 
-export function practaConfigIsRequired(type: string): boolean {
-  return PRACTA_TYPES_REQUIRING_CONFIG.includes(type);
+export function getPractaConfigMeta(practaType: string): PractaConfigMeta<unknown> | undefined {
+  return CONFIG_REGISTRY[practaType];
+}
+
+export function practaHasConfig(practaType: string): boolean {
+  return practaType in CONFIG_REGISTRY;
+}
+
+export function practaConfigIsRequired(practaType: string): boolean {
+  const meta = CONFIG_REGISTRY[practaType];
+  return meta?.isRequired ?? false;
+}
+
+export function getDefaultConfig(practaType: string): Record<string, unknown> {
+  const meta = CONFIG_REGISTRY[practaType];
+  return (meta?.defaultConfig ?? {}) as Record<string, unknown>;
+}
+
+export function validateConfig(practaType: string, config: unknown): { success: true; data: unknown } | { success: false; error: string } {
+  const meta = CONFIG_REGISTRY[practaType];
+  if (!meta) {
+    return { success: true, data: config };
+  }
+  
+  const result = meta.schema.safeParse(config);
+  if (result.success) {
+    return { success: true, data: result.data };
+  }
+  
+  const firstError = result.error.errors[0];
+  return { success: false, error: firstError?.message || "Invalid configuration" };
+}
+
+export function canSaveConfig(practaType: string, config: unknown): boolean {
+  const meta = CONFIG_REGISTRY[practaType];
+  if (!meta) return true;
+  
+  if (!meta.isRequired) return true;
+  
+  return meta.schema.safeParse(config).success;
+}
+
+export function getConfigEditor(practaType: string): React.ComponentType<ConfigEditorProps<unknown>> | undefined {
+  const meta = CONFIG_REGISTRY[practaType];
+  return meta?.Editor;
+}
+
+export function getRegisteredConfigTypes(): string[] {
+  return Object.keys(CONFIG_REGISTRY);
+}
+
+export function isPractaAIEnabled(config?: Record<string, unknown>): boolean {
+  if (!config) return true;
+  if (config.aiEnabled === undefined) return true;
+  return config.aiEnabled === true;
 }

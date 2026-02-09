@@ -90,6 +90,8 @@ export interface PreviousPractaContext {
 
 export type PractaAssets = Record<string, unknown>;
 
+export type ResolvedAssets = Record<string, number | { uri: string }>;
+
 export interface PractaContext {
   flowId: string;
   practaIndex: number;
