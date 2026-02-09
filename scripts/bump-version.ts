@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { PractaFileMetadata } from "@shared/schema";
 
+const VERSION_PATH = path.resolve(process.cwd(), "client/my-practa/version.json");
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const PRACTA_INDEX_PATH = path.resolve(process.cwd(), "client/my-practa/index.tsx");
 const APP_JSON_PATH = path.resolve(process.cwd(), "app.json");
@@ -91,28 +92,37 @@ function bumpPatchVersion(version: string): string {
 
 export function bumpMetadataPatch(): { success: boolean; newVersion?: string; detectedDeps?: string[]; error?: string } {
   try {
-    if (!fs.existsSync(METADATA_PATH)) {
-      return { success: false, error: "metadata.json not found" };
+    if (!fs.existsSync(VERSION_PATH)) {
+      fs.writeFileSync(VERSION_PATH, JSON.stringify({ version: "1.0.0" }, null, 2) + "\n");
     }
 
-    const content = fs.readFileSync(METADATA_PATH, "utf-8");
-    const metadata: PractaFileMetadata = JSON.parse(content);
-    
-    const oldVersion = metadata.version;
+    const versionContent = fs.readFileSync(VERSION_PATH, "utf-8");
+    const versionData = JSON.parse(versionContent);
+
+    const oldVersion = versionData.version || "1.0.0";
     const newVersion = bumpPatchVersion(oldVersion);
-    metadata.version = newVersion;
+    versionData.version = newVersion;
+
+    fs.writeFileSync(VERSION_PATH, JSON.stringify(versionData, null, 2) + "\n");
 
     const detectedDeps = detectDependencies();
-    if (detectedDeps.length > 0) {
-      metadata.dependencies = detectedDeps;
-      console.log(`[Version Bump] Auto-detected dependencies: ${detectedDeps.join(", ")}`);
-    } else {
-      delete metadata.dependencies;
+    if (fs.existsSync(METADATA_PATH)) {
+      const metaContent = fs.readFileSync(METADATA_PATH, "utf-8");
+      const metadata = JSON.parse(metaContent);
+      const oldDeps = JSON.stringify(metadata.dependencies || []);
+      const newDeps = detectedDeps.length > 0 ? detectedDeps : undefined;
+      const newDepsStr = JSON.stringify(newDeps || []);
+
+      if (oldDeps !== newDepsStr) {
+        if (newDeps) {
+          metadata.dependencies = newDeps;
+        } else {
+          delete metadata.dependencies;
+        }
+        fs.writeFileSync(METADATA_PATH, JSON.stringify(metadata, null, 2) + "\n");
+        console.log(`[Version Bump] Updated dependencies: ${(newDeps || []).join(", ")}`);
+      }
     }
-
-    const jsonContent = JSON.stringify(metadata, null, 2) + "\n";
-
-    fs.writeFileSync(METADATA_PATH, jsonContent);
 
     console.log(`[Version Bump] ${oldVersion} -> ${newVersion}`);
     return { success: true, newVersion, detectedDeps };
