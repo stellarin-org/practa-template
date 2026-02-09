@@ -51,10 +51,17 @@ export default function PublishScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copiedValidation, setCopiedValidation] = useState(false);
   const [releaseType, setReleaseType] = useState<"major" | "minor" | "patch">("patch");
+  const [bumpResult, setBumpResult] = useState<{ previousVersion?: string; newVersion?: string; releaseType?: string } | null>(null);
 
-  const { data: metadata } = useQuery<PractaFileMetadata>({
+  const { data: metadata, refetch: refetchMetadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
+
+  const { data: syncStatus } = useQuery<{ isMasterTemplate?: boolean }>({
+    queryKey: ["/api/template/sync-status"],
+  });
+
+  const isMasterTemplate = syncStatus?.isMasterTemplate === true;
 
   const validationReport = usePractaValidation();
 
@@ -82,7 +89,8 @@ export default function PublishScreen() {
     setSubmitError(null);
     
     try {
-      const response = await fetch(new URL("/api/practa/submit", getApiUrl()).toString(), {
+      const endpoint = isMasterTemplate ? "/api/practa/bump-version" : "/api/practa/submit";
+      const response = await fetch(new URL(endpoint, getApiUrl()).toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,18 +101,23 @@ export default function PublishScreen() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || data.message || data.details || "Submission failed");
+        throw new Error(data.error || data.message || data.details || "Failed");
       }
-      
-      setSubmitResult(data);
+
+      if (isMasterTemplate) {
+        setBumpResult(data);
+        refetchMetadata();
+      } else {
+        setSubmitResult(data);
+      }
       setSubmitState("success");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Submission failed";
+      const errorMessage = error instanceof Error ? error.message : "Failed";
       const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Network");
       setSubmitError(
         isNetworkError 
-          ? "Unable to reach Stellarin. Please check your connection and try again." 
+          ? "Unable to reach the server. Please check your connection and try again." 
           : errorMessage
       );
       setSubmitState("error");
@@ -157,9 +170,9 @@ export default function PublishScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Publish</ThemedText>
+          <ThemedText style={styles.title}>{isMasterTemplate ? "Version" : "Publish"}</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Submit your Practa to Stellarin
+            {isMasterTemplate ? "Update the template version" : "Submit your Practa to Stellarin"}
           </ThemedText>
         </View>
 
@@ -244,7 +257,43 @@ export default function PublishScreen() {
           ) : null}
         </Card>
 
-        {submitState === "success" && submitResult ? (
+        {submitState === "success" && isMasterTemplate && bumpResult ? (
+          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+            <View style={styles.successHeader}>
+              <Feather name="check-circle" size={24} color={theme.success} />
+              <ThemedText style={[styles.successTitle, { color: theme.success }]}>
+                Version Updated
+              </ThemedText>
+            </View>
+            
+            <View style={styles.detailRow}>
+              <ThemedText style={styles.detailLabel}>Previous</ThemedText>
+              <ThemedText style={[styles.detailValue, { color: theme.textSecondary }]}>
+                {bumpResult.previousVersion}
+              </ThemedText>
+            </View>
+
+            <View style={styles.detailRow}>
+              <ThemedText style={styles.detailLabel}>New</ThemedText>
+              <ThemedText style={[styles.detailValue, { fontWeight: "600" }]}>
+                {bumpResult.newVersion}
+              </ThemedText>
+            </View>
+
+            <ThemedText style={[styles.bumpHint, { color: theme.textSecondary }]}>
+              Push to GitHub when ready to publish the new version.
+            </ThemedText>
+
+            <Pressable
+              style={[styles.continueButton, { backgroundColor: theme.primary }]}
+              onPress={handleReset}
+            >
+              <ThemedText style={styles.continueButtonText}>Done</ThemedText>
+            </Pressable>
+          </Card>
+        ) : null}
+
+        {submitState === "success" && !isMasterTemplate && submitResult ? (
           <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
@@ -380,7 +429,9 @@ export default function PublishScreen() {
               <View style={styles.infoRow}>
                 <Feather name="info" size={18} color={theme.textSecondary} />
                 <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
-                  Your Practa will be validated. After validation, continue to Stellarin to complete your submission.
+                  {isMasterTemplate
+                    ? "This will update the version in metadata.json. Push to GitHub to publish."
+                    : "Your Practa will be validated. After validation, continue to Stellarin to complete your submission."}
                 </ThemedText>
               </View>
             </Card>
@@ -396,9 +447,9 @@ export default function PublishScreen() {
               onPress={handleSubmit}
               disabled={!canSubmit}
             >
-              <Feather name="upload-cloud" size={20} color="#FFFFFF" />
+              <Feather name={isMasterTemplate ? "tag" : "upload-cloud"} size={20} color="#FFFFFF" />
               <ThemedText style={styles.submitButtonText}>
-                Submit to Stellarin
+                {isMasterTemplate ? "Update Version" : "Submit to Stellarin"}
               </ThemedText>
             </Pressable>
 
@@ -408,12 +459,14 @@ export default function PublishScreen() {
               </ThemedText>
             ) : null}
 
-            <Pressable onPress={handleDownloadZip} style={styles.downloadLink}>
-              <Feather name="download" size={16} color={theme.primary} />
-              <ThemedText style={[styles.downloadLinkText, { color: theme.primary }]}>
-                Download ZIP for manual upload
-              </ThemedText>
-            </Pressable>
+            {isMasterTemplate ? null : (
+              <Pressable onPress={handleDownloadZip} style={styles.downloadLink}>
+                <Feather name="download" size={16} color={theme.primary} />
+                <ThemedText style={[styles.downloadLinkText, { color: theme.primary }]}>
+                  Download ZIP for manual upload
+                </ThemedText>
+              </Pressable>
+            )}
           </>
         ) : null}
 
@@ -675,6 +728,11 @@ const styles = StyleSheet.create({
   copyForAIText: {
     fontSize: 13,
     fontWeight: "500",
+  },
+  bumpHint: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: Spacing.md,
   },
   releaseTitle: {
     fontSize: 16,

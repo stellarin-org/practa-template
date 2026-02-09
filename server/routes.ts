@@ -379,6 +379,35 @@ ${config.version}
     });
   });
 
+  app.post("/api/practa/bump-version", async (req, res) => {
+    try {
+      const { releaseType } = req.body as { releaseType?: string };
+      const validTypes: ReleaseType[] = ["major", "minor", "patch"];
+      
+      if (!releaseType || !validTypes.includes(releaseType as ReleaseType)) {
+        return res.status(400).json({ 
+          error: "Release type is required. Choose 'major', 'minor', or 'patch'." 
+        });
+      }
+
+      const bumpResult = bumpMetadataVersion(releaseType as ReleaseType);
+      if (!bumpResult.success) {
+        return res.status(500).json({ error: `Version bump failed: ${bumpResult.error}` });
+      }
+
+      res.json({
+        success: true,
+        previousVersion: bumpResult.oldVersion,
+        newVersion: bumpResult.newVersion,
+        releaseType,
+        detectedDeps: bumpResult.detectedDeps,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: message });
+    }
+  });
+
   app.post("/api/practa/submit", async (req, res) => {
     const SUBMIT_URL = "https://stellarin-practa-verification.replit.app/api/submissions/upload-preview";
     

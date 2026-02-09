@@ -55,10 +55,17 @@ export default function SubmitScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copiedValidation, setCopiedValidation] = useState(false);
   const [releaseType, setReleaseType] = useState<"major" | "minor" | "patch">("patch");
+  const [bumpResult, setBumpResult] = useState<{ previousVersion?: string; newVersion?: string; releaseType?: string } | null>(null);
 
-  const { data: metadata } = useQuery<PractaFileMetadata>({
+  const { data: metadata, refetch: refetchMetadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
   });
+
+  const { data: syncStatus } = useQuery<{ isMasterTemplate?: boolean }>({
+    queryKey: ["/api/template/sync-status"],
+  });
+
+  const isMasterTemplate = syncStatus?.isMasterTemplate === true;
 
   const validationReport = usePractaValidation();
 
@@ -86,7 +93,8 @@ export default function SubmitScreen() {
     setSubmitError(null);
     
     try {
-      const response = await fetch(new URL("/api/practa/submit", getApiUrl()).toString(), {
+      const endpoint = isMasterTemplate ? "/api/practa/bump-version" : "/api/practa/submit";
+      const response = await fetch(new URL(endpoint, getApiUrl()).toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,21 +105,25 @@ export default function SubmitScreen() {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || data.message || data.details || "Submission failed");
+        throw new Error(data.error || data.message || data.details || "Failed");
       }
-      
-      setSubmitResult(data);
+
+      if (isMasterTemplate) {
+        setBumpResult(data);
+        refetchMetadata();
+      } else {
+        setSubmitResult(data);
+      }
       setSubmitState("success");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
-      // Invalidate last-submit query to refresh the timestamp display
       queryClient.invalidateQueries({ queryKey: ["/api/practa/last-submit"] });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Submission failed";
+      const errorMessage = error instanceof Error ? error.message : "Failed";
       const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Network");
       setSubmitError(
         isNetworkError 
-          ? "Unable to reach Stellarin. Please check your connection and try again." 
+          ? "Unable to reach the server. Please check your connection and try again." 
           : errorMessage
       );
       setSubmitState("error");
@@ -149,7 +161,7 @@ export default function SubmitScreen() {
         <Pressable onPress={handleClose} style={styles.closeButton}>
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText style={styles.headerTitle}>Submit Practa</ThemedText>
+        <ThemedText style={styles.headerTitle}>{isMasterTemplate ? "Update Version" : "Submit Practa"}</ThemedText>
         <View style={styles.placeholder} />
       </View>
 
@@ -291,12 +303,43 @@ export default function SubmitScreen() {
           <View style={styles.infoRow}>
             <Feather name="info" size={18} color={theme.textSecondary} />
             <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
-              Your Practa will be validated and uploaded. Sign in on Stellarin to claim your submission.
+              {isMasterTemplate
+                ? "This will update the version in metadata.json. Push to GitHub to publish."
+                : "Your Practa will be validated and uploaded. Sign in on Stellarin to claim your submission."}
             </ThemedText>
           </View>
         </Card>
 
-        {submitState === "success" && submitResult ? (
+        {submitState === "success" && isMasterTemplate && bumpResult ? (
+          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+            <View style={styles.successHeader}>
+              <Feather name="check-circle" size={24} color={theme.success} />
+              <ThemedText style={[styles.successTitle, { color: theme.success }]}>
+                Version Updated
+              </ThemedText>
+            </View>
+
+            <View style={styles.submissionDetails}>
+              <ThemedText style={styles.detailLabel}>Previous</ThemedText>
+              <ThemedText style={[styles.detailValue, { color: theme.textSecondary }]}>
+                {bumpResult.previousVersion}
+              </ThemedText>
+            </View>
+
+            <View style={styles.submissionDetails}>
+              <ThemedText style={styles.detailLabel}>New</ThemedText>
+              <ThemedText style={[styles.detailValue, { fontWeight: "600" }]}>
+                {bumpResult.newVersion}
+              </ThemedText>
+            </View>
+
+            <ThemedText style={[styles.bumpHint, { color: theme.textSecondary }]}>
+              Push to GitHub when ready to publish the new version.
+            </ThemedText>
+          </Card>
+        ) : null}
+
+        {submitState === "success" && !isMasterTemplate && submitResult ? (
           <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
@@ -390,10 +433,12 @@ export default function SubmitScreen() {
             {submitState === "submitting" ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Feather name="upload-cloud" size={20} color="#FFFFFF" />
+              <Feather name={isMasterTemplate ? "tag" : "upload-cloud"} size={20} color="#FFFFFF" />
             )}
             <ThemedText style={styles.submitButtonText}>
-              {submitState === "submitting" ? "Validating..." : "Submit to Stellarin"}
+              {submitState === "submitting"
+                ? (isMasterTemplate ? "Updating..." : "Validating...")
+                : (isMasterTemplate ? "Update Version" : "Submit to Stellarin")}
             </ThemedText>
           </Pressable>
         ) : null}
@@ -588,6 +633,11 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 13,
     textAlign: "center",
+  },
+  bumpHint: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: Spacing.md,
   },
   releaseTitle: {
     fontSize: 16,
