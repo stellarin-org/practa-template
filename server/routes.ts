@@ -10,6 +10,7 @@ import { updatePractaAssets } from "./index";
 import type { PractaFileMetadata } from "@shared/schema";
 import { validateMetadataFields } from "@shared/metadata-schema";
 import { fetchRepoInfo, fetchLatestSha, fetchJsonFile, downloadRepoZip, compareVersions, fetchPublishedInfo, fetchRepoPractaMetadata, readLocalMetadata, listPractaFiles, fetchFileContent, TEMPLATE_REPO, PRACTA_REPO, type PublishedPractaInfo } from "./github-sync";
+import { bumpMetadataVersion, type ReleaseType } from "../scripts/bump-version";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
 const LAST_SUBMIT_PATH = path.resolve(process.cwd(), ".config/last-submit.json");
@@ -382,6 +383,15 @@ ${config.version}
     const SUBMIT_URL = "https://stellarin-practa-verification.replit.app/api/submissions/upload-preview";
     
     try {
+      const { releaseType } = req.body as { releaseType?: string };
+      const validTypes: ReleaseType[] = ["major", "minor", "patch"];
+      
+      if (!releaseType || !validTypes.includes(releaseType as ReleaseType)) {
+        return res.status(400).json({ 
+          error: "Release type is required. Choose 'major', 'minor', or 'patch'." 
+        });
+      }
+
       const practaDir = path.resolve(process.cwd(), "client/my-practa");
       
       if (!fs.existsSync(practaDir)) {
@@ -396,6 +406,11 @@ ${config.version}
           warnings: assetValidation.warnings,
           totalSizeMB: (assetValidation.totalSize / 1024 / 1024).toFixed(2),
         });
+      }
+
+      const bumpResult = bumpMetadataVersion(releaseType as ReleaseType);
+      if (!bumpResult.success) {
+        return res.status(500).json({ error: `Version bump failed: ${bumpResult.error}` });
       }
 
       const config = readConfig();
@@ -501,7 +516,9 @@ ${config.version}
         fs.writeFileSync(LAST_SUBMIT_PATH, JSON.stringify({ 
           timestamp: new Date().toISOString(),
           practaId: practaIdSubmit,
-          version: config.version
+          version: config.version,
+          releaseType,
+          previousVersion: bumpResult.oldVersion,
         }, null, 2));
       } catch (timestampError) {
         console.error("Failed to save submission timestamp:", timestampError);
