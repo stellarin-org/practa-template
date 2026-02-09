@@ -98,6 +98,16 @@ export function bumpMetadataVersion(releaseType: ReleaseType): { success: boolea
     const jsonContent = JSON.stringify(metadata, null, 2) + "\n";
     fs.writeFileSync(METADATA_PATH, jsonContent);
 
+    const attachedAssetsDir = path.resolve(process.cwd(), "attached_assets");
+    if (fs.existsSync(attachedAssetsDir)) {
+      const files = fs.readdirSync(attachedAssetsDir);
+      for (const file of files) {
+        const filePath = path.join(attachedAssetsDir, file);
+        fs.rmSync(filePath, { recursive: true, force: true });
+      }
+      console.log(`[Version Bump] Cleared ${files.length} item(s) from attached_assets/`);
+    }
+
     console.log(`[Version Bump] ${releaseType}: ${oldVersion} -> ${newVersion}`);
     return { success: true, oldVersion, newVersion, detectedDeps };
   } catch (error) {
