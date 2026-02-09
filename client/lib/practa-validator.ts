@@ -179,19 +179,6 @@ export function validateSourceCode(source: string): ValidationResult[] {
     });
   }
 
-  if (!source.includes("onSkip")) {
-    results.push({
-      passed: true,
-      message: "Consider supporting onSkip for user flexibility",
-      severity: "warning",
-    });
-  } else {
-    results.push({
-      passed: true,
-      message: "Supports skip option",
-      severity: "success",
-    });
-  }
 
   if (!source.includes("useSafeAreaInsets") && !source.includes("SafeAreaView")) {
     results.push({

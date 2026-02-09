@@ -6,23 +6,14 @@ Requests for the test harness developer to address in `stellarin-org/stellarin-a
 
 ## Active Requests
 
-### 1. Confirm `onSkip` removal from `PractaProps` is intentional
-
-**File:** `client/types/flow.ts`
-**Priority:** Low (informational)
-**Status:** No fix needed — template uses local types
-
-The official `PractaProps` no longer includes `onSkip`. The template's demo practas and `my-practa` define their own local props that include `onSkip`, so nothing breaks. But the template's validator (`practa-validator.ts`) and documentation currently recommend supporting `onSkip`.
-
-**Requested clarification:**
-- Is `onSkip` deprecated? Should we stop recommending it?
-- Or will it return in a future version?
-
-If deprecated, we'll update the validator and docs to remove `onSkip` references.
+(No active requests)
 
 ---
 
 ## Resolved Requests
+
+### `onSkip` removal from `PractaProps` confirmed intentional (Feb 9, 2026)
+**Resolved:** Confirmed by maintainer that `onSkip` was intentionally removed from `PractaProps`. Template validator and docs should be updated to stop recommending `onSkip`.
 
 ### `practa-config.ts` missing from import config (Feb 9, 2026)
 **Resolved:** Added `client/lib/practa-config.ts` to `.config/harness-import.config.json`. The upstream file now imports successfully with full Zod schemas, config registry, validation, and editor support. Local stub is no longer needed.

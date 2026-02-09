@@ -69,13 +69,15 @@ Every Practa receives these props:
 interface PractaProps {
   context: PractaContext;
   onComplete: (output: PractaOutput) => void;
-  onSkip?: () => void;
+  showSettings?: boolean;
+  onSettings?: () => void;
 }
 ```
 
 - **context** - Flow info, resolved assets, and optional storage
 - **onComplete** - Call this when the user finishes your Practa
-- **onSkip** - Optional callback for users who want to skip
+- **showSettings** - Whether to show a settings button
+- **onSettings** - Callback when settings button is tapped
 
 ## Features
 

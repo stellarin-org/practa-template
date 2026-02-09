@@ -20,7 +20,6 @@ Your Practa is a React Native component that receives these props:
 interface PractaProps {
   context: PractaContext;           // Flow info + optional storage
   onComplete: (output: PractaOutput) => void;  // Call when done
-  onSkip?: () => void;              // Optional skip handler
   showSettings?: boolean;           // Whether to show settings button
   onSettings?: () => void;          // Settings button callback
 }
@@ -37,18 +36,6 @@ const handleComplete = () => {
     metadata: { duration: 60 },
   });
 };
-```
-
-### Optional: Support `onSkip`
-
-Allow users to exit early:
-
-```typescript
-{onSkip ? (
-  <Pressable onPress={onSkip}>
-    <Text>Skip</Text>
-  </Pressable>
-) : null}
 ```
 
 ### Optional: Settings Support
@@ -608,7 +595,6 @@ import { useHeaderHeight } from "@/components/PractaChromeHeader";
 export default function GratitudeJournal({ 
   context, 
   onComplete, 
-  onSkip,
   showSettings,
   onSettings 
 }: PractaProps) {
@@ -665,11 +651,6 @@ export default function GratitudeJournal({
           <ThemedText style={styles.buttonText}>Complete</ThemedText>
         </Pressable>
 
-        {onSkip ? (
-          <Pressable onPress={onSkip} style={styles.skipButton}>
-            <ThemedText style={{ color: theme.textSecondary }}>Skip</ThemedText>
-          </Pressable>
-        ) : null}
       </View>
     </ThemedView>
   );

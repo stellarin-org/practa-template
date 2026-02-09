@@ -221,7 +221,7 @@ Every Practa must declare two AI-related values:
 ## Documentation
 
 See `docs/practa-developer-guide.md` for:
-- Component contract (props, onComplete, onSkip, showSettings, onSettings)
+- Component contract (props, onComplete, showSettings, onSettings)
 - Header configuration (usePractaChrome, useHeaderHeight)
 - Metadata schema (including `requiresAI` and `aiEnabled`)
 - Storage API

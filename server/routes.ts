@@ -311,7 +311,6 @@ function MyFlow() {
     <${componentName}
       context={{ flowId: "my-flow", practaIndex: 0 }}
       onComplete={(output) => console.log("Completed:", output)}
-      onSkip={() => console.log("Skipped")}
     />
   );
 }
@@ -325,7 +324,6 @@ This component accepts the standard Practa props:
 |------|------|----------|-------------|
 | \`context\` | PractaContext | Yes | Flow context from previous Practa |
 | \`onComplete\` | (output: PractaOutput) => void | Yes | Callback when the Practa completes |
-| \`onSkip\` | () => void | No | Optional callback to skip the Practa |
 
 ## Author
 
@@ -428,7 +426,6 @@ function MyFlow() {
     <${componentName}
       context={{ flowId: "my-flow", practaIndex: 0 }}
       onComplete={(output) => console.log("Completed:", output)}
-      onSkip={() => console.log("Skipped")}
     />
   );
 }
@@ -442,7 +439,6 @@ This component accepts the standard Practa props:
 |------|------|----------|-------------|
 | \`context\` | PractaContext | Yes | Flow context from previous Practa |
 | \`onComplete\` | (output: PractaOutput) => void | Yes | Callback when the Practa completes |
-| \`onSkip\` | () => void | No | Optional callback to skip the Practa |
 
 ## Author
 

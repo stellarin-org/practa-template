@@ -245,23 +245,7 @@ If nothing changed (all files were identical), just say "All harness files are a
 
 ## Files Managed by This Skill
 
-These files are defined in `.config/harness-import.config.json` and are the ones imported:
-
-- `server/cdn_routes.ts`
-- `client/constants/theme.ts`
-- `client/hooks/useTheme.ts`
-- `client/components/ThemedText.tsx`
-- `client/components/ThemedView.tsx`
-- `client/components/Card.tsx`
-- `client/components/PractaSplashScreen.tsx`
-- `client/types/flow.ts`
-- `client/lib/practa-config.ts`
-- `client/lib/practa-storage.ts`
-- `client/context/PractaChromeContext.tsx`
-- `client/components/PractaChromeHeader.tsx`
-- `client/components/PractaTestHarness.tsx`
-- `docs/practa-test-harness.md`
-- `design_guidelines.md`
+The full list of imported files is defined in `.config/harness-import.config.json` under the `syncItems` array. Always read that config to get the current file list — do not rely on a hardcoded list here.
 
 ## Important Notes
 

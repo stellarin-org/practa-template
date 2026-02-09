@@ -211,11 +211,6 @@ export default function HowToScreen() {
             description="Always call onComplete() when the user finishes your Practa."
           />
 
-          <Tip
-            icon="x-circle"
-            title="Support onSkip"
-            description="Provide a way to skip your Practa using the onSkip callback."
-          />
         </Card>
 
         <Card style={styles.card}>
@@ -235,7 +230,6 @@ export default function HowToScreen() {
     };
   };
   onComplete: (output: PractaOutput) => void;
-  onSkip?: () => void;
 }`}
             </ThemedText>
           </View>
