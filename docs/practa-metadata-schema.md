@@ -4,8 +4,6 @@ Every Practa must include a `metadata.json` file at its root. This file tells St
 
 Location: `client/my-practa/metadata.json`
 
-> **Version is managed separately.** The Practa version lives in `client/my-practa/version.json`, not in `metadata.json`. It is auto-incremented on each commit. The server merges it into API responses automatically.
-
 ---
 
 ## Required Fields
@@ -14,6 +12,7 @@ Location: `client/my-practa/metadata.json`
 |-------|------|-------------|
 | `id` | string | Unique identifier for the Practa (e.g., `"breathing-pause"`) |
 | `name` | string | Display name shown to users |
+| `version` | string | Semver version (auto-incremented on each commit) |
 | `description` | string | Short summary of the experience |
 | `author` | string | Creator name |
 | `requiresAI` | boolean | `true` if the Practa cannot function without AI, `false` if it works without AI. Every Practa must set this. |
@@ -133,6 +132,7 @@ export default function MyPracta({ context, onComplete }: PractaProps) {
 {
   "id": "breathing-pause",
   "name": "Breathing Pause",
+  "version": "1.0.0",
   "description": "A calming breathing exercise to help you center yourself",
   "author": "Stellarin",
   "estimatedDuration": 60,
@@ -198,6 +198,7 @@ The simplest valid metadata.json:
 {
   "id": "my-practa",
   "name": "My Practa",
+  "version": "1.0.0",
   "description": "A simple wellness experience",
   "author": "Your Name",
   "requiresAI": false,

@@ -169,9 +169,8 @@ Update `client/my-practa/metadata.json` with your Practa info:
 | `name` | string | `"Gratitude Journal"` | Display name |
 | `description` | string | `"Write three things you're grateful for"` | Short summary |
 | `author` | string | `"Your Name"` | Creator name |
+| `version` | string | `"1.0.0"` | Semver version |
 | `requiresAI` | boolean | `false` | Whether this Practa **requires** AI to function at all. Set `true` if the Practa cannot work without AI (e.g., AI-generated content is the core experience). Set `false` if it can operate without AI. Every Practa must declare this. |
-
-> **Note:** Version is auto-managed in `version.json` (not in `metadata.json`). It is incremented on each commit.
 
 ### Optional Fields
 
@@ -308,6 +307,7 @@ The server automatically installs missing dependencies on startup and template u
   "name": "Gratitude Journal", 
   "description": "Write three things you're grateful for today",
   "author": "Jane Developer",
+  "version": "1.0.0",
   "estimatedDuration": 120,
   "tags": ["journaling", "gratitude"],
   "icon": "heart",
@@ -338,6 +338,7 @@ Add an `assets` object to your `metadata.json`:
 {
   "id": "my-practa",
   "name": "My Practa",
+  "version": "1.0.0",
   "assets": {
     "splash": "splash.png",
     "background": "bg.jpg",
@@ -549,7 +550,7 @@ Before submitting, ensure:
 
 - [ ] Default export is a function component
 - [ ] Calls `onComplete` at some point
-- [ ] Metadata has all required fields (`type`, `name`, `description`, `author`, `requiresAI`)
+- [ ] Metadata has all required fields (`type`, `name`, `description`, `author`, `version`)
 - [ ] `type` uses lowercase letters, numbers, and hyphens only
 - [ ] Uses `useTheme()` for colors (no hardcoded colors)
 - [ ] Provides skip option if appropriate

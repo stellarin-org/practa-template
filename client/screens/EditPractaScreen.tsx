@@ -69,8 +69,10 @@ export default function EditPractaScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const queryClient = useQueryClient();
 
+  // Fields in same order as metadata.json: id, name, version, description, author, estimatedDuration, category, tags
   const [id, setId] = useState("");
   const [name, setName] = useState("");
+  const [version, setVersion] = useState("");
   const [description, setDescription] = useState("");
   const [author, setAuthor] = useState("");
   const [estimatedDuration, setEstimatedDuration] = useState("");
@@ -87,6 +89,7 @@ export default function EditPractaScreen() {
     if (metadata) {
       setId(metadata.id || "");
       setName(metadata.name || "");
+      setVersion(metadata.version || "");
       setDescription(metadata.description || "");
       setAuthor(metadata.author || "");
       setEstimatedDuration(
@@ -146,6 +149,12 @@ export default function EditPractaScreen() {
       newErrors.name = "Name is required";
     }
 
+    if (!version.trim()) {
+      newErrors.version = "Version is required";
+    } else if (!/^\d+\.\d+\.\d+$/.test(version)) {
+      newErrors.version = "Use format: 1.0.0";
+    }
+
     if (!description.trim()) {
       newErrors.description = "Description is required";
     }
@@ -175,6 +184,7 @@ export default function EditPractaScreen() {
     const data: Partial<PractaFileMetadata> = {
       id: id.trim(),
       name: name.trim(),
+      version: version.trim(),
       description: description.trim(),
       author: author.trim(),
       estimatedDuration: estimatedDuration ? Number(estimatedDuration) : undefined,
@@ -228,17 +238,13 @@ export default function EditPractaScreen() {
             error={errors.name}
           />
 
-          <View style={styles.fieldContainer}>
-            <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
-              Version
-            </ThemedText>
-            <View style={[styles.input, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, opacity: 0.7 }]}>
-              <ThemedText>{metadata?.version || "..."}</ThemedText>
-            </View>
-            <ThemedText style={[styles.hintText, { color: theme.textSecondary }]}>
-              Auto-incremented on each save
-            </ThemedText>
-          </View>
+          <FormField
+            label="Version"
+            value={version}
+            onChangeText={handleFieldChange(setVersion)}
+            placeholder="1.0.0"
+            error={errors.version}
+          />
 
           <FormField
             label="Description"
@@ -358,10 +364,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#EF4444",
-    fontSize: 12,
-    marginTop: Spacing.xs,
-  },
-  hintText: {
     fontSize: 12,
     marginTop: Spacing.xs,
   },

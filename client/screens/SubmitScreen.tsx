@@ -162,7 +162,7 @@ export default function SubmitScreen() {
         <Card style={styles.card}>
           <ThemedText style={styles.cardTitle}>{displayMetadata.name}</ThemedText>
           <ThemedText style={styles.cardSubtitle}>
-            {displayMetadata.id} v{String((displayMetadata as Record<string, unknown>).version || "...")}
+            {displayMetadata.id} v{displayMetadata.version}
           </ThemedText>
           <ThemedText style={[styles.cardDescription, { color: theme.textSecondary }]}>
             by {displayMetadata.author}
