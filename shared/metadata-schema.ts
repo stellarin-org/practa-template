@@ -82,7 +82,8 @@ export const METADATA_FIELDS: FieldDefinition[] = [
     key: "version",
     label: "Version",
     type: "string",
-    required: true,
+    required: false,
+    description: "Auto-managed in version.json — not required in metadata.json",
     stringConstraints: {
       pattern: /^\d+\.\d+\.\d+$/,
       patternHint: "format X.Y.Z (e.g., '1.0.0')",

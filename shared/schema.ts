@@ -5,7 +5,7 @@ export const practaFileMetadataSchema = z.object({
   name: z.string(),
   description: z.string(),
   author: z.string().nullable(),
-  version: z.string(),
+  version: z.string().optional(),
   estimatedDuration: z.number().optional(),
   category: z.string().optional(),
   tags: z.array(z.string()).optional(),
