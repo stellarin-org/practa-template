@@ -45,3 +45,6 @@ app-example
 
 # Version bump cache
 .cache/
+
+# Attached assets (cleared on version bump)
+attached_assets/
