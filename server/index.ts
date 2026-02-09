@@ -480,9 +480,12 @@ function startGitVersionWatcher() {
   const watchPath = fs.existsSync(gitLogsHeadPath) ? gitLogsHeadPath : gitHeadPath;
   
   try {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     fs.watch(watchPath, { persistent: false }, (eventType) => {
       if (eventType === "change") {
-        setTimeout(checkAndBump, 100);
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkAndBump, 1500);
       }
     });
     const watchTypes = isMasterTemplate ? "Practa + Template versions" : "Practa version";
