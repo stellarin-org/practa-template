@@ -12,7 +12,7 @@ Location: `client/my-practa/metadata.json`
 |-------|------|-------------|
 | `id` | string | Unique identifier for the Practa (e.g., `"breathing-pause"`) |
 | `name` | string | Display name shown to users |
-| `version` | string | Semver version (auto-incremented on each commit) |
+| `version` | string | Semver version (bumped at submission time based on release type) |
 | `description` | string | Short summary of the experience |
 | `author` | string | Creator name |
 | `requiresAI` | boolean | `true` if the Practa cannot function without AI, `false` if it works without AI. Every Practa must set this. |
