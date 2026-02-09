@@ -1,12 +1,21 @@
 import type { PractaStorage } from "@/lib/practa-storage";
+import { practaHasConfig, practaConfigIsRequired } from "@/lib/practa-config";
 
 export type { PractaStorage };
+export { practaHasConfig, practaConfigIsRequired };
 
-export type PractaType = "journal" | "silent-meditation" | "personalized-meditation" | "tend" | "integration-breath";
+export type { JournalConfig, PractaPickerConfig } from "@/lib/practa-config";
+
+export type PractaType = "journal" | "silent-meditation" | "personalized-meditation" | "tend" | "integration-breath" | "practa-picker";
 
 export interface PractaContent {
-  type: "text" | "image";
+  type: "text" | "image" | "audio";
   value: string;
+  audioUri?: string;
+  audioDuration?: number;
+  imageUri?: string;
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 export interface PractaMetadata {
@@ -80,7 +89,6 @@ export interface PreviousPractaContext {
 }
 
 export type PractaAssets = Record<string, unknown>;
-export type ResolvedAssets = Record<string, number | { uri: string }>;
 
 export interface PractaContext {
   flowId: string;
@@ -88,6 +96,7 @@ export interface PractaContext {
   previous?: PreviousPractaContext;
   storage?: PractaStorage;
   assets?: PractaAssets;
+  config?: Record<string, unknown>;
 }
 
 export interface PractaOutput {
@@ -95,11 +104,33 @@ export interface PractaOutput {
   metadata?: PractaMetadata;
 }
 
+export type AnyPractaConfig = Record<string, unknown> | undefined;
+
+export interface FlowPractaItem {
+  type: string;
+  id: string;
+  config?: Record<string, unknown>;
+}
+
+export function practaRequiresConfig(type: string): boolean {
+  return practaConfigIsRequired(type);
+}
+
+export function createPractaItem(type: string, config?: AnyPractaConfig): FlowPractaItem {
+  return {
+    type,
+    id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    config,
+  };
+}
+
 export interface PractaDefinition {
   id: string;
   type: PractaType;
   name: string;
   description?: string;
+  requiresAI?: boolean;
+  config?: AnyPractaConfig;
 }
 
 export interface FlowDefinition {
@@ -125,7 +156,6 @@ export type FlowCompleteHandler = (state: FlowExecutionState) => void;
 export interface PractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
   showSettings?: boolean;
   onSettings?: () => void;
 }

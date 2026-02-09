@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { View, StyleSheet, ImageSourcePropType } from "react-native";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { View, StyleSheet, ImageSourcePropType, Platform } from "react-native";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView, VideoPlayer } from "expo-video";
 import Animated, {
@@ -12,9 +12,10 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 
+type SplashSource = ImageSourcePropType | string;
+
 interface PractaSplashScreenProps {
-  splashImage?: ImageSourcePropType;
-  splashVideo?: number | { uri: string };
+  splashImage: SplashSource;
   onComplete: () => void;
   displayDuration?: number;
   startWithOverlay?: boolean;
@@ -22,22 +23,84 @@ interface PractaSplashScreenProps {
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
+function isVideoSource(source: SplashSource): boolean {
+  if (typeof source === "string") {
+    const lower = source.toLowerCase();
+    return lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm");
+  }
+  if (source && typeof source === "object" && "uri" in source) {
+    const uri = (source as { uri: string }).uri;
+    if (typeof uri === "string") {
+      const lower = uri.toLowerCase();
+      return lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm");
+    }
+  }
+  return false;
+}
+
+function getVideoUri(source: SplashSource): string | null {
+  if (typeof source === "string") {
+    return source;
+  }
+  if (source && typeof source === "object" && "uri" in source) {
+    return (source as { uri: string }).uri;
+  }
+  return null;
+}
+
+function WebVideo({ uri, onLoad }: { uri: string; onLoad: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleCanPlay = () => {
+      onLoad();
+      video.play().catch(() => {});
+    };
+
+    video.addEventListener("canplaythrough", handleCanPlay);
+    video.load();
+
+    return () => {
+      video.removeEventListener("canplaythrough", handleCanPlay);
+    };
+  }, [uri, onLoad]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={uri}
+      muted
+      playsInline
+      autoPlay
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+      }}
+    />
+  );
+}
+
 export default function PractaSplashScreen({
   splashImage,
-  splashVideo,
   onComplete,
   displayDuration = 2000,
 }: PractaSplashScreenProps) {
   const [mediaLoaded, setMediaLoaded] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
   const overlayOpacity = useSharedValue(1);
   const mediaOpacity = useSharedValue(0);
-  const isVideo = !!splashVideo;
 
-  const videoPlayer = useVideoPlayer(splashVideo ?? null, (player: VideoPlayer) => {
-    if (splashVideo) {
-      player.loop = false;
-      player.muted = false;
+  const isVideo = useMemo(() => isVideoSource(splashImage), [splashImage]);
+  const videoUri = useMemo(() => (isVideo ? getVideoUri(splashImage) : null), [isVideo, splashImage]);
+
+  const player = useVideoPlayer(videoUri, (p: VideoPlayer) => {
+    if (videoUri && Platform.OS !== "web") {
+      p.loop = false;
+      p.muted = true;
+      p.play();
     }
   });
 
@@ -46,24 +109,24 @@ export default function PractaSplashScreen({
   }, [onComplete]);
 
   useEffect(() => {
-    if (!isVideo || !videoPlayer) return;
+    if (!player || !isVideo) return;
 
-    const subscription = videoPlayer.addListener("statusChange", (status: { status: string }) => {
+    const handleStatusChange = (status: { status: string }) => {
       if (status.status === "readyToPlay") {
         setMediaLoaded(true);
-        videoPlayer.play();
       }
-    });
+    };
 
-    const endSubscription = videoPlayer.addListener("playToEnd", () => {
-      setVideoEnded(true);
-    });
+    const subscription = player.addListener("statusChange", handleStatusChange);
+    
+    if (player.status === "readyToPlay") {
+      setMediaLoaded(true);
+    }
 
     return () => {
-      subscription.remove();
-      endSubscription.remove();
+      subscription?.remove();
     };
-  }, [videoPlayer, isVideo]);
+  }, [player, isVideo]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -71,45 +134,30 @@ export default function PractaSplashScreen({
         console.warn("[PractaSplash] Media failed to load, skipping");
         onComplete();
       }
-    }, 10000);
+    }, 5000);
     return () => clearTimeout(timeout);
   }, [mediaLoaded, onComplete]);
 
   useEffect(() => {
     if (!mediaLoaded) return;
 
-    if (isVideo) {
-      mediaOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
-    } else {
-      mediaOpacity.value = withSequence(
-        withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
-        withDelay(displayDuration, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
-      );
+    const effectiveDuration = isVideo ? Math.min(displayDuration, 4000) : displayDuration;
 
-      const totalImageTime = 400 + displayDuration + 400;
+    mediaOpacity.value = withSequence(
+      withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) }),
+      withDelay(effectiveDuration, withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }))
+    );
 
-      overlayOpacity.value = withDelay(totalImageTime,
-        withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }, (finished) => {
-          if (finished) {
-            runOnJS(handleAnimationComplete)();
-          }
-        })
-      );
-    }
-  }, [mediaLoaded, displayDuration, overlayOpacity, mediaOpacity, handleAnimationComplete, isVideo]);
+    const totalMediaTime = 400 + effectiveDuration + 400;
 
-  useEffect(() => {
-    if (!isVideo || !videoEnded) return;
-
-    mediaOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) });
-    overlayOpacity.value = withDelay(400,
+    overlayOpacity.value = withDelay(totalMediaTime,
       withTiming(0, { duration: 400, easing: Easing.in(Easing.ease) }, (finished) => {
         if (finished) {
           runOnJS(handleAnimationComplete)();
         }
       })
     );
-  }, [videoEnded, isVideo, mediaOpacity, overlayOpacity, handleAnimationComplete]);
+  }, [mediaLoaded, displayDuration, isVideo, overlayOpacity, mediaOpacity, handleAnimationComplete]);
 
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
@@ -123,26 +171,39 @@ export default function PractaSplashScreen({
     setMediaLoaded(true);
   };
 
+  const handleVideoReady = useCallback(() => {
+    setMediaLoaded(true);
+  }, []);
+
+
+  const handleWebVideoLoad = useCallback(() => {
+    setMediaLoaded(true);
+  }, []);
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.overlay, overlayAnimatedStyle]}>
-        {isVideo && splashVideo ? (
+        {isVideo && videoUri ? (
           <Animated.View style={[styles.videoContainer, mediaAnimatedStyle]}>
-            <VideoView
-              player={videoPlayer}
-              style={styles.video}
-              contentFit="cover"
-              nativeControls={false}
-            />
+            {Platform.OS === "web" ? (
+              <WebVideo uri={videoUri} onLoad={handleWebVideoLoad} />
+            ) : (
+              <VideoView
+                style={styles.video}
+                player={player}
+                contentFit="cover"
+                nativeControls={false}
+              />
+            )}
           </Animated.View>
-        ) : splashImage ? (
+        ) : (
           <AnimatedImage
-            source={splashImage}
+            source={splashImage as ImageSourcePropType}
             style={[styles.image, mediaAnimatedStyle]}
             contentFit="cover"
             onLoad={handleImageLoad}
           />
-        ) : null}
+        )}
       </Animated.View>
     </View>
   );

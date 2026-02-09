@@ -42,8 +42,7 @@ export function registerCdnRoutes(app: Express): void {
         return res.status(413).json({ error: "Response too large" });
       }
 
-      const contentType =
-        response.headers.get("content-type") || "application/octet-stream";
+      const contentType = response.headers.get("content-type") || "application/octet-stream";
       res.setHeader("Content-Type", contentType);
 
       if (contentLength) {
