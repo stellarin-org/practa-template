@@ -700,6 +700,17 @@ ${config.version}
         }
       }
       
+      if (fs.existsSync(METADATA_PATH)) {
+        try {
+          const syncedMeta = JSON.parse(fs.readFileSync(METADATA_PATH, "utf-8"));
+          if (syncedMeta.version) {
+            fs.writeFileSync(VERSION_PATH, JSON.stringify({ version: syncedMeta.version }, null, 2) + "\n");
+            delete syncedMeta.version;
+            fs.writeFileSync(METADATA_PATH, JSON.stringify(syncedMeta, null, 2) + "\n");
+          }
+        } catch {}
+      }
+
       const { updatePractaAssets } = await import("./index");
       updatePractaAssets();
       
@@ -912,9 +923,12 @@ ${config.version}
         fs.mkdirSync(assetsDir, { recursive: true });
       }
 
-      // Write files by truncating and writing (keeps same inode)
+      const demoMetadata = JSON.parse(demoMetadataContent);
+      const { version: _demoVersion, ...demoMetaWithoutVersion } = demoMetadata;
+
       fs.writeFileSync(path.join(practaDir, "index.tsx"), demoIndexContent, { flag: "w" });
-      fs.writeFileSync(path.join(practaDir, "metadata.json"), demoMetadataContent, { flag: "w" });
+      fs.writeFileSync(path.join(practaDir, "metadata.json"), JSON.stringify(demoMetaWithoutVersion, null, 2) + "\n", { flag: "w" });
+      fs.writeFileSync(path.join(practaDir, "version.json"), JSON.stringify({ version: "1.0.0" }, null, 2) + "\n", { flag: "w" });
 
       // Copy assets
       const demoAssetsDir = path.join(demoDir, "assets");
