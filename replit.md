@@ -48,6 +48,7 @@ client/
   my-practa/              # YOUR PRACTA - EDIT THIS
     index.tsx             # Your component (default export)
     metadata.json         # Practa metadata (includes assets declaration)
+    version.json          # Auto-managed version (do not edit manually)
     assets/               # Your local assets (images, splash.png, etc.)
   
   demo-practa/            # EXAMPLE PRACTAS - REFERENCE THESE
@@ -102,11 +103,11 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 3. Update `shared/schema.ts` (Zod types) to match
 4. Both validators automatically pick up the new field — no code changes needed in either
 
-**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
+**Key required fields:** `id`, `name`, `description`, `author`, `requiresAI`, `configSchema.fields.aiEnabled`
 
-## Automatic Version Bumping
+## Version Management
 
-The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on each git commit. No setup required.
+The Practa version lives in `client/my-practa/version.json` (not in `metadata.json`). This separation prevents the auto-version-bumper from overwriting metadata edits. The version is auto-incremented (1.0.0 → 1.0.1) on each git commit. The server merges the version from `version.json` into API responses automatically.
 
 ## Three Sync Systems
 
