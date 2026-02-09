@@ -32,18 +32,23 @@ The template's validation and status UI uses a `warning` color for non-critical 
 
 ---
 
-### 2. Add `client/lib/practa-config.ts` to the harness import — or remove the import from `flow.ts`
+### 2. Resolve `practa-config.ts` dependency in `flow.ts`
 
 **File:** `client/types/flow.ts` imports from `@/lib/practa-config`
 **Priority:** High (breaks on import)
 **Status:** Locally created stub in template
 
-The upstream `flow.ts` imports `practaHasConfig`, `practaConfigIsRequired`, `JournalConfig`, and `PractaPickerConfig` from `@/lib/practa-config`. But that file is not included in the harness import config, so when `flow.ts` is synced into the template, it breaks immediately with a missing module error.
+The upstream `flow.ts` imports `practaHasConfig`, `practaConfigIsRequired`, `JournalConfig`, and `PractaPickerConfig` from `@/lib/practa-config`. But that file:
+- Is **not** included in the harness import config
+- Does **not exist** in the upstream repo at `client/lib/practa-config.ts` (checked Feb 9, 2026 — returned 404)
+- Is **not used** by anything in the template — the exports are only re-exported by `flow.ts` for Stellarin app consumption
 
-**Options for the harness dev:**
-1. **Add `client/lib/practa-config.ts` to the harness import** (`.config/harness-import.config.json` sync items) so it arrives alongside `flow.ts`
-2. **Move the config types/functions directly into `flow.ts`** so there's no external dependency
-3. **Remove the import from `flow.ts`** if `practa-config` is Stellarin-app-specific and not needed in the template
+We maintain a minimal stub locally. Nothing in the template calls these functions, so the stub just keeps TypeScript happy.
+
+**Recommended options for the harness dev (pick one):**
+1. **Move the config types/functions directly into `flow.ts`** so there's no external dependency (simplest for both sides)
+2. **Add `client/lib/practa-config.ts` to the harness import config** if it exists elsewhere in the repo under a different path
+3. **Remove the import from `flow.ts`** if it's Stellarin-app-specific and not needed in the template contract
 
 **Current stub we maintain locally:**
 
