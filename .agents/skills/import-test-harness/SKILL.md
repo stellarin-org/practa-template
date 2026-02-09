@@ -125,15 +125,72 @@ If any breaking changes were found in Step 3a:
 3. Verify the app loads without errors
 4. Check for LSP diagnostics on changed files
 
-## Step 5: Clean Up
+## Step 5: Update Change Requests for Harness Developer
+
+After fixing breaking changes, update `docs/harness-dev-change-requests.md` to communicate issues back to the upstream harness developer. This file is the canonical list of things we want changed in `stellarin-org/stellarin-app` so future imports are cleaner.
+
+### When to add a request
+
+Add a new entry to the "Active Requests" section when:
+- A breaking change required a local workaround (stub file, local type definition, re-adding removed values)
+- An imported file depends on a module that isn't included in the import
+- A change removes something the template actively uses and there's no clean migration path
+- You want clarification on whether a removal was intentional
+
+### When NOT to add a request
+
+Don't add a request when:
+- The breaking change was straightforward to adapt to (e.g., a renamed prop we can just update)
+- The change is clearly an improvement and our code should simply adopt it
+- It's a new feature we just need to learn about, not a conflict
+
+### Request format
+
+Each request should include:
+- **File** affected
+- **Priority** (High = breaks on import, Medium = requires workaround, Low = cosmetic/informational)
+- **Status** (e.g., "Locally patched", "No fix needed", "Needs discussion")
+- **What changed** and why it's a problem for the template
+- **Suggested fix** — what the harness dev should do
+- **Impact if not done** — what happens on the next import if this isn't addressed
+
+### Resolving requests
+
+When a future import shows that a request has been addressed upstream:
+1. Move the entry from "Active Requests" to "Resolved Requests"
+2. Add the resolution date
+
+### If the file doesn't exist
+
+Create it with this structure:
+
+```markdown
+# Harness Developer Change Requests
+
+Requests for the test harness developer to address in `stellarin-org/stellarin-app`.
+
+---
+
+## Active Requests
+
+(entries here)
+
+---
+
+## Resolved Requests
+
+(resolved entries here)
+```
+
+## Step 6: Clean Up
 
 ```bash
 rm -rf /tmp/harness-pre-import
 ```
 
-## Step 6: Report to User
+## Step 7: Report to User
 
-Provide a summary with three sections:
+Provide a summary with four sections:
 
 ### Files Updated
 List all files that changed, were added, or were deleted.
@@ -149,6 +206,9 @@ For each new feature or enhancement:
 - What it is and what file it's in
 - How it could be used in a Practa
 - Whether the user should consider adopting it
+
+### Change Requests for Harness Developer
+Summarize any new or updated entries added to `docs/harness-dev-change-requests.md`. If no new requests were needed, say so.
 
 If nothing changed (all files were identical), just say "All harness files are already up to date with the main app."
 
@@ -176,4 +236,4 @@ These files are defined in `.config/harness-import.config.json` and are the ones
 - This skill only works on the master template — it requires `MASTER_TEMPLATE_KEY`
 - Changes to these files should be made upstream in `stellarin-org/stellarin-app`, not locally
 - If local changes exist that haven't been pushed upstream, this import will overwrite them
-- Use `docs/upstream-changes-needed.md` (if it exists) to track local changes that need to go upstream before importing
+- `docs/harness-dev-change-requests.md` tracks requests for the upstream harness developer — review it before sharing with the dev team
