@@ -382,11 +382,14 @@ export default function PublishScreen() {
                 How should the version number change?
               </ThemedText>
               <View style={styles.releaseOptions}>
-                {([
-                  { type: "patch" as const, label: "Bug Fix", description: `${displayMetadata.version.split(".").slice(0, 2).join(".")}.X`, icon: "tool" as const },
-                  { type: "minor" as const, label: "New Feature", description: `${displayMetadata.version.split(".")[0]}.X.0`, icon: "plus-circle" as const },
-                  { type: "major" as const, label: "Major Release", description: `X.0.0`, icon: "zap" as const },
-                ]).map((option) => (
+                {(() => {
+                  const [maj, min, pat] = displayMetadata.version.split(".").map(Number);
+                  return [
+                    { type: "patch" as const, label: "Bug Fix", description: `${maj}.${min}.${pat} \u2192 ${maj}.${min}.${pat + 1}`, icon: "tool" as const },
+                    { type: "minor" as const, label: "New Feature", description: `${maj}.${min}.${pat} \u2192 ${maj}.${min + 1}.0`, icon: "plus-circle" as const },
+                    { type: "major" as const, label: "Major Release", description: `${maj}.${min}.${pat} \u2192 ${maj + 1}.0.0`, icon: "zap" as const },
+                  ];
+                })().map((option) => (
                   <Pressable
                     key={option.type}
                     onPress={() => {
