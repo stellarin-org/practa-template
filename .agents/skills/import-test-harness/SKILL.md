@@ -255,6 +255,7 @@ These files are defined in `.config/harness-import.config.json` and are the ones
 - `client/components/Card.tsx`
 - `client/components/PractaSplashScreen.tsx`
 - `client/types/flow.ts`
+- `client/lib/practa-config.ts`
 - `client/lib/practa-storage.ts`
 - `client/context/PractaChromeContext.tsx`
 - `client/components/PractaChromeHeader.tsx`

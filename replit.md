@@ -81,6 +81,7 @@ server/                   # Express backend for preview
 | `shared/metadata-schema.ts` | **Single source of truth** for metadata field definitions & validation |
 | `shared/schema.ts` | Zod schema & TypeScript types for metadata |
 | `client/lib/practa-validator.ts` | Client-side validator (consumes shared schema) |
+| `client/lib/practa-config.ts` | Practa config types, Zod schemas, and config registry (imported from upstream) |
 | `client/types/flow.ts` | TypeScript types |
 | `docs/practa-developer-guide.md` | Full requirements & examples |
 | `docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
