@@ -54,6 +54,7 @@ export default function SubmitScreen() {
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copiedValidation, setCopiedValidation] = useState(false);
+  const [releaseType, setReleaseType] = useState<"major" | "minor" | "patch">("patch");
 
   const { data: metadata } = useQuery<PractaFileMetadata>({
     queryKey: ["/api/practa/metadata"],
@@ -90,6 +91,7 @@ export default function SubmitScreen() {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ releaseType }),
       });
       
       const data = await response.json();
@@ -234,6 +236,55 @@ export default function SubmitScreen() {
               </Pressable>
             </View>
           ) : null}
+        </Card>
+
+        <Card style={styles.card}>
+          <ThemedText style={styles.releaseTitle}>Release Type</ThemedText>
+          <ThemedText style={[styles.releaseSubtitle, { color: theme.textSecondary }]}>
+            How should the version number change?
+          </ThemedText>
+          <View style={styles.releaseOptions}>
+            {([
+              { type: "patch" as const, label: "Bug Fix", description: `${displayMetadata.version.split(".").slice(0, 2).join(".")}.X`, icon: "tool" as const },
+              { type: "minor" as const, label: "New Feature", description: `${displayMetadata.version.split(".")[0]}.X.0`, icon: "plus-circle" as const },
+              { type: "major" as const, label: "Major Release", description: `X.0.0`, icon: "zap" as const },
+            ]).map((option) => (
+              <Pressable
+                key={option.type}
+                onPress={() => {
+                  setReleaseType(option.type);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={[
+                  styles.releaseOption,
+                  {
+                    backgroundColor: releaseType === option.type ? theme.primary + "15" : "transparent",
+                    borderColor: releaseType === option.type ? theme.primary : theme.textSecondary + "30",
+                  },
+                ]}
+              >
+                <View style={styles.releaseOptionLeft}>
+                  <Feather name={option.icon} size={18} color={releaseType === option.type ? theme.primary : theme.textSecondary} />
+                  <View>
+                    <ThemedText style={[styles.releaseOptionLabel, releaseType === option.type ? { color: theme.primary } : null]}>
+                      {option.label}
+                    </ThemedText>
+                    <ThemedText style={[styles.releaseOptionDesc, { color: theme.textSecondary }]}>
+                      {option.description}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={[
+                  styles.releaseRadio,
+                  { borderColor: releaseType === option.type ? theme.primary : theme.textSecondary + "50" },
+                ]}>
+                  {releaseType === option.type ? (
+                    <View style={[styles.releaseRadioInner, { backgroundColor: theme.primary }]} />
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
+          </View>
         </Card>
 
         <Card style={styles.card}>
@@ -537,6 +588,51 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 13,
     textAlign: "center",
+  },
+  releaseTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: Spacing.xs,
+  },
+  releaseSubtitle: {
+    fontSize: 13,
+    marginBottom: Spacing.md,
+  },
+  releaseOptions: {
+    gap: Spacing.sm,
+  },
+  releaseOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  releaseOptionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  releaseOptionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  releaseOptionDesc: {
+    fontSize: 12,
+  },
+  releaseRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  releaseRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   errorList: {
     marginTop: Spacing.md,

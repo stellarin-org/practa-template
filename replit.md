@@ -104,9 +104,14 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 
 **Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
 
-## Automatic Version Bumping
+## Versioning
 
-The template auto-increments your Practa's patch version (1.0.0 → 1.0.1) on each git commit. No setup required.
+Version numbers are controlled at submission time. When you publish your Practa, you choose a release type:
+- **Bug Fix (patch):** increments the last number (1.0.0 → 1.0.1)
+- **New Feature (minor):** increments the middle number (1.0.1 → 1.1.0)
+- **Major Release (major):** increments the first number (1.1.0 → 2.0.0)
+
+The version bump happens automatically when you submit — no manual editing of `metadata.json` version is needed.
 
 ## Three Sync Systems
 
