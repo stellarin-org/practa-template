@@ -5,6 +5,7 @@ import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { usePractaChrome, HeaderMode } from "@/context/PractaChromeContext";
 import { ThemedText } from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
 import { Spacing, Colors } from "@/constants/theme";
 
 export const HEADER_BAR_HEIGHT = 44;
@@ -44,21 +45,27 @@ interface PractaChromeHeaderProps {
   progressActiveColor?: string;
 }
 
-function CloseButton({ onPress }: { onPress?: () => void }) {
+function CloseButton({ onPress, icon = "x", isDark = false }: { onPress?: () => void; icon?: string; isDark?: boolean }) {
   return (
-    <View style={styles.closeButtonCircle}>
+    <View style={[
+      styles.closeButtonCircle,
+      { backgroundColor: isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.9)" },
+    ]}>
       <Pressable style={styles.closeButtonInner} onPress={onPress}>
-        <Feather name="x" size={18} color="rgba(0, 0, 0, 0.8)" />
+        <Feather name={icon as any} size={18} color={isDark ? "rgba(255, 255, 255, 0.85)" : "rgba(0, 0, 0, 0.8)"} />
       </Pressable>
     </View>
   );
 }
 
-function SettingsButton({ onPress }: { onPress?: () => void }) {
+function SettingsButton({ onPress, isDark = false }: { onPress?: () => void; isDark?: boolean }) {
   return (
-    <View style={styles.closeButtonCircle}>
+    <View style={[
+      styles.closeButtonCircle,
+      { backgroundColor: isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.9)" },
+    ]}>
       <Pressable style={styles.closeButtonInner} onPress={onPress}>
-        <Feather name="settings" size={18} color="rgba(0, 0, 0, 0.8)" />
+        <Feather name="settings" size={18} color={isDark ? "rgba(255, 255, 255, 0.85)" : "rgba(0, 0, 0, 0.8)"} />
       </Pressable>
     </View>
   );
@@ -72,6 +79,8 @@ function DefaultHeader({
   showSettings,
   onSettings,
   rightAction,
+  isDark,
+  theme,
 }: {
   insetTop: number;
   onClose?: () => void;
@@ -80,13 +89,17 @@ function DefaultHeader({
   showSettings: boolean;
   onSettings?: () => void;
   rightAction?: React.ReactNode;
+  isDark: boolean;
+  theme: any;
 }) {
+  const iconColor = theme.text;
+
   const headerContent = (
     <View style={[styles.defaultHeaderContent, { paddingTop: insetTop }]}>
       <View style={styles.headerRow}>
         {showClose ? (
           <Pressable style={styles.headerButton} onPress={onClose}>
-            <Feather name="x" size={22} color={Colors.dark.text} />
+            <Feather name="x" size={22} color={iconColor} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
@@ -100,7 +113,7 @@ function DefaultHeader({
           <View style={styles.headerButton}>{rightAction}</View>
         ) : showSettings ? (
           <Pressable style={styles.headerButton} onPress={onSettings}>
-            <Feather name="settings" size={20} color={Colors.dark.text} />
+            <Feather name="settings" size={20} color={iconColor} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
@@ -111,14 +124,19 @@ function DefaultHeader({
 
   if (Platform.OS === "ios") {
     return (
-      <BlurView intensity={80} tint="light" style={styles.defaultHeader}>
+      <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={styles.defaultHeader}>
         {headerContent}
       </BlurView>
     );
   }
 
   return (
-    <View style={[styles.defaultHeader, styles.defaultHeaderAndroid]}>
+    <View style={[
+      styles.defaultHeader,
+      {
+        backgroundColor: isDark ? "rgba(26, 26, 26, 0.95)" : "rgba(255, 255, 255, 0.95)",
+      },
+    ]}>
       {headerContent}
     </View>
   );
@@ -135,6 +153,8 @@ function MinimalHeader({
   totalSteps,
   currentStep,
   progressActiveColor,
+  closeIcon,
+  isDark,
 }: {
   insetTop: number;
   onClose?: () => void;
@@ -146,6 +166,8 @@ function MinimalHeader({
   totalSteps: number;
   currentStep: number;
   progressActiveColor: string;
+  closeIcon?: string;
+  isDark: boolean;
 }) {
   return (
     <View
@@ -154,7 +176,7 @@ function MinimalHeader({
     >
       <View style={styles.minimalRow} pointerEvents="box-none">
         {showClose ? (
-          <CloseButton onPress={onClose} />
+          <CloseButton onPress={onClose} icon={closeIcon} isDark={isDark} />
         ) : (
           <View style={styles.placeholder} />
         )}
@@ -172,7 +194,7 @@ function MinimalHeader({
         {rightAction ? (
           <View>{rightAction}</View>
         ) : showSettings ? (
-          <SettingsButton onPress={onSettings} />
+          <SettingsButton onPress={onSettings} isDark={isDark} />
         ) : (
           <View style={styles.placeholder} />
         )}
@@ -192,6 +214,7 @@ export function PractaChromeHeader({
 }: PractaChromeHeaderProps) {
   const insets = useSafeAreaInsets();
   const { config } = usePractaChrome();
+  const { theme, isDark } = useTheme();
 
   const headerMode = config.headerMode ?? defaultMode;
   const title = config.title ?? defaultTitle;
@@ -199,6 +222,9 @@ export function PractaChromeHeader({
   const onSettings = config.onSettings;
   const rightAction = config.rightAction;
   const showProgressDots = config.showProgressDots ?? false;
+  const closeIcon = config.closeIcon;
+  const effectiveOnClose = config.onCloseOverride ?? onClose;
+  const effectiveShowClose = config.onCloseOverride ? true : showClose;
 
   if (headerMode === "none") {
     return null;
@@ -208,8 +234,8 @@ export function PractaChromeHeader({
     return (
       <MinimalHeader
         insetTop={insets.top}
-        onClose={onClose}
-        showClose={showClose}
+        onClose={effectiveOnClose}
+        showClose={effectiveShowClose}
         showSettings={showSettings}
         onSettings={onSettings}
         rightAction={rightAction}
@@ -217,6 +243,8 @@ export function PractaChromeHeader({
         totalSteps={totalSteps}
         currentStep={currentStep}
         progressActiveColor={progressActiveColor}
+        closeIcon={closeIcon}
+        isDark={isDark}
       />
     );
   }
@@ -224,12 +252,14 @@ export function PractaChromeHeader({
   return (
     <DefaultHeader
       insetTop={insets.top}
-      onClose={onClose}
-      showClose={showClose}
+      onClose={effectiveOnClose}
+      showClose={effectiveShowClose}
       title={title}
       showSettings={showSettings}
       onSettings={onSettings}
       rightAction={rightAction}
+      isDark={isDark}
+      theme={theme}
     />
   );
 }
@@ -252,9 +282,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 100,
-  },
-  defaultHeaderAndroid: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
   },
   defaultHeaderContent: {
     width: "100%",
@@ -295,7 +322,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

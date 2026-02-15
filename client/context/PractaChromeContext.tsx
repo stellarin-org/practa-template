@@ -9,6 +9,8 @@ export interface PractaChromeConfig {
   onSettings?: () => void;
   showProgressDots?: boolean;
   rightAction?: ReactNode;
+  closeIcon?: string;
+  onCloseOverride?: (() => void) | null;
 }
 
 interface PractaChromeContextValue {
@@ -24,6 +26,8 @@ const defaultConfig: PractaChromeConfig = {
   onSettings: undefined,
   showProgressDots: undefined,
   rightAction: undefined,
+  closeIcon: undefined,
+  onCloseOverride: undefined,
 };
 
 const PractaChromeContext = createContext<PractaChromeContextValue | null>(null);
