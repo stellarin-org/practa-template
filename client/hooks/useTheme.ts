@@ -1,10 +1,13 @@
+import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/theme";
 
 export function useTheme() {
-  const theme = Colors.light;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const theme = isDark ? Colors.dark : Colors.light;
 
   return {
     theme,
-    isDark: false,
+    isDark,
   };
 }
