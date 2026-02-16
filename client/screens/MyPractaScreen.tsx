@@ -11,6 +11,7 @@ import * as Haptics from "expo-haptics";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from "react-native-reanimated";
 
+import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/Card";
@@ -20,7 +21,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
 import practaMetadataJson from "@/my-practa/metadata.json";
 import { apiRequest } from "@/lib/query-client";
-import { hasSplash, getSplashSource } from "@/lib/practa-assets";
+import { hasSplash, getSplashSource, resolveAssets } from "@/lib/practa-assets";
 import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
 
 interface SyncStatus {
@@ -343,9 +344,17 @@ export default function MyPractaScreen() {
 
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
-              <Feather name="layers" size={24} color={theme.primary} />
-            </View>
+            {resolveAssets("my-practa").icon ? (
+              <Image
+                source={resolveAssets("my-practa").icon}
+                style={styles.iconImage}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
+                <Feather name="layers" size={24} color={theme.primary} />
+              </View>
+            )}
             <View style={styles.cardInfo}>
               <ThemedText style={styles.cardTitle}>{metadata.name}</ThemedText>
               <ThemedText style={[styles.cardDescription, { color: theme.textSecondary }]}>
@@ -613,6 +622,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.lg,
+  },
+  iconImage: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    marginRight: Spacing.md,
   },
   iconContainer: {
     width: 48,
