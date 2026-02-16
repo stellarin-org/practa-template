@@ -37,3 +37,5 @@ Before writing any code, read the full documentation to understand the contract:
 4. Place any asset files in `client/my-practa/assets/`
 5. Restart the app so assets regenerate
 6. Verify against the validation checklist in the developer guide
+7. Generate a Practa icon — follow `.agents/skills/generate-practa-icon/SKILL.md`
+8. Generate a Practa splash image — follow `.agents/skills/generate-practa-splash/SKILL.md`
