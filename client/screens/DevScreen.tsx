@@ -77,7 +77,7 @@ function ConfirmModal({
               onPress={onConfirm}
               style={[
                 styles.modalButton,
-                { backgroundColor: isDestructive ? "#EF4444" : theme.primary },
+                { backgroundColor: isDestructive ? theme.error : theme.primary },
               ]}
             >
               <ThemedText style={[styles.modalButtonText, { color: "white" }]}>
@@ -378,11 +378,11 @@ export default function DevScreen() {
             {syncStatus ? (
               <View style={[
                 styles.versionBadge, 
-                { backgroundColor: (syncStatus.isInSync || !syncStatus.hasNewerVersion) ? theme.primary + "20" : "#D97706" + "20" }
+                { backgroundColor: (syncStatus.isInSync || !syncStatus.hasNewerVersion) ? theme.primary + "20" : theme.warning + "20" }
               ]}>
                 <ThemedText style={[
                   styles.versionBadgeText, 
-                  { color: (syncStatus.isInSync || !syncStatus.hasNewerVersion) ? theme.primary : "#D97706" }
+                  { color: (syncStatus.isInSync || !syncStatus.hasNewerVersion) ? theme.primary : theme.warning }
                 ]}>
                   v{syncStatus.localTemplateVersion || "?"}
                 </ThemedText>
@@ -406,7 +406,7 @@ export default function DevScreen() {
                 </ThemedText>
                 <ThemedText style={[
                   styles.versionValue,
-                  syncStatus.hasNewerVersion && { color: "#D97706" }
+                  syncStatus.hasNewerVersion && { color: theme.warning }
                 ]}>
                   v{syncStatus.latestTemplateVersion || "?"}
                   {syncStatus.hasNewerVersion ? " (newer)" : ""}
@@ -433,7 +433,7 @@ export default function DevScreen() {
 
           {syncStatus && !syncStatus.isInSync && !syncStatus.isMasterTemplate ? (
             <View style={styles.updateBanner}>
-              <Feather name="download-cloud" size={16} color="#D97706" />
+              <Feather name="download-cloud" size={16} color={theme.warning} />
               <ThemedText style={styles.updateBannerText}>
                 {syncStatus.hasNewerVersion
                   ? `Update available: ${syncStatus.localTemplateVersion} → ${syncStatus.latestTemplateVersion}`
@@ -510,13 +510,13 @@ export default function DevScreen() {
               <Feather
                 name="rotate-ccw"
                 size={20}
-                color={isResetting ? theme.textSecondary : "#EF4444"}
+                color={isResetting ? theme.textSecondary : theme.error}
               />
               <View style={styles.optionText}>
                 <ThemedText
                   style={[
                     styles.optionTitle,
-                    { color: isResetting ? theme.textSecondary : "#EF4444" },
+                    { color: isResetting ? theme.textSecondary : theme.error },
                   ]}
                 >
                   Reset Practa to Demo
@@ -541,8 +541,8 @@ export default function DevScreen() {
             <View style={styles.sectionHeader}>
               <Feather name="git-pull-request" size={20} color={theme.primary} />
               <ThemedText style={styles.sectionTitle}>Test Harness Import</ThemedText>
-              <View style={[styles.versionBadge, { backgroundColor: "#10B981" + "20" }]}>
-                <ThemedText style={[styles.versionBadgeText, { color: "#10B981" }]}>
+              <View style={[styles.versionBadge, { backgroundColor: theme.success + "20" }]}>
+                <ThemedText style={[styles.versionBadgeText, { color: theme.success }]}>
                   Master
                 </ThemedText>
               </View>
@@ -585,13 +585,13 @@ export default function DevScreen() {
                 <Feather
                   name="download"
                   size={20}
-                  color={isHarnessImporting ? theme.textSecondary : "#10B981"}
+                  color={isHarnessImporting ? theme.textSecondary : theme.success}
                 />
                 <View style={styles.optionText}>
                   <ThemedText
                     style={[
                       styles.optionTitle,
-                      { color: isHarnessImporting ? theme.textSecondary : "#10B981" },
+                      { color: isHarnessImporting ? theme.textSecondary : theme.success },
                     ]}
                   >
                     Import from Stellarin

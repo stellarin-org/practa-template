@@ -281,7 +281,7 @@ export default function MyPractaScreen() {
               <Feather 
                 name={syncStatus.isMasterTemplate ? "git-commit" : "download-cloud"} 
                 size={20} 
-                color={syncStatus.isMasterTemplate ? "#3B82F6" : "#D97706"} 
+                color={syncStatus.isMasterTemplate ? "#3B82F6" : theme.warning} 
               />
               <View style={styles.syncBannerText}>
                 <ThemedText style={styles.syncBannerTitle}>
@@ -442,20 +442,20 @@ export default function MyPractaScreen() {
                   {practaSyncStatus.publishedVersion}
                 </ThemedText>
                 {practaSyncStatus.localIsAhead ? (
-                  <View style={[styles.versionBadge, { backgroundColor: "#F59E0B20" }]}>
-                    <ThemedText style={[styles.versionBadgeText, { color: "#D97706" }]}>
+                  <View style={[styles.versionBadge, { backgroundColor: theme.warning + "20" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: theme.warning }]}>
                       Local: {practaSyncStatus.localVersion}
                     </ThemedText>
                   </View>
                 ) : practaSyncStatus.hasNewerPublished ? (
-                  <View style={[styles.versionBadge, { backgroundColor: "#EF444420" }]}>
-                    <ThemedText style={[styles.versionBadgeText, { color: "#DC2626" }]}>
+                  <View style={[styles.versionBadge, { backgroundColor: theme.error + "20" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: theme.error }]}>
                       Behind
                     </ThemedText>
                   </View>
                 ) : (
-                  <View style={[styles.versionBadge, { backgroundColor: "#10B98120" }]}>
-                    <ThemedText style={[styles.versionBadgeText, { color: "#059669" }]}>
+                  <View style={[styles.versionBadge, { backgroundColor: theme.success + "20" }]}>
+                    <ThemedText style={[styles.versionBadgeText, { color: theme.success }]}>
                       Up to date
                     </ThemedText>
                   </View>
@@ -514,7 +514,7 @@ export default function MyPractaScreen() {
                       {(field as ConfigField).label}
                     </ThemedText>
                     {(field as ConfigField).required ? (
-                      <ThemedText style={[styles.requiredMark, { color: "#EF4444" }]}>*</ThemedText>
+                      <ThemedText style={[styles.requiredMark, { color: theme.error }]}>*</ThemedText>
                     ) : null}
                   </View>
                   {(field as ConfigField).description ? (

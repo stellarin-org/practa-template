@@ -43,10 +43,10 @@ function ValidationItem({ result }: { result: ValidationResult }) {
       : "check-circle";
       
   const iconColor = result.severity === "error"
-    ? "#EF4444"
+    ? theme.error
     : result.severity === "warning"
-      ? "#F59E0B"
-      : "#10B981";
+      ? theme.warning
+      : theme.success;
 
   return (
     <View style={styles.validationItem}>
@@ -54,7 +54,7 @@ function ValidationItem({ result }: { result: ValidationResult }) {
       <ThemedText 
         style={[
           styles.validationText, 
-          { color: result.severity === "error" ? "#EF4444" : theme.textSecondary }
+          { color: result.severity === "error" ? theme.error : theme.textSecondary }
         ]}
       >
         {result.message}
@@ -167,7 +167,7 @@ export default function PreviewScreen() {
               <Feather 
                 name={syncStatus.isMasterTemplate ? "git-commit" : "alert-triangle"} 
                 size={20} 
-                color={syncStatus.isMasterTemplate ? "#3B82F6" : "#D97706"} 
+                color={syncStatus.isMasterTemplate ? "#3B82F6" : theme.warning} 
               />
               <View style={styles.syncBannerText}>
                 <ThemedText style={styles.syncBannerTitle}>
@@ -279,7 +279,7 @@ export default function PreviewScreen() {
               <Feather 
                 name={validationReport.isValid ? "check-circle" : "alert-circle"} 
                 size={20} 
-                color={validationReport.isValid ? "#10B981" : "#EF4444"} 
+                color={validationReport.isValid ? theme.success : theme.error} 
               />
               <ThemedText style={styles.validationTitle}>
                 Validation {validationReport.isValid ? "Passed" : "Failed"}
@@ -288,14 +288,14 @@ export default function PreviewScreen() {
             <View style={styles.validationStats}>
               {validationReport.errors.length > 0 ? (
                 <View style={[styles.statBadge, { backgroundColor: "#FEE2E2" }]}>
-                  <ThemedText style={[styles.statText, { color: "#EF4444" }]}>
+                  <ThemedText style={[styles.statText, { color: theme.error }]}>
                     {validationReport.errors.length} errors
                   </ThemedText>
                 </View>
               ) : null}
               {validationReport.warnings.length > 0 ? (
                 <View style={[styles.statBadge, { backgroundColor: "#FEF3C7" }]}>
-                  <ThemedText style={[styles.statText, { color: "#D97706" }]}>
+                  <ThemedText style={[styles.statText, { color: theme.warning }]}>
                     {validationReport.warnings.length} warnings
                   </ThemedText>
                 </View>
