@@ -9,6 +9,17 @@ export type ThemedTextProps = TextProps & {
   type?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "link";
 };
 
+const typeStyles: Record<string, (typeof Typography)[keyof typeof Typography]> =
+  {
+    h1: Typography.h1,
+    h2: Typography.h2,
+    h3: Typography.h3,
+    h4: Typography.h4,
+    body: Typography.body,
+    small: Typography.small,
+    link: Typography.link,
+  };
+
 export function ThemedText({
   style,
   lightColor,
@@ -18,44 +29,9 @@ export function ThemedText({
 }: ThemedTextProps) {
   const { theme, isDark } = useTheme();
 
-  const getColor = () => {
-    if (isDark && darkColor) {
-      return darkColor;
-    }
+  const color =
+    (isDark ? darkColor : lightColor) ??
+    (type === "link" ? theme.link : theme.text);
 
-    if (!isDark && lightColor) {
-      return lightColor;
-    }
-
-    if (type === "link") {
-      return theme.link;
-    }
-
-    return theme.text;
-  };
-
-  const getTypeStyle = () => {
-    switch (type) {
-      case "h1":
-        return Typography.h1;
-      case "h2":
-        return Typography.h2;
-      case "h3":
-        return Typography.h3;
-      case "h4":
-        return Typography.h4;
-      case "body":
-        return Typography.body;
-      case "small":
-        return Typography.small;
-      case "link":
-        return Typography.link;
-      default:
-        return Typography.body;
-    }
-  };
-
-  return (
-    <Text style={[{ color: getColor() }, getTypeStyle(), style]} {...rest} />
-  );
+  return <Text style={[{ color }, typeStyles[type] ?? Typography.body, style]} {...rest} />;
 }

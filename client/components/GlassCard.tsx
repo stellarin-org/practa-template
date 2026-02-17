@@ -1,9 +1,24 @@
 import React from "react";
-import { StyleSheet, View, ViewStyle, StyleProp, Platform } from "react-native";
+import { StyleSheet, View, ViewStyle, StyleProp, Platform, Pressable } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  WithSpringConfig,
+} from "react-native-reanimated";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius } from "@/constants/theme";
+
+const pressSpring: WithSpringConfig = {
+  damping: 15,
+  mass: 0.3,
+  stiffness: 150,
+  overshootClamping: true,
+};
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -11,6 +26,7 @@ interface GlassCardProps {
   intensity?: number;
   tint?: "light" | "dark" | "default";
   noPadding?: boolean;
+  onPress?: () => void;
 }
 
 export function GlassCard({
@@ -19,8 +35,10 @@ export function GlassCard({
   intensity,
   tint,
   noPadding,
+  onPress,
 }: GlassCardProps) {
   const { theme, isDark } = useTheme();
+  const scale = useSharedValue(1);
 
   const resolvedTint = tint ?? (isDark ? "dark" : "light");
   const resolvedIntensity = intensity ?? (isDark ? 40 : 30);
@@ -34,22 +52,39 @@ export function GlassCard({
 
   const innerStyle: ViewStyle = noPadding ? {} : { padding: 16 };
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    if (onPress) scale.value = withSpring(0.98, pressSpring);
+  };
+
+  const handlePressOut = () => {
+    if (onPress) scale.value = withSpring(1, pressSpring);
+  };
+
+  const Wrapper = onPress ? AnimatedPressable : Animated.View;
+  const wrapperProps = onPress
+    ? {
+        onPress,
+        onPressIn: handlePressIn,
+        onPressOut: handlePressOut,
+        style: [containerStyle, animatedStyle, style],
+      }
+    : { style: [containerStyle, animatedStyle, style] };
+
   if (Platform.OS === "web") {
     return (
-      <View
-        style={[
-          containerStyle,
-          { backgroundColor: theme.glassBg } as any,
-          style,
-        ]}
-      >
+      <Wrapper {...(wrapperProps as any)}>
+        <View style={{ backgroundColor: theme.glassBg, ...StyleSheet.absoluteFillObject }} />
         <View style={innerStyle}>{children}</View>
-      </View>
+      </Wrapper>
     );
   }
 
   return (
-    <View style={[containerStyle, style]}>
+    <Wrapper {...(wrapperProps as any)}>
       <BlurView
         intensity={resolvedIntensity}
         tint={resolvedTint}
@@ -63,6 +98,6 @@ export function GlassCard({
         pointerEvents="none"
       />
       <View style={innerStyle}>{children}</View>
-    </View>
+    </Wrapper>
   );
 }
