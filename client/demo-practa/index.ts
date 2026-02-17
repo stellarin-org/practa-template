@@ -1,5 +1,5 @@
 import { ComponentType } from "react";
-import { PractaContext, PractaCompleteHandler } from "@/types/flow";
+import { PractaProps } from "@/types/flow";
 
 import BreathingPause from "./breathing-pause";
 import GratitudePrompt from "./gratitude-prompt";
@@ -9,11 +9,7 @@ export interface DemoPractaInfo {
   name: string;
   description: string;
   icon: string;
-  component: ComponentType<{
-    context: PractaContext;
-    onComplete: PractaCompleteHandler;
-    onSkip?: () => void;
-  }>;
+  component: ComponentType<PractaProps>;
 }
 
 export const demoPractas: DemoPractaInfo[] = [

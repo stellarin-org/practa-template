@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, StyleSheet, Pressable, Image } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAudioPlayer } from "expo-audio";
 import Animated, {
@@ -12,6 +12,7 @@ import Animated, {
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassBackground } from "@/components/GlassBackground";
+import { PractaImage } from "@/components/PractaImage";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -244,10 +245,11 @@ export default function BreathingPause({ context, onComplete, onSettings, showSe
         <AnimatedSection index={0}>
           <View style={styles.orbContainer}>
             <Animated.View style={[styles.orbWrapper, animatedOrbStyle]}>
-              <Image 
+              <PractaImage 
                 source={context.assets?.breathingOrb as number | { uri: string } | undefined} 
                 style={styles.orbImage}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={600}
               />
             </Animated.View>
             

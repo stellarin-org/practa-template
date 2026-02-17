@@ -16,14 +16,14 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, ImageSourcePropType } from "react-native";
-import { Image } from "expo-image";
+import { View, StyleSheet, Pressable } from "react-native";
+import { ImageSource } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassBackground } from "@/components/GlassBackground";
-import { GlassCard } from "@/components/GlassCard";
+import { PractaImage } from "@/components/PractaImage";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptics } from "@/hooks/useHaptics";
@@ -58,7 +58,7 @@ export default function MyPracta({ context, onComplete, showSettings, onSettings
     });
   }, [setConfig, showSettings, onSettings]);
 
-  const wellnessBgSource = context.assets?.wellnessBg as ImageSourcePropType | undefined;
+  const wellnessBgSource = context.assets?.wellnessBg as ImageSource | undefined;
   const content = context.assets?.content as ContentData | undefined;
 
   const title = isStarted 
@@ -93,10 +93,11 @@ export default function MyPracta({ context, onComplete, showSettings, onSettings
       <View style={styles.content}>
         <AnimatedSection index={0}>
           {wellnessBgSource ? (
-            <Image
+            <PractaImage
               source={wellnessBgSource}
-              style={styles.wellnessImage}
-              contentFit="cover"
+              size={150}
+              circular
+              style={{ marginBottom: Spacing.xl }}
             />
           ) : (
             <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
@@ -153,12 +154,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.xl,
-  },
-  wellnessImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
     marginBottom: Spacing.xl,
   },
   title: {
