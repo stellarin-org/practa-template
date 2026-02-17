@@ -4,6 +4,7 @@ import TabNavigator from "@/navigation/TabNavigator";
 import HarnessPreviewScreen from "@/screens/HarnessPreviewScreen";
 import MetadataEditorScreen from "@/screens/MetadataEditorScreen";
 import SubmitScreen from "@/screens/SubmitScreen";
+import ThemePreviewScreen from "@/screens/ThemePreviewScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type RootStackParamList = {
@@ -11,6 +12,7 @@ export type RootStackParamList = {
   HarnessPreview: { practaId: string };
   MetadataEditor: undefined;
   Submit: undefined;
+  ThemePreview: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +48,15 @@ export default function RootStackNavigator() {
       <Stack.Screen
         name="Submit"
         component={SubmitScreen}
+        options={{
+          presentation: "modal",
+          headerShown: false,
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="ThemePreview"
+        component={ThemePreviewScreen}
         options={{
           presentation: "modal",
           headerShown: false,
