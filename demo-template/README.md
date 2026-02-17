@@ -12,7 +12,8 @@ This Practa provides a simple interactive experience with a welcome screen and c
 |------|------|----------|-------------|
 | `context` | `PractaContext` | Yes | Context from previous Practa in the flow |
 | `onComplete` | `(output: PractaOutput) => void` | Yes | Callback when the experience is finished |
-| `onSkip` | `() => void` | No | Optional callback to skip the experience |
+| `showSettings` | `boolean` | No | Whether to show the settings button in the header |
+| `onSettings` | `() => void` | No | Callback when the settings button is pressed |
 
 ## Usage
 
@@ -22,13 +23,14 @@ The component receives context from the flow system and calls `onComplete` when 
 <MyPracta
   context={{ flowId: "flow-123", practaIndex: 0 }}
   onComplete={(output) => console.log("Completed:", output)}
-  onSkip={() => console.log("Skipped")}
+  showSettings={true}
+  onSettings={() => console.log("Settings pressed")}
 />
 ```
 
 ## Output
 
 When completed, this Practa outputs:
-- `content.type`: "text" //
+- `content.type`: "text"
 - `content.value`: "Practa completed successfully!"
 - `metadata.completedAt`: Timestamp of completion

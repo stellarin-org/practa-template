@@ -4,6 +4,5 @@
   "welcomeMessage": "This is a starter template. Customize it to create your own wellbeing experience.",
   "startedMessage": "You've started your Practa experience.",
   "buttonStart": "Start",
-  "buttonComplete": "Complete",
-  "buttonSkip": "Skip"
+  "buttonComplete": "Complete"
 }
