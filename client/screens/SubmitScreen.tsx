@@ -4,13 +4,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 import * as Clipboard from "expo-clipboard";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
+import { AnimatedSection } from "@/components/AnimatedSection";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -18,29 +19,11 @@ import codeMetadata from "@/my-practa/metadata.json";
 import { usePractaValidation, ValidationReport } from "@/hooks/usePractaValidation";
 import { getApiUrl } from "@/lib/query-client";
 import { PractaFileMetadata } from "@/types/flow";
+import { ValidationCheck, UploadPreviewResult } from "@/types/api";
 
 const VERIFICATION_SERVICE_URL = "https://stellarin-practa-verification.replit.app";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface ValidationCheck {
-  name: string;
-  category: string;
-  passed: boolean;
-  message: string;
-}
-
-interface UploadPreviewResult {
-  token: string;
-  practaName: string;
-  practaType: string;
-  version: string;
-  validationScore: number;
-  validationChecks: ValidationCheck[];
-  valid: boolean;
-  expiresAt: string;
-  requiresAuth: boolean;
-}
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
@@ -49,6 +32,7 @@ export default function SubmitScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
   
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
@@ -80,7 +64,7 @@ export default function SubmitScreen() {
     if (errors) message += `Errors:\n${errors}\n\n`;
     if (warnings) message += `Warnings:\n${warnings}\n`;
     await Clipboard.setStringAsync(message.trim());
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    haptics.success();
     setCopiedValidation(true);
     setTimeout(() => setCopiedValidation(false), 2000);
   };
@@ -88,7 +72,7 @@ export default function SubmitScreen() {
   const handleSubmit = async () => {
     if (hasErrors) return;
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    haptics.medium();
     setSubmitState("submitting");
     setSubmitError(null);
     
@@ -115,7 +99,7 @@ export default function SubmitScreen() {
         setSubmitResult(data);
       }
       setSubmitState("success");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptics.success();
       
       queryClient.invalidateQueries({ queryKey: ["/api/practa/last-submit"] });
     } catch (error) {
@@ -127,20 +111,20 @@ export default function SubmitScreen() {
           : errorMessage
       );
       setSubmitState("error");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      haptics.error();
     }
   };
 
   const handleClaimSubmission = () => {
     if (!submitResult?.token) return;
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     const submitUrl = `${VERIFICATION_SERVICE_URL}/submit?token=${submitResult.token}`;
     Linking.openURL(submitUrl);
   };
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     navigation.goBack();
   };
 
@@ -156,7 +140,7 @@ export default function SubmitScreen() {
   const canSubmit = !hasErrors && submitState !== "submitting";
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable onPress={handleClose} style={styles.closeButton}>
           <Feather name="x" size={24} color={theme.text} />
@@ -173,7 +157,8 @@ export default function SubmitScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Card style={styles.card}>
+        <AnimatedSection index={0}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.cardTitle}>{displayMetadata.name}</ThemedText>
           <ThemedText style={styles.cardSubtitle}>
             {displayMetadata.id} v{displayMetadata.version}
@@ -181,9 +166,11 @@ export default function SubmitScreen() {
           <ThemedText style={[styles.cardDescription, { color: theme.textSecondary }]}>
             by {displayMetadata.author}
           </ThemedText>
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
-        <Card style={styles.card}>
+        <AnimatedSection index={1}>
+        <GlassCard style={styles.card}>
           <View style={styles.statusRow}>
             <Feather
               name={hasErrors ? "alert-circle" : "check-circle"}
@@ -248,9 +235,11 @@ export default function SubmitScreen() {
               </Pressable>
             </View>
           ) : null}
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
-        <Card style={styles.card}>
+        <AnimatedSection index={2}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.releaseTitle}>Release Type</ThemedText>
           <ThemedText style={[styles.releaseSubtitle, { color: theme.textSecondary }]}>
             How should the version number change?
@@ -268,7 +257,7 @@ export default function SubmitScreen() {
                 key={option.type}
                 onPress={() => {
                   setReleaseType(option.type);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  haptics.light();
                 }}
                 style={[
                   styles.releaseOption,
@@ -300,9 +289,11 @@ export default function SubmitScreen() {
               </Pressable>
             ))}
           </View>
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
-        <Card style={styles.card}>
+        <AnimatedSection index={3}>
+        <GlassCard style={styles.card}>
           <View style={styles.infoRow}>
             <Feather name="info" size={18} color={theme.textSecondary} />
             <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
@@ -311,10 +302,12 @@ export default function SubmitScreen() {
                 : "Your Practa will be validated and uploaded. Sign in on Stellarin to claim your submission."}
             </ThemedText>
           </View>
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
         {submitState === "success" && isMasterTemplate && bumpResult ? (
-          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+          <AnimatedSection index={4}>
+          <GlassCard style={[styles.card, { borderColor: theme.success, borderWidth: 1 }]}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
@@ -339,11 +332,13 @@ export default function SubmitScreen() {
             <ThemedText style={[styles.bumpHint, { color: theme.textSecondary }]}>
               Push to GitHub when ready to publish the new version.
             </ThemedText>
-          </Card>
+          </GlassCard>
+          </AnimatedSection>
         ) : null}
 
         {submitState === "success" && !isMasterTemplate && submitResult ? (
-          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+          <AnimatedSection index={4}>
+          <GlassCard style={[styles.card, { borderColor: theme.success, borderWidth: 1 }]}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
@@ -404,11 +399,13 @@ export default function SubmitScreen() {
               <Feather name="external-link" size={18} color="#FFFFFF" />
               <ThemedText style={styles.claimButtonText}>Sign in to Claim</ThemedText>
             </Pressable>
-          </Card>
+          </GlassCard>
+          </AnimatedSection>
         ) : null}
 
         {submitState === "error" && submitError ? (
-          <Card style={{ ...styles.card, borderColor: theme.error, borderWidth: 1 }}>
+          <AnimatedSection index={4}>
+          <GlassCard style={[styles.card, { borderColor: theme.error, borderWidth: 1 }]}>
             <View style={styles.errorHeader}>
               <Feather name="alert-circle" size={24} color={theme.error} />
               <ThemedText style={[styles.errorTitle, { color: theme.error }]}>
@@ -418,7 +415,8 @@ export default function SubmitScreen() {
             <ThemedText style={[styles.errorText, { color: theme.textSecondary }]}>
               {submitError}
             </ThemedText>
-          </Card>
+          </GlassCard>
+          </AnimatedSection>
         ) : null}
 
         {submitState !== "success" ? (
@@ -452,7 +450,7 @@ export default function SubmitScreen() {
           </ThemedText>
         ) : null}
       </ScrollView>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

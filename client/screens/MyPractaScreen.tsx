@@ -7,7 +7,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS } from "react-native-reanimated";
 
@@ -23,48 +23,8 @@ import practaMetadataJson from "@/my-practa/metadata.json";
 import { apiRequest } from "@/lib/query-client";
 import { hasSplash, getSplashSource, resolveAssets } from "@/lib/practa-assets";
 import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
-
-interface SyncStatus {
-  isInSync: boolean;
-  localVersion: string | null;
-  latestVersion: string;
-  localTemplateVersion?: string;
-  latestTemplateVersion?: string;
-  hasNewerVersion?: boolean;
-  repoUrl: string;
-  isMasterTemplate?: boolean;
-}
-
-interface PractaSyncStatus {
-  hasLocalPracta: boolean;
-  slug: string | null;
-  localVersion: string;
-  isPublished: boolean;
-  publishedVersion: string | null;
-  publishedEntry: {
-    slug: string;
-    version: string;
-    buildId: string;
-    name: string;
-    description: string;
-    author: string;
-    category: string;
-    practaType: string;
-    type: string;
-    requiresAI: boolean;
-    estimatedDuration: number;
-    assets?: Record<string, string>;
-    dependencies?: string[];
-  } | null;
-  hasNewerPublished: boolean;
-  localIsAhead: boolean;
-  publishedAt: string | null;
-  repoVersion: string | null;
-  hasNewerInRepo: boolean;
-  repoAvailable: boolean;
-  repoUrl: string;
-  error?: string;
-}
+import { SyncStatus, PractaSyncStatus } from "@/types/api";
+import { AnimatedSection } from "@/components/AnimatedSection";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -103,6 +63,7 @@ export default function MyPractaScreen() {
   const queryClient = useQueryClient();
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const transitionOpacity = useSharedValue(0);
+  const haptics = useHaptics();
   const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
@@ -138,9 +99,7 @@ export default function MyPractaScreen() {
     const message = `My Practa template is out of date (${syncStatus?.localTemplateVersion || "?"} → ${syncStatus?.latestTemplateVersion || "?"}). Please update it by following the instructions in .agents/skills/update-practa-template/SKILL.md — then run the post-update review from .agents/skills/post-template-update/SKILL.md using the SHA values returned by the update.`;
     await Clipboard.setStringAsync(message);
     setCopiedUpdateInstructions(true);
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    haptics.success();
     setTimeout(() => setCopiedUpdateInstructions(false), 3000);
   }, [syncStatus]);
 
@@ -152,14 +111,10 @@ export default function MyPractaScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/practa/sync-status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      haptics.success();
     },
     onError: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      haptics.error();
     },
   });
 
@@ -169,9 +124,7 @@ export default function MyPractaScreen() {
       return response.json();
     },
     onSuccess: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      haptics.success();
       queryClient.invalidateQueries();
       if (Platform.OS === "web") {
         window.location.reload();
@@ -180,9 +133,7 @@ export default function MyPractaScreen() {
       }
     },
     onError: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      haptics.error();
     },
   });
 
@@ -219,9 +170,7 @@ export default function MyPractaScreen() {
   }, [navigation]);
 
   const handlePreview = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    haptics.medium();
     
     if (hasSplash()) {
       transitionOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) }, (finished) => {
@@ -255,9 +204,7 @@ export default function MyPractaScreen() {
               {toggleTheme ? (
                 <Pressable
                   onPress={() => {
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
+                    haptics.light();
                     toggleTheme();
                   }}
                   style={[styles.themeToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}
@@ -338,9 +285,7 @@ export default function MyPractaScreen() {
             </View>
             <Pressable
               onPress={() => {
-                if (Platform.OS !== "web") {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                }
+                haptics.medium();
                 syncPractaMutation.mutate();
               }}
               disabled={syncPractaMutation.isPending}
@@ -361,6 +306,7 @@ export default function MyPractaScreen() {
           </View>
         ) : null}
 
+        <AnimatedSection index={0}>
         <GlassCard style={styles.card}>
           <View style={styles.cardHeader}>
             {resolveAssets("my-practa").icon ? (
@@ -489,8 +435,10 @@ export default function MyPractaScreen() {
             </View>
           )}
         </GlassCard>
+        </AnimatedSection>
 
         {typedMetadata.configSchema && Object.keys(typedMetadata.configSchema.fields || {}).length > 0 ? (
+          <AnimatedSection index={1}>
           <GlassCard style={styles.configCard}>
             <View style={styles.configHeader}>
               <Feather name="sliders" size={20} color={theme.primary} />
@@ -602,6 +550,7 @@ export default function MyPractaScreen() {
               ))}
             </View>
           </GlassCard>
+          </AnimatedSection>
         ) : null}
 
       </ScrollView>

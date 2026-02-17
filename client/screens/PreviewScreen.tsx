@@ -4,14 +4,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 import * as Clipboard from "expo-clipboard";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassCard } from "@/components/GlassCard";
+import { AnimatedSection } from "@/components/AnimatedSection";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -22,14 +23,7 @@ import { ValidationResult } from "@/lib/practa-validator";
 import { usePractaValidation } from "@/hooks/usePractaValidation";
 import { apiRequest } from "@/lib/query-client";
 import { PractaFileMetadata } from "@/types/flow";
-
-interface SyncStatus {
-  isInSync: boolean;
-  localVersion: string | null;
-  latestVersion: string;
-  repoUrl: string;
-  isMasterTemplate?: boolean;
-}
+import { SyncStatus } from "@/types/api";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -68,6 +62,7 @@ export default function PreviewScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
   const [showValidation, setShowValidation] = useState(false);
   const [enableSyncCheck, setEnableSyncCheck] = useState(false);
   const [copiedValidation, setCopiedValidation] = useState(false);
@@ -94,10 +89,10 @@ export default function PreviewScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/template/sync-status"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptics.success();
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      haptics.error();
     },
   });
 
@@ -112,22 +107,22 @@ export default function PreviewScreen() {
   const validationReport = usePractaValidation();
 
   const handlePreview = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    haptics.medium();
     navigation.navigate("HarnessPreview", { practaId: "my-practa" });
   };
 
   const toggleValidation = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     setShowValidation(!showValidation);
   };
 
   const handleEditMetadata = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     navigation.navigate("MetadataEditor");
   };
 
   const handleSubmit = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    haptics.medium();
     navigation.navigate("Submit");
   };
 
@@ -138,13 +133,13 @@ export default function PreviewScreen() {
     if (errors) message += `Errors:\n${errors}\n\n`;
     if (warnings) message += `Warnings:\n${warnings}\n`;
     await Clipboard.setStringAsync(message.trim());
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    haptics.success();
     setCopiedValidation(true);
     setTimeout(() => setCopiedValidation(false), 2000);
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -188,7 +183,7 @@ export default function PreviewScreen() {
             {!syncStatus.isMasterTemplate ? (
               <Pressable
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  haptics.medium();
                   updateTemplateMutation.mutate();
                 }}
                 disabled={updateTemplateMutation.isPending}
@@ -209,7 +204,8 @@ export default function PreviewScreen() {
           </View>
         ) : null}
 
-        <Card style={styles.card}>
+        <AnimatedSection index={0}>
+        <GlassCard style={styles.card}>
           <View style={styles.cardHeader}>
             {resolveAssets("my-practa").icon ? (
               <Image
@@ -271,9 +267,11 @@ export default function PreviewScreen() {
               <ThemedText style={styles.previewButtonText}>Preview</ThemedText>
             </Pressable>
           </View>
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
-        <Card style={styles.validationCard}>
+        <AnimatedSection index={1}>
+        <GlassCard style={styles.validationCard}>
           <Pressable onPress={toggleValidation} style={styles.validationHeader}>
             <View style={styles.validationHeaderLeft}>
               <Feather 
@@ -332,8 +330,10 @@ export default function PreviewScreen() {
               ) : null}
             </View>
           ) : null}
-        </Card>
+        </GlassCard>
+        </AnimatedSection>
 
+        <AnimatedSection index={2}>
         <View style={styles.instructions}>
           <ThemedText style={styles.instructionsTitle}>How to develop</ThemedText>
           <View style={styles.step}>
@@ -369,7 +369,9 @@ export default function PreviewScreen() {
             </ThemedText>
           </View>
         </View>
+        </AnimatedSection>
 
+        <AnimatedSection index={3}>
         <Pressable
           onPress={handleSubmit}
           style={[styles.submitButton, { backgroundColor: theme.primary }]}
@@ -377,8 +379,9 @@ export default function PreviewScreen() {
           <Feather name="upload" size={20} color="white" />
           <ThemedText style={styles.submitButtonText}>Submit for Review</ThemedText>
         </Pressable>
+        </AnimatedSection>
       </ScrollView>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

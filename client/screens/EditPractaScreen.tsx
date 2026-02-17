@@ -3,13 +3,14 @@ import { View, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert } from
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { GlassCard } from "@/components/GlassCard";
 import { GlassBackground } from "@/components/GlassBackground";
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { useHaptics } from "@/hooks/useHaptics";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -69,6 +70,7 @@ export default function EditPractaScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
 
   // Fields in same order as metadata.json: id, name, version, description, author, estimatedDuration, category, tags
   const [id, setId] = useState("");
@@ -113,11 +115,11 @@ export default function EditPractaScreen() {
     },
     onSuccess: (savedData) => {
       queryClient.setQueryData(["/api/practa/metadata"], savedData);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptics.success();
       setHasUnsavedChanges(false);
     },
     onError: (error: Error) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      haptics.error();
       Alert.alert("Save Failed", error.message || "Failed to save");
     },
   });
@@ -174,7 +176,7 @@ export default function EditPractaScreen() {
 
   const handleSave = () => {
     if (!validateFields()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      haptics.warning();
       return;
     }
 
@@ -222,96 +224,100 @@ export default function EditPractaScreen() {
           </ThemedText>
         </View>
 
-        <GlassCard style={styles.card}>
-          <FormField
-            label="Practa ID"
-            value={id}
-            onChangeText={handleIdChange}
-            placeholder="my-practa-id"
-            error={errors.id}
-          />
+        <AnimatedSection index={0}>
+          <GlassCard style={styles.card}>
+            <FormField
+              label="Practa ID"
+              value={id}
+              onChangeText={handleIdChange}
+              placeholder="my-practa-id"
+              error={errors.id}
+            />
 
-          <FormField
-            label="Display Name"
-            value={name}
-            onChangeText={handleFieldChange(setName)}
-            placeholder="My Practa"
-            error={errors.name}
-          />
+            <FormField
+              label="Display Name"
+              value={name}
+              onChangeText={handleFieldChange(setName)}
+              placeholder="My Practa"
+              error={errors.name}
+            />
 
-          <FormField
-            label="Version"
-            value={version}
-            onChangeText={handleFieldChange(setVersion)}
-            placeholder="1.0.0"
-            error={errors.version}
-          />
+            <FormField
+              label="Version"
+              value={version}
+              onChangeText={handleFieldChange(setVersion)}
+              placeholder="1.0.0"
+              error={errors.version}
+            />
 
-          <FormField
-            label="Description"
-            value={description}
-            onChangeText={handleFieldChange(setDescription)}
-            placeholder="What does your Practa do?"
-            multiline
-            error={errors.description}
-          />
+            <FormField
+              label="Description"
+              value={description}
+              onChangeText={handleFieldChange(setDescription)}
+              placeholder="What does your Practa do?"
+              multiline
+              error={errors.description}
+            />
 
-          <FormField
-            label="Author"
-            value={author}
-            onChangeText={handleFieldChange(setAuthor)}
-            placeholder="Your Name"
-            error={errors.author}
-          />
+            <FormField
+              label="Author"
+              value={author}
+              onChangeText={handleFieldChange(setAuthor)}
+              placeholder="Your Name"
+              error={errors.author}
+            />
 
-          <FormField
-            label="Estimated Duration (seconds)"
-            value={estimatedDuration}
-            onChangeText={handleFieldChange(setEstimatedDuration)}
-            placeholder="15"
-            keyboardType="numeric"
-            error={errors.estimatedDuration}
-          />
+            <FormField
+              label="Estimated Duration (seconds)"
+              value={estimatedDuration}
+              onChangeText={handleFieldChange(setEstimatedDuration)}
+              placeholder="15"
+              keyboardType="numeric"
+              error={errors.estimatedDuration}
+            />
 
-          <FormField
-            label="Category (optional)"
-            value={category}
-            onChangeText={handleFieldChange(setCategory)}
-            placeholder="wellness"
-          />
+            <FormField
+              label="Category (optional)"
+              value={category}
+              onChangeText={handleFieldChange(setCategory)}
+              placeholder="wellness"
+            />
 
-          <FormField
-            label="Tags (optional, comma-separated)"
-            value={tags}
-            onChangeText={handleFieldChange(setTags)}
-            placeholder="meditation, calm, breathing"
-          />
-        </GlassCard>
+            <FormField
+              label="Tags (optional, comma-separated)"
+              value={tags}
+              onChangeText={handleFieldChange(setTags)}
+              placeholder="meditation, calm, breathing"
+            />
+          </GlassCard>
+        </AnimatedSection>
 
         <ThemedText style={[styles.hint, { color: theme.textSecondary }]}>
           Changes are saved to metadata.json in your Practa folder.
         </ThemedText>
 
-        <Pressable
-          onPress={handleSave}
-          disabled={saveMutation.isPending || !hasUnsavedChanges}
-          style={[
-            styles.saveButton,
-            { backgroundColor: theme.primary },
-            (saveMutation.isPending || !hasUnsavedChanges) && styles.buttonDisabled,
-          ]}
-        >
-          {saveMutation.isPending ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <>
-              <Feather name="save" size={18} color="white" />
-              <ThemedText style={styles.saveButtonText}>
-                {hasUnsavedChanges ? "Save Changes" : "Saved"}
-              </ThemedText>
-            </>
-          )}
-        </Pressable>
+        <AnimatedSection index={1}>
+          <Pressable
+            onPress={handleSave}
+            disabled={saveMutation.isPending || !hasUnsavedChanges}
+            style={[
+              styles.saveButton,
+              { backgroundColor: theme.primary },
+              (saveMutation.isPending || !hasUnsavedChanges) && styles.buttonDisabled,
+            ]}
+          >
+            {saveMutation.isPending ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Feather name="save" size={18} color="white" />
+                <ThemedText style={styles.saveButtonText}>
+                  {hasUnsavedChanges ? "Save Changes" : "Saved"}
+                </ThemedText>
+              </>
+            )}
+          </Pressable>
+        </AnimatedSection>
       </KeyboardAwareScrollViewCompat>
     </GlassBackground>
   );

@@ -4,12 +4,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { useHaptics } from "@/hooks/useHaptics";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -75,6 +76,7 @@ export default function MetadataEditorScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
 
   const [id, setId] = useState("");
   const [name, setName] = useState("");
@@ -124,11 +126,11 @@ export default function MetadataEditorScreen() {
     },
     onSuccess: (savedData) => {
       queryClient.setQueryData(["/api/practa/metadata"], savedData);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptics.success();
       navigation.goBack();
     },
     onError: (error: Error & { fieldErrors?: Record<string, string> }) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      haptics.error();
       if (error.fieldErrors) {
         setErrors(prev => ({ ...prev, ...error.fieldErrors }));
       } else {
@@ -177,7 +179,7 @@ export default function MetadataEditorScreen() {
 
   const handleSave = async () => {
     if (!validateFields()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      haptics.warning();
       return;
     }
 
@@ -202,20 +204,20 @@ export default function MetadataEditorScreen() {
   };
 
   const handleCancel = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     navigation.goBack();
   };
 
   if (isLoading) {
     return (
-      <ThemedView style={[styles.container, styles.centered]}>
+      <GlassBackground style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={theme.primary} />
-      </ThemedView>
+      </GlassBackground>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
@@ -233,93 +235,97 @@ export default function MetadataEditorScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        <Card style={styles.card}>
-          <FormField
-            label="Practa ID"
-            value={id}
-            onChangeText={handleIdChange}
-            placeholder="my-practa-id"
-            error={errors.id}
-          />
+        <AnimatedSection index={0}>
+          <GlassCard style={styles.card}>
+            <FormField
+              label="Practa ID"
+              value={id}
+              onChangeText={handleIdChange}
+              placeholder="my-practa-id"
+              error={errors.id}
+            />
 
-          <FormField
-            label="Display Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="My Practa"
-            error={errors.name}
-          />
+            <FormField
+              label="Display Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="My Practa"
+              error={errors.name}
+            />
 
-          <FormField
-            label="Version"
-            value={version}
-            onChangeText={setVersion}
-            placeholder="1.0.0"
-            error={errors.version}
-          />
+            <FormField
+              label="Version"
+              value={version}
+              onChangeText={setVersion}
+              placeholder="1.0.0"
+              error={errors.version}
+            />
 
-          <FormField
-            label="Description"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="What does your Practa do?"
-            multiline
-            error={errors.description}
-          />
+            <FormField
+              label="Description"
+              value={description}
+              onChangeText={setDescription}
+              placeholder="What does your Practa do?"
+              multiline
+              error={errors.description}
+            />
 
-          <FormField
-            label="Author"
-            value={author}
-            onChangeText={setAuthor}
-            placeholder="Your Name"
-            error={errors.author}
-          />
+            <FormField
+              label="Author"
+              value={author}
+              onChangeText={setAuthor}
+              placeholder="Your Name"
+              error={errors.author}
+            />
 
-          <FormField
-            label="Estimated Duration (seconds)"
-            value={estimatedDuration}
-            onChangeText={setEstimatedDuration}
-            placeholder="15"
-            keyboardType="numeric"
-            error={errors.estimatedDuration}
-          />
+            <FormField
+              label="Estimated Duration (seconds)"
+              value={estimatedDuration}
+              onChangeText={setEstimatedDuration}
+              placeholder="15"
+              keyboardType="numeric"
+              error={errors.estimatedDuration}
+            />
 
-          <FormField
-            label="Category (optional)"
-            value={category}
-            onChangeText={setCategory}
-            placeholder="wellness"
-          />
+            <FormField
+              label="Category (optional)"
+              value={category}
+              onChangeText={setCategory}
+              placeholder="wellness"
+            />
 
-          <FormField
-            label="Tags (optional, comma-separated)"
-            value={tags}
-            onChangeText={setTags}
-            placeholder="meditation, calm, breathing"
-          />
-        </Card>
+            <FormField
+              label="Tags (optional, comma-separated)"
+              value={tags}
+              onChangeText={setTags}
+              placeholder="meditation, calm, breathing"
+            />
+          </GlassCard>
+        </AnimatedSection>
 
         <ThemedText style={[styles.hint, { color: theme.textSecondary }]}>
           Changes are saved to metadata.json in your Practa folder.
         </ThemedText>
 
-        <Pressable
-          onPress={handleSave}
-          disabled={saveMutation.isPending}
-          style={[
-            styles.saveButton,
-            { backgroundColor: theme.primary },
-            saveMutation.isPending && styles.buttonDisabled,
-          ]}
-        >
-          {saveMutation.isPending ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
-          )}
-        </Pressable>
+        <AnimatedSection index={1}>
+          <Pressable
+            onPress={handleSave}
+            disabled={saveMutation.isPending}
+            style={[
+              styles.saveButton,
+              { backgroundColor: theme.primary },
+              saveMutation.isPending && styles.buttonDisabled,
+            ]}
+          >
+            {saveMutation.isPending ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
+            )}
+          </Pressable>
+        </AnimatedSection>
       </KeyboardAwareScrollViewCompat>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 
