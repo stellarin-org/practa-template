@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, StyleSheet, Pressable, Image, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
 import { useAudioPlayer } from "expo-audio";
 import Animated, {
   useSharedValue,
@@ -12,10 +11,12 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { GlassBackground } from "@/components/GlassBackground";
+import { AnimatedSection } from "@/components/AnimatedSection";
 import { useTheme } from "@/hooks/useTheme";
+import { useHaptics } from "@/hooks/useHaptics";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
+import { PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
 import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
@@ -47,14 +48,9 @@ const DEFAULT_CONFIG: BreathingConfig = {
   },
 };
 
-interface BreathingPauseProps {
-  context: PractaContext;
-  onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
-}
-
-export default function BreathingPause({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
+export default function BreathingPause({ context, onComplete, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
+  const haptics = useHaptics();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
   const headerHeight = useHeaderHeight();
@@ -103,12 +99,6 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
     }
   }, [player]);
 
-  const triggerHaptic = useCallback(() => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  }, []);
-
   const clearAllTimers = useCallback(() => {
     if (cycleRef.current) {
       clearInterval(cycleRef.current);
@@ -135,7 +125,7 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
     if (exhaleTimeoutRef.current) clearTimeout(exhaleTimeoutRef.current);
     
     setBreathPhase("inhale");
-    triggerHaptic();
+    haptics.medium();
     
     scale.value = withTiming(1.4, { 
       duration: INHALE_DURATION, 
@@ -149,12 +139,12 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
     holdTimeoutRef.current = setTimeout(() => {
       if (!isMountedRef.current) return;
       setBreathPhase("hold");
-      triggerHaptic();
+      haptics.medium();
       
       exhaleTimeoutRef.current = setTimeout(() => {
         if (!isMountedRef.current) return;
         setBreathPhase("exhale");
-        triggerHaptic();
+        haptics.medium();
         
         scale.value = withTiming(1, { 
           duration: EXHALE_DURATION, 
@@ -166,7 +156,7 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
         });
       }, HOLD_DURATION);
     }, INHALE_DURATION);
-  }, [scale, opacity, triggerHaptic]);
+  }, [scale, opacity, haptics]);
 
   const startBreathing = useCallback(() => {
     setPhase("breathing");
@@ -191,13 +181,11 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
           if (!isMountedRef.current) return;
           playChime();
           setPhase("complete");
-          if (Platform.OS !== "web") {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
+          haptics.success();
         }, EXHALE_DURATION);
       }
     }, CYCLE_DURATION);
-  }, [startBreathCycle, clearAllTimers, playChime, progress]);
+  }, [startBreathCycle, clearAllTimers, playChime, progress, haptics]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -211,9 +199,7 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
   }, [scale, opacity, progress, clearAllTimers]);
 
   const handleComplete = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    haptics.light();
     onComplete({
       content: { 
         type: "text", 
@@ -253,33 +239,37 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
+    <GlassBackground style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
       <View style={styles.content}>
-        <View style={styles.orbContainer}>
-          <Animated.View style={[styles.orbWrapper, animatedOrbStyle]}>
-            <Image 
-              source={context.assets?.breathingOrb as number | { uri: string } | undefined} 
-              style={styles.orbImage}
-              resizeMode="cover"
-            />
-          </Animated.View>
-          
-          {phase === "breathing" ? (
-            <View style={styles.phaseIndicator}>
-              <ThemedText style={[styles.phaseText, { color: theme.primary }]}>
-                {breathPhase.toUpperCase()}
-              </ThemedText>
-            </View>
-          ) : null}
-        </View>
+        <AnimatedSection index={0}>
+          <View style={styles.orbContainer}>
+            <Animated.View style={[styles.orbWrapper, animatedOrbStyle]}>
+              <Image 
+                source={context.assets?.breathingOrb as number | { uri: string } | undefined} 
+                style={styles.orbImage}
+                resizeMode="cover"
+              />
+            </Animated.View>
+            
+            {phase === "breathing" ? (
+              <View style={styles.phaseIndicator}>
+                <ThemedText style={[styles.phaseText, { color: theme.primary }]}>
+                  {breathPhase.toUpperCase()}
+                </ThemedText>
+              </View>
+            ) : null}
+          </View>
+        </AnimatedSection>
 
-        <ThemedText style={styles.title}>{getPhaseText()}</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {getSubtext()}
-        </ThemedText>
+        <AnimatedSection index={1}>
+          <ThemedText style={styles.title}>{getPhaseText()}</ThemedText>
+          <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {getSubtext()}
+          </ThemedText>
+        </AnimatedSection>
       </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
+      <AnimatedSection index={2} style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
         {phase === "ready" ? (
           <Pressable
             onPress={startBreathing}
@@ -305,16 +295,8 @@ export default function BreathingPause({ context, onComplete, onSkip, onSettings
             />
           </View>
         )}
-
-        {onSkip && phase !== "breathing" ? (
-          <Pressable onPress={onSkip} style={styles.skipButton}>
-            <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
-              Skip
-            </ThemedText>
-          </Pressable>
-        ) : null}
-      </View>
-    </ThemedView>
+      </AnimatedSection>
+    </GlassBackground>
   );
 }
 
@@ -385,13 +367,5 @@ const styles = StyleSheet.create({
   progressBar: {
     height: "100%",
     borderRadius: 4,
-  },
-  skipButton: {
-    padding: Spacing.md,
-    alignItems: "center",
-    marginTop: Spacing.sm,
-  },
-  skipText: {
-    fontSize: 14,
   },
 });

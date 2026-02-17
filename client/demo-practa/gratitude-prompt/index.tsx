@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, Platform } from "react-native";
+import { View, StyleSheet, TextInput, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { GlassBackground } from "@/components/GlassBackground";
+import { AnimatedSection } from "@/components/AnimatedSection";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
+import { useHaptics } from "@/hooks/useHaptics";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { PractaContext, PractaCompleteHandler, PractaProps } from "@/types/flow";
+import { PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
 import { useHeaderHeight } from "@/components/PractaChromeHeader";
 
@@ -18,14 +19,9 @@ const DEFAULT_PROMPTS = [
   "Name something you're thankful for right now.",
 ];
 
-interface GratitudePromptProps {
-  context: PractaContext;
-  onComplete: PractaCompleteHandler;
-  onSkip?: () => void;
-}
-
-export default function GratitudePrompt({ context, onComplete, onSkip, onSettings, showSettings }: PractaProps) {
+export default function GratitudePrompt({ context, onComplete, onSettings, showSettings }: PractaProps) {
   const { theme } = useTheme();
+  const haptics = useHaptics();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
   const headerHeight = useHeaderHeight();
@@ -43,25 +39,15 @@ export default function GratitudePrompt({ context, onComplete, onSkip, onSetting
   const [response, setResponse] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const triggerHaptic = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
   const handleSubmit = () => {
     if (!response.trim()) return;
-    
-    triggerHaptic();
+    haptics.light();
     setIsSubmitted(true);
-    
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    haptics.success();
   };
 
   const handleComplete = () => {
-    triggerHaptic();
+    haptics.light();
     onComplete({
       content: { 
         type: "text", 
@@ -76,7 +62,7 @@ export default function GratitudePrompt({ context, onComplete, onSkip, onSetting
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.content,
@@ -86,90 +72,88 @@ export default function GratitudePrompt({ context, onComplete, onSkip, onSetting
           }
         ]}
       >
-        <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
-            <Feather name="heart" size={32} color={theme.primary} />
-          </View>
-          <ThemedText style={styles.title}>Gratitude Moment</ThemedText>
-        </View>
-
-        <View style={styles.promptContainer}>
-          <ThemedText style={[styles.prompt, { color: theme.textSecondary }]}>
-            {prompt}
-          </ThemedText>
-        </View>
-
-        {isSubmitted ? (
-          <View style={styles.thankYouContainer}>
-            <Feather name="check-circle" size={48} color={theme.primary} />
-            <ThemedText style={styles.thankYouTitle}>Thank you for sharing</ThemedText>
-            <ThemedText style={[styles.thankYouSubtitle, { color: theme.textSecondary }]}>
-              Taking time to appreciate the good helps build resilience and joy.
-            </ThemedText>
-            
-            <View style={[styles.responsePreview, { backgroundColor: theme.backgroundSecondary }]}>
-              <ThemedText style={styles.responsePreviewText}>
-                "{response.trim()}"
-              </ThemedText>
+        <AnimatedSection index={0}>
+          <View style={styles.header}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
+              <Feather name="heart" size={32} color={theme.primary} />
             </View>
-
-            <Pressable
-              onPress={handleComplete}
-              style={[styles.button, { backgroundColor: theme.primary }]}
-            >
-              <ThemedText style={styles.buttonText}>Continue</ThemedText>
-            </Pressable>
+            <ThemedText style={styles.title}>Gratitude Moment</ThemedText>
           </View>
-        ) : (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.textInput,
-                { 
-                  backgroundColor: theme.backgroundSecondary,
-                  color: theme.text,
-                  borderColor: theme.border,
-                }
-              ]}
-              placeholder="Write your thoughts here..."
-              placeholderTextColor={theme.textSecondary}
-              value={response}
-              onChangeText={setResponse}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+        </AnimatedSection>
 
-            <Pressable
-              onPress={handleSubmit}
-              style={[
-                styles.button, 
-                { 
-                  backgroundColor: response.trim() ? theme.primary : theme.backgroundSecondary,
-                  opacity: response.trim() ? 1 : 0.6,
-                }
-              ]}
-              disabled={!response.trim()}
-            >
-              <ThemedText style={[
-                styles.buttonText,
-                { color: response.trim() ? "white" : theme.textSecondary }
-              ]}>
-                Submit
-              </ThemedText>
-            </Pressable>
-          </View>
-        )}
-
-        {onSkip && !isSubmitted ? (
-          <Pressable onPress={onSkip} style={styles.skipButton}>
-            <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
-              Skip this time
+        <AnimatedSection index={1}>
+          <View style={styles.promptContainer}>
+            <ThemedText style={[styles.prompt, { color: theme.textSecondary }]}>
+              {prompt}
             </ThemedText>
-          </Pressable>
-        ) : null}
+          </View>
+        </AnimatedSection>
+
+        <AnimatedSection index={2}>
+          {isSubmitted ? (
+            <View style={styles.thankYouContainer}>
+              <Feather name="check-circle" size={48} color={theme.primary} />
+              <ThemedText style={styles.thankYouTitle}>Thank you for sharing</ThemedText>
+              <ThemedText style={[styles.thankYouSubtitle, { color: theme.textSecondary }]}>
+                Taking time to appreciate the good helps build resilience and joy.
+              </ThemedText>
+              
+              <View style={[styles.responsePreview, { backgroundColor: theme.backgroundSecondary }]}>
+                <ThemedText style={styles.responsePreviewText}>
+                  "{response.trim()}"
+                </ThemedText>
+              </View>
+
+              <Pressable
+                onPress={handleComplete}
+                style={[styles.button, { backgroundColor: theme.primary }]}
+              >
+                <ThemedText style={styles.buttonText}>Continue</ThemedText>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  { 
+                    backgroundColor: theme.backgroundSecondary,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  }
+                ]}
+                placeholder="Write your thoughts here..."
+                placeholderTextColor={theme.textSecondary}
+                value={response}
+                onChangeText={setResponse}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+
+              <Pressable
+                onPress={handleSubmit}
+                style={[
+                  styles.button, 
+                  { 
+                    backgroundColor: response.trim() ? theme.primary : theme.backgroundSecondary,
+                    opacity: response.trim() ? 1 : 0.6,
+                  }
+                ]}
+                disabled={!response.trim()}
+              >
+                <ThemedText style={[
+                  styles.buttonText,
+                  { color: response.trim() ? "white" : theme.textSecondary }
+                ]}>
+                  Submit
+                </ThemedText>
+              </Pressable>
+            </View>
+          )}
+        </AnimatedSection>
       </KeyboardAwareScrollViewCompat>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 
@@ -226,14 +210,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "600",
     fontSize: 16,
-  },
-  skipButton: {
-    padding: Spacing.md,
-    alignItems: "center",
-    marginTop: Spacing.sm,
-  },
-  skipText: {
-    fontSize: 14,
   },
   thankYouContainer: {
     flex: 1,
