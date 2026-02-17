@@ -8,12 +8,14 @@ import * as Clipboard from "expo-clipboard";
 import * as WebBrowser from "expo-web-browser";
 import { useQuery } from "@tanstack/react-query";
 
+import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import codeMetadata from "@/my-practa/metadata.json";
+import { resolveAssets } from "@/lib/practa-assets";
 import { usePractaValidation, ValidationReport } from "@/hooks/usePractaValidation";
 import { getApiUrl } from "@/lib/query-client";
 import { PractaFileMetadata } from "@/types/flow";
@@ -178,9 +180,17 @@ export default function PublishScreen() {
 
         <Card style={styles.card}>
           <View style={styles.practaHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
-              <Feather name="package" size={24} color={theme.primary} />
-            </View>
+            {resolveAssets("my-practa").icon ? (
+              <Image
+                source={resolveAssets("my-practa").icon}
+                style={styles.iconImage}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={[styles.iconContainer, { backgroundColor: theme.primary + "20" }]}>
+                <Feather name="package" size={24} color={theme.primary} />
+              </View>
+            )}
             <View style={styles.practaInfo}>
               <ThemedText style={styles.practaName}>{displayMetadata.name}</ThemedText>
               <ThemedText style={[styles.practaType, { color: theme.textSecondary }]}>
@@ -511,6 +521,12 @@ const styles = StyleSheet.create({
   practaHeader: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  iconImage: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    marginRight: Spacing.md,
   },
   iconContainer: {
     width: 48,
