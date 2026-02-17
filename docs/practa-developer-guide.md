@@ -493,17 +493,20 @@ const { theme } = useTheme();
 
 ### Haptic Feedback
 
-Provide tactile feedback for actions:
+Provide tactile feedback for actions using the `useHaptics` hook:
 
 ```typescript
-import * as Haptics from "expo-haptics";
-import { Platform } from "react-native";
+import { useHaptics } from "@/hooks/useHaptics";
 
-const triggerHaptic = () => {
-  if (Platform.OS !== "web") {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }
-};
+const haptics = useHaptics();
+
+haptics.light();     // Light tap
+haptics.medium();    // Medium impact
+haptics.heavy();     // Heavy impact
+haptics.success();   // Success notification
+haptics.warning();   // Warning notification
+haptics.error();     // Error notification
+haptics.selection(); // Selection change
 ```
 
 ### Safe Areas & Header Height
@@ -553,7 +556,7 @@ Before submitting, ensure:
 - [ ] Metadata has all required fields (`type`, `name`, `description`, `author`, `version`)
 - [ ] `type` uses lowercase letters, numbers, and hyphens only
 - [ ] Uses `useTheme()` for colors (no hardcoded colors)
-- [ ] Provides skip option if appropriate
+- [ ] Supports `showSettings` / `onSettings` props
 
 ---
 
@@ -572,7 +575,7 @@ Before submitting, ensure:
 | Exports | Component and metadata exported correctly |
 | Contract | `onComplete` called with valid output |
 | Style | Follows Stellarin design patterns |
-| UX | Has skip option, provides feedback |
+| UX | Supports settings, provides feedback |
 
 ---
 
@@ -580,13 +583,13 @@ Before submitting, ensure:
 
 ```typescript
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, TextInput, Platform } from "react-native";
+import { View, StyleSheet, Pressable, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { GlassBackground } from "@/components/GlassBackground";
 import { useTheme } from "@/hooks/useTheme";
+import { useHaptics } from "@/hooks/useHaptics";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { PractaProps } from "@/types/flow";
 import { usePractaChrome } from "@/context/PractaChromeContext";
@@ -599,6 +602,7 @@ export default function GratitudeJournal({
   onSettings 
 }: PractaProps) {
   const { theme } = useTheme();
+  const haptics = useHaptics();
   const insets = useSafeAreaInsets();
   const { setConfig } = usePractaChrome();
   const headerHeight = useHeaderHeight();
@@ -613,14 +617,8 @@ export default function GratitudeJournal({
     });
   }, [setConfig, showSettings, onSettings]);
 
-  const triggerHaptic = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
   const handleComplete = () => {
-    triggerHaptic();
+    haptics.success();
     onComplete({
       content: { type: "text", value: text },
       metadata: { source: "user" },
@@ -628,7 +626,7 @@ export default function GratitudeJournal({
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
+    <GlassBackground style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
       <ThemedText style={styles.title}>What are you grateful for?</ThemedText>
       
       <TextInput
@@ -650,9 +648,8 @@ export default function GratitudeJournal({
         >
           <ThemedText style={styles.buttonText}>Complete</ThemedText>
         </Pressable>
-
       </View>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 
@@ -662,7 +659,6 @@ const styles = StyleSheet.create({
   input: { flex: 1, borderRadius: BorderRadius.md, padding: Spacing.md, fontSize: 16, textAlignVertical: "top" },
   button: { padding: Spacing.md, borderRadius: BorderRadius.md, alignItems: "center" },
   buttonText: { color: "white", fontWeight: "600", fontSize: 16 },
-  skipButton: { padding: Spacing.md, alignItems: "center", marginTop: Spacing.sm },
 });
 ```
 
