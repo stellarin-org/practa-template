@@ -23,7 +23,7 @@ export function GlassCard({
   const { theme, isDark } = useTheme();
 
   const resolvedTint = tint ?? (isDark ? "dark" : "light");
-  const resolvedIntensity = intensity ?? (isDark ? 40 : 60);
+  const resolvedIntensity = intensity ?? (isDark ? 40 : 30);
 
   const containerStyle: ViewStyle = {
     borderRadius: BorderRadius.lg,
@@ -31,7 +31,7 @@ export function GlassCard({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: isDark
       ? "rgba(255,255,255,0.12)"
-      : "rgba(0,0,0,0.06)",
+      : "rgba(0,0,0,0.08)",
   };
 
   const innerStyle: ViewStyle = noPadding
@@ -46,24 +46,12 @@ export function GlassCard({
           {
             backgroundColor: isDark
               ? "rgba(255,255,255,0.06)"
-              : "rgba(255,255,255,0.7)",
-            backdropFilter: `blur(${resolvedIntensity}px)`,
+              : "rgba(255,255,255,0.35)",
           } as any,
           style,
         ]}
       >
         <View style={innerStyle}>{children}</View>
-        <LinearGradient
-          colors={
-            isDark
-              ? ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.02)"]
-              : ["rgba(255,255,255,0.6)", "rgba(255,255,255,0.1)"]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
       </View>
     );
   }
@@ -79,7 +67,7 @@ export function GlassCard({
         colors={
           isDark
             ? ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.02)"]
-            : ["rgba(255,255,255,0.6)", "rgba(255,255,255,0.1)"]
+            : ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
