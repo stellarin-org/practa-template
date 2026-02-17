@@ -8,7 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -204,7 +205,7 @@ export default function EditPractaScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
@@ -221,7 +222,7 @@ export default function EditPractaScreen() {
           </ThemedText>
         </View>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <FormField
             label="Practa ID"
             value={id}
@@ -285,7 +286,7 @@ export default function EditPractaScreen() {
             onChangeText={handleFieldChange(setTags)}
             placeholder="meditation, calm, breathing"
           />
-        </Card>
+        </GlassCard>
 
         <ThemedText style={[styles.hint, { color: theme.textSecondary }]}>
           Changes are saved to metadata.json in your Practa folder.
@@ -312,7 +313,7 @@ export default function EditPractaScreen() {
           )}
         </Pressable>
       </KeyboardAwareScrollViewCompat>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

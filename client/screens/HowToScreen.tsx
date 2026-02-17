@@ -8,8 +8,8 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { demoPractas, DemoPractaInfo } from "@/demo-practa";
@@ -113,7 +113,7 @@ export default function HowToScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -128,14 +128,14 @@ export default function HowToScreen() {
           </ThemedText>
         </View>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.sectionTitle}>What is this?</ThemedText>
           <ThemedText style={[styles.introText, { color: theme.textSecondary }]}>
             This Practa template lets you build Practa - small daily rituals that operate like mini-app experiences. Build your Practa with this template and then publish it to the Stellarin app. The next time the app is published to the app store, your Practa will be bundled and included with it, allowing users to include it in their daily flows.
           </ThemedText>
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.sectionTitle}>Try Demo Practa</ThemedText>
           <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
             Explore these examples to see what's possible
@@ -148,9 +148,9 @@ export default function HowToScreen() {
               onPress={() => handleTryDemo(demo)}
             />
           ))}
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.sectionTitle}>Getting Started</ThemedText>
           
           <Step
@@ -182,9 +182,9 @@ export default function HowToScreen() {
             title="Submit for review"
             description="When ready, go to the Publish tab to submit your Practa to Stellarin."
           />
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.sectionTitle}>Best Practices</ThemedText>
 
           <Tip
@@ -211,9 +211,9 @@ export default function HowToScreen() {
             description="Always call onComplete() when the user finishes your Practa."
           />
 
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <ThemedText style={styles.sectionTitle}>Practa Props</ThemedText>
           
           <View style={styles.codeBlock}>
@@ -233,7 +233,7 @@ export default function HowToScreen() {
 }`}
             </ThemedText>
           </View>
-        </Card>
+        </GlassCard>
 
         <Pressable
           onPress={handleOpenDocs}
@@ -245,7 +245,7 @@ export default function HowToScreen() {
           </ThemedText>
         </Pressable>
       </ScrollView>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

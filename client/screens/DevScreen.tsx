@@ -9,8 +9,8 @@ import * as Haptics from "expo-haptics";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
@@ -354,7 +354,7 @@ export default function DevScreen() {
   };
 
   return (
-    <ThemedView
+    <GlassBackground
       style={[
         styles.container,
         {
@@ -371,7 +371,7 @@ export default function DevScreen() {
       </View>
 
       <View style={styles.content}>
-        <Card style={styles.section}>
+        <GlassCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Feather name="download" size={20} color={theme.primary} />
             <ThemedText style={styles.sectionTitle}>Template</ThemedText>
@@ -486,9 +486,9 @@ export default function DevScreen() {
               <Feather name="chevron-right" size={20} color={theme.textSecondary} />
             )}
           </Pressable>
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.section}>
+        <GlassCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Feather name="refresh-cw" size={20} color={theme.primary} />
             <ThemedText style={styles.sectionTitle}>Reset</ThemedText>
@@ -534,10 +534,10 @@ export default function DevScreen() {
               <Feather name="chevron-right" size={20} color={theme.textSecondary} />
             )}
           </Pressable>
-        </Card>
+        </GlassCard>
 
         {harnessImportStatus?.available ? (
-          <Card style={styles.section}>
+          <GlassCard style={styles.section}>
             <View style={styles.sectionHeader}>
               <Feather name="git-pull-request" size={20} color={theme.primary} />
               <ThemedText style={styles.sectionTitle}>Test Harness Import</ThemedText>
@@ -609,7 +609,7 @@ export default function DevScreen() {
                 <Feather name="chevron-right" size={20} color={theme.textSecondary} />
               )}
             </Pressable>
-          </Card>
+          </GlassCard>
         ) : null}
 
         <ThemedText style={[styles.warningText, { color: theme.textSecondary }]}>
@@ -662,7 +662,7 @@ export default function DevScreen() {
           }
         }}
       />
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

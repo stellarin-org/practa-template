@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, ViewStyle, Platform } from "react-native";
+import { StyleSheet, View, ViewStyle, StyleProp, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks/useTheme";
@@ -7,7 +7,7 @@ import { BorderRadius } from "@/constants/theme";
 
 interface GlassCardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   intensity?: number;
   tint?: "light" | "dark" | "default";
   noPadding?: boolean;

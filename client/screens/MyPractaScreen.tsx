@@ -13,8 +13,8 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS
 
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -240,7 +240,7 @@ export default function MyPractaScreen() {
   }));
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -254,7 +254,7 @@ export default function MyPractaScreen() {
             <View style={styles.headerActions}>
               <Pressable
                 onPress={() => navigation.navigate("ThemePreview")}
-                style={[styles.themeToggle, { backgroundColor: theme.backgroundSecondary }]}
+                style={[styles.themeToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}
               >
                 <Feather name="droplet" size={18} color={theme.primary} />
               </Pressable>
@@ -266,7 +266,7 @@ export default function MyPractaScreen() {
                     }
                     toggleTheme();
                   }}
-                  style={[styles.themeToggle, { backgroundColor: theme.backgroundSecondary }]}
+                  style={[styles.themeToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}
                 >
                   <Feather name={isDark ? "sun" : "moon"} size={18} color={theme.text} />
                 </Pressable>
@@ -367,7 +367,7 @@ export default function MyPractaScreen() {
           </View>
         ) : null}
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <View style={styles.cardHeader}>
             {resolveAssets("my-practa").icon ? (
               <Image
@@ -494,10 +494,10 @@ export default function MyPractaScreen() {
               </ThemedText>
             </View>
           )}
-        </Card>
+        </GlassCard>
 
         {typedMetadata.configSchema && Object.keys(typedMetadata.configSchema.fields || {}).length > 0 ? (
-          <Card style={styles.configCard}>
+          <GlassCard style={styles.configCard}>
             <View style={styles.configHeader}>
               <Feather name="sliders" size={20} color={theme.primary} />
               <ThemedText style={styles.configTitle}>Configuration Options</ThemedText>
@@ -607,12 +607,12 @@ export default function MyPractaScreen() {
                 </View>
               ))}
             </View>
-          </Card>
+          </GlassCard>
         ) : null}
 
       </ScrollView>
       <Animated.View style={[styles.transitionOverlay, transitionStyle]} />
-    </ThemedView>
+    </GlassBackground>
   );
 }
 
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
   previewButtonText: {

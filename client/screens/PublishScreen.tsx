@@ -10,8 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/Card";
+import { GlassCard } from "@/components/GlassCard";
+import { GlassBackground } from "@/components/GlassBackground";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import codeMetadata from "@/my-practa/metadata.json";
@@ -163,7 +163,7 @@ export default function PublishScreen() {
   const canSubmit = !hasErrors && submitState !== "submitting";
 
   return (
-    <ThemedView style={styles.container}>
+    <GlassBackground style={styles.container}>
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -178,7 +178,7 @@ export default function PublishScreen() {
           </ThemedText>
         </View>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <View style={styles.practaHeader}>
             {resolveAssets("my-practa").icon ? (
               <Image
@@ -198,9 +198,9 @@ export default function PublishScreen() {
               </ThemedText>
             </View>
           </View>
-        </Card>
+        </GlassCard>
 
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
           <View style={styles.statusRow}>
             <Feather
               name={hasErrors ? "alert-circle" : "check-circle"}
@@ -265,10 +265,10 @@ export default function PublishScreen() {
               </Pressable>
             </View>
           ) : null}
-        </Card>
+        </GlassCard>
 
         {submitState === "success" && isMasterTemplate && bumpResult ? (
-          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+          <GlassCard style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
@@ -300,11 +300,11 @@ export default function PublishScreen() {
             >
               <ThemedText style={styles.continueButtonText}>Done</ThemedText>
             </Pressable>
-          </Card>
+          </GlassCard>
         ) : null}
 
         {submitState === "success" && !isMasterTemplate && submitResult ? (
-          <Card style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
+          <GlassCard style={{ ...styles.card, borderColor: theme.success, borderWidth: 1 }}>
             <View style={styles.successHeader}>
               <Feather name="check-circle" size={24} color={theme.success} />
               <ThemedText style={[styles.successTitle, { color: theme.success }]}>
@@ -361,11 +361,11 @@ export default function PublishScreen() {
               <Feather name="arrow-right" size={18} color="#FFFFFF" />
               <ThemedText style={styles.continueButtonText}>Continue to Submit</ThemedText>
             </Pressable>
-          </Card>
+          </GlassCard>
         ) : null}
 
         {submitState === "error" && submitError ? (
-          <Card style={{ ...styles.card, borderColor: theme.error, borderWidth: 1 }}>
+          <GlassCard style={{ ...styles.card, borderColor: theme.error, borderWidth: 1 }}>
             <View style={styles.errorHeader}>
               <Feather name="alert-circle" size={24} color={theme.error} />
               <ThemedText style={[styles.errorTitle, { color: theme.error }]}>
@@ -381,12 +381,12 @@ export default function PublishScreen() {
             >
               <ThemedText style={styles.retryButtonText}>Try Again</ThemedText>
             </Pressable>
-          </Card>
+          </GlassCard>
         ) : null}
 
         {submitState === "idle" ? (
           <>
-            <Card style={styles.card}>
+            <GlassCard style={styles.card}>
               <ThemedText style={styles.releaseTitle}>Release Type</ThemedText>
               <ThemedText style={[styles.releaseSubtitle, { color: theme.textSecondary }]}>
                 How should the version number change?
@@ -436,9 +436,9 @@ export default function PublishScreen() {
                   </Pressable>
                 ))}
               </View>
-            </Card>
+            </GlassCard>
 
-            <Card style={styles.card}>
+            <GlassCard style={styles.card}>
               <View style={styles.infoRow}>
                 <Feather name="info" size={18} color={theme.textSecondary} />
                 <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
@@ -447,7 +447,7 @@ export default function PublishScreen() {
                     : "Your Practa will be validated. After validation, continue to Stellarin to complete your submission."}
                 </ThemedText>
               </View>
-            </Card>
+            </GlassCard>
 
             <Pressable
               style={[
@@ -492,7 +492,7 @@ export default function PublishScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </ThemedView>
+    </GlassBackground>
   );
 }
 

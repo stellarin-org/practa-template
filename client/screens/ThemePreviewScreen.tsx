@@ -5,6 +5,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
+import { GlassBackground } from "@/components/GlassBackground";
+import { GlassCard } from "@/components/GlassCard";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 
@@ -245,7 +247,7 @@ export default function ThemePreviewScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <GlassBackground style={styles.container}>
       <View style={[styles.topBar, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color={theme.text} />
@@ -323,7 +325,7 @@ export default function ThemePreviewScreen() {
           );
         })}
       </ScrollView>
-    </View>
+    </GlassBackground>
   );
 }
 
