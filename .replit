@@ -3,7 +3,7 @@ modules = ["nodejs-22"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["codespelunker", "vim"]
+packages = ["codespelunker", "vim", "zip"]
 
 [deployment]
 deploymentTarget = "cloudrun"
