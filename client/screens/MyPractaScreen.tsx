@@ -96,7 +96,7 @@ function formatFullDateTime(dateString: string): string {
 }
 
 export default function MyPractaScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<NavigationProp>();
@@ -249,7 +249,22 @@ export default function MyPractaScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Practa Starter</ThemedText>
+          <View style={styles.headerRow}>
+            <ThemedText style={styles.title}>Practa Starter</ThemedText>
+            {toggleTheme ? (
+              <Pressable
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  toggleTheme();
+                }}
+                style={[styles.themeToggle, { backgroundColor: theme.backgroundSecondary }]}
+              >
+                <Feather name={isDark ? "sun" : "moon"} size={18} color={theme.text} />
+              </Pressable>
+            ) : null}
+          </View>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
             Build and test your Practa
           </ThemedText>
@@ -607,6 +622,18 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  themeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
