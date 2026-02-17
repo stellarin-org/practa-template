@@ -58,10 +58,10 @@ client/
   lib/
     practa-assets.ts      # Auto-generated asset resolver (do not edit)
 
-  components/             # Shared UI (ThemedText, Card, etc.)
+  components/             # Shared UI (ThemedText, Card, GlassCard, AnimatedSection, etc.)
   constants/              # Theme tokens (Colors, Spacing)
-  hooks/                  # useTheme, useScreenOptions
-  types/                  # TypeScript definitions
+  hooks/                  # useTheme, useScreenOptions, useHaptics
+  types/                  # TypeScript definitions (flow.ts, api.ts)
 
 docs/
   practa-developer-guide.md   # Full developer documentation
