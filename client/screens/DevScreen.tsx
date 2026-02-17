@@ -5,7 +5,7 @@ import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -148,6 +148,7 @@ export default function DevScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
   const [isResetting, setIsResetting] = useState(false);
   const [isUpdatingTemplate, setIsUpdatingTemplate] = useState(false);
   const [isHarnessImporting, setIsHarnessImporting] = useState(false);
@@ -188,9 +189,7 @@ export default function DevScreen() {
       return response.json();
     },
     onSuccess: (data) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      haptics.success();
       queryClient.invalidateQueries();
 
       const reviewPrompt = data.previousSha
@@ -213,18 +212,14 @@ export default function DevScreen() {
           onSecondaryPress: reviewPrompt
             ? async () => {
                 await Clipboard.setStringAsync(reviewPrompt);
-                if (Platform.OS !== "web") {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                }
+                haptics.success();
               }
             : undefined,
         }
       );
     },
     onError: (error: Error) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      haptics.error();
       showAlert("Update Failed", error.message || "Failed to update template");
     },
     onSettled: () => {
@@ -233,9 +228,7 @@ export default function DevScreen() {
   });
 
   const handleUpdateTemplate = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    haptics.medium();
     setShowUpdateModal(true);
   };
 
@@ -251,9 +244,7 @@ export default function DevScreen() {
       return response.json();
     },
     onSuccess: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      haptics.success();
       queryClient.invalidateQueries({ queryKey: ["/api/practa/metadata"] });
       showAlert(
         "Reset Complete",
@@ -271,9 +262,7 @@ export default function DevScreen() {
       );
     },
     onError: (error: Error) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      haptics.error();
       showAlert("Reset Failed", error.message || "Failed to reset Practa");
     },
     onSettled: () => {
@@ -282,9 +271,7 @@ export default function DevScreen() {
   });
 
   const handleResetToDemo = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    haptics.medium();
     setShowConfirmModal(true);
   };
 
@@ -300,9 +287,7 @@ export default function DevScreen() {
       return response.json();
     },
     onSuccess: (data) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      haptics.success();
       queryClient.invalidateQueries({ queryKey: ["/api/harness-import/status"] });
       const successCount = data.results?.filter((r: { status: string }) => r.status === "success").length || 0;
       const failedCount = data.results?.filter((r: { status: string }) => r.status === "failed").length || 0;
@@ -330,9 +315,7 @@ export default function DevScreen() {
       }
     },
     onError: (error: Error) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      haptics.error();
       showAlert("Import Failed", error.message || "Failed to import from main app");
     },
     onSettled: () => {
@@ -341,9 +324,7 @@ export default function DevScreen() {
   });
 
   const handleHarnessImport = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    haptics.medium();
     setShowHarnessImportModal(true);
   };
 

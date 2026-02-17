@@ -1,11 +1,11 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Linking, Pressable, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Linking, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
@@ -97,18 +97,15 @@ export default function HowToScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<NavigationProp>();
+  const haptics = useHaptics();
 
   const handleOpenDocs = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    haptics.light();
     Linking.openURL("https://github.com/woodenfox/Stellarin-Practa-Template");
   };
 
   const handleTryDemo = (demo: DemoPractaInfo) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    haptics.medium();
     navigation.navigate("HarnessPreview", { practaId: demo.id });
   };
 
@@ -219,17 +216,10 @@ export default function HowToScreen() {
           <View style={styles.codeBlock}>
             <ThemedText style={[styles.code, { color: theme.textSecondary }]}>
               {`interface PractaProps {
-  context: {
-    flowId: string;
-    practaIndex: number;
-    previous?: {
-      practaId: string;
-      practaType: string;
-      content?: { type: "text" | "image"; value: string };
-      metadata?: Record<string, unknown>;
-    };
-  };
-  onComplete: (output: PractaOutput) => void;
+  context: PractaContext;
+  onComplete: PractaCompleteHandler;
+  showSettings?: boolean;
+  onSettings?: () => void;
 }`}
             </ThemedText>
           </View>

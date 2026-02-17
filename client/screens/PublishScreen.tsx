@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable, ScrollView, Linking, ActivityIndicator } f
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { useHaptics } from "@/hooks/useHaptics";
 import * as Clipboard from "expo-clipboard";
 import * as WebBrowser from "expo-web-browser";
 import { useQuery } from "@tanstack/react-query";
@@ -47,6 +47,7 @@ export default function PublishScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const haptics = useHaptics();
   
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitResult, setSubmitResult] = useState<UploadPreviewResult | null>(null);
@@ -78,7 +79,7 @@ export default function PublishScreen() {
     if (errors) message += `Errors:\n${errors}\n\n`;
     if (warnings) message += `Warnings:\n${warnings}\n`;
     await Clipboard.setStringAsync(message.trim());
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    haptics.success();
     setCopiedValidation(true);
     setTimeout(() => setCopiedValidation(false), 2000);
   };
@@ -86,7 +87,7 @@ export default function PublishScreen() {
   const handleSubmit = async () => {
     if (hasErrors) return;
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    haptics.medium();
     setSubmitState("submitting");
     setSubmitError(null);
     
@@ -113,7 +114,7 @@ export default function PublishScreen() {
         setSubmitResult(data);
       }
       setSubmitState("success");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptics.success();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed";
       const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Network");
@@ -123,14 +124,14 @@ export default function PublishScreen() {
           : errorMessage
       );
       setSubmitState("error");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      haptics.error();
     }
   };
 
   const handleContinueToSubmit = () => {
     if (!submitResult?.token) return;
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     const submitUrl = `${VERIFICATION_SERVICE_URL}/submit?token=${submitResult.token}`;
     Linking.openURL(submitUrl);
     // Reset to initial state so user can submit again if needed
@@ -139,13 +140,13 @@ export default function PublishScreen() {
   };
 
   const handleDownloadZip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     const downloadUrl = new URL("/api/practa/download-zip", getApiUrl()).toString();
     Linking.openURL(downloadUrl);
   };
 
   const handleReset = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.light();
     setSubmitState("idle");
     setSubmitResult(null);
     setSubmitError(null);
@@ -404,7 +405,7 @@ export default function PublishScreen() {
                     key={option.type}
                     onPress={() => {
                       setReleaseType(option.type);
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      haptics.light();
                     }}
                     style={[
                       styles.releaseOption,
