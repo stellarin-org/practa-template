@@ -255,7 +255,7 @@ export default function MyPractaScreen() {
           </ThemedText>
         </View>
 
-        {syncStatus && !syncStatus.isInSync && (syncStatus.isMasterTemplate || syncStatus.hasNewerVersion) ? (
+        {syncStatus && !syncStatus.isInSync ? (
           <View style={[
             styles.syncBanner, 
             syncStatus.isMasterTemplate && styles.syncBannerMaster
@@ -270,7 +270,9 @@ export default function MyPractaScreen() {
                 <ThemedText style={styles.syncBannerTitle}>
                   {syncStatus.isMasterTemplate 
                     ? "Unpublished Changes" 
-                    : `Template Update: ${syncStatus.localTemplateVersion || "?"} → ${syncStatus.latestTemplateVersion || "?"}`}
+                    : syncStatus.hasNewerVersion
+                      ? `Template Update: ${syncStatus.localTemplateVersion || "?"} → ${syncStatus.latestTemplateVersion || "?"}`
+                      : "Template Update Available"}
                 </ThemedText>
                 <ThemedText style={[
                   styles.syncBannerMessage,

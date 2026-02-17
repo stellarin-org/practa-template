@@ -431,11 +431,13 @@ export default function DevScreen() {
             </View>
           ) : null}
 
-          {syncStatus && !syncStatus.isInSync && !syncStatus.isMasterTemplate && syncStatus.hasNewerVersion ? (
+          {syncStatus && !syncStatus.isInSync && !syncStatus.isMasterTemplate ? (
             <View style={styles.updateBanner}>
               <Feather name="download-cloud" size={16} color="#D97706" />
               <ThemedText style={styles.updateBannerText}>
-                Update available: {syncStatus.localTemplateVersion} → {syncStatus.latestTemplateVersion}
+                {syncStatus.hasNewerVersion
+                  ? `Update available: ${syncStatus.localTemplateVersion} → ${syncStatus.latestTemplateVersion}`
+                  : "Template update available"}
               </ThemedText>
             </View>
           ) : null}
@@ -470,8 +472,10 @@ export default function DevScreen() {
                 <ThemedText
                   style={[styles.optionDescription, { color: theme.textSecondary }]}
                 >
-                  {syncStatus && !syncStatus.isInSync && !syncStatus.isMasterTemplate && syncStatus.hasNewerVersion
-                    ? `Update from v${syncStatus.localTemplateVersion} to v${syncStatus.latestTemplateVersion}`
+                  {syncStatus && !syncStatus.isInSync && !syncStatus.isMasterTemplate
+                    ? (syncStatus.hasNewerVersion
+                      ? `Update from v${syncStatus.localTemplateVersion} to v${syncStatus.latestTemplateVersion}`
+                      : "New template changes available")
                     : "Download and update to the latest Practa template"}
                 </ThemedText>
               </View>
