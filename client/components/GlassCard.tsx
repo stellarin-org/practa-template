@@ -29,25 +29,17 @@ export function GlassCard({
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: isDark
-      ? "rgba(255,255,255,0.12)"
-      : "rgba(0,0,0,0.08)",
+    borderColor: theme.glassBorder,
   };
 
-  const innerStyle: ViewStyle = noPadding
-    ? {}
-    : { padding: 16 };
+  const innerStyle: ViewStyle = noPadding ? {} : { padding: 16 };
 
   if (Platform.OS === "web") {
     return (
       <View
         style={[
           containerStyle,
-          {
-            backgroundColor: isDark
-              ? "rgba(255,255,255,0.06)"
-              : "rgba(255,255,255,0.35)",
-          } as any,
+          { backgroundColor: theme.glassBg } as any,
           style,
         ]}
       >
@@ -64,11 +56,7 @@ export function GlassCard({
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={
-          isDark
-            ? ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.02)"]
-            : ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]
-        }
+        colors={theme.glassOverlay as [string, string]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
