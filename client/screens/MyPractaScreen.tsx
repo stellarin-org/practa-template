@@ -252,12 +252,6 @@ export default function MyPractaScreen() {
           <View style={styles.headerRow}>
             <ThemedText style={styles.title}>Practa Starter</ThemedText>
             <View style={styles.headerActions}>
-              <Pressable
-                onPress={() => navigation.navigate("ThemePreview")}
-                style={[styles.themeToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}
-              >
-                <Feather name="droplet" size={18} color={theme.primary} />
-              </Pressable>
               {toggleTheme ? (
                 <Pressable
                   onPress={() => {
