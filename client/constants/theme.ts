@@ -16,7 +16,7 @@ export const Colors = {
     backgroundDefault: "#FFFFFF",
     backgroundSecondary: "#FFF8F3",
     backgroundTertiary: "#FFF0E6",
-    border: "rgba(0,0,0,0.08)",
+    border: "rgba(0,0,0,0.18)",
     glassBorder: "rgba(0,0,0,0.18)",
     glassBg: "rgba(255,255,255,0.35)",
     glassOverlay: ["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"],
