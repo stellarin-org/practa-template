@@ -493,16 +493,6 @@ Created by ${config.author}
 ${config.version}
 `;
 
-      const replitEnv = {
-        REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN || null,
-        REPLIT_DOMAINS: process.env.REPLIT_DOMAINS || null,
-        REPLIT_USER: process.env.REPLIT_USER || null,
-        REPLIT_USERID: process.env.REPLIT_USERID || null,
-        generatedAt: new Date().toISOString(),
-      };
-      const replitJsonPath = path.join(practaDir, "replit.json");
-      fs.writeFileSync(replitJsonPath, JSON.stringify(replitEnv, null, 2));
-
       const chunks: Buffer[] = [];
       const archive = archiver("zip", { zlib: { level: 9 } });
       const passThrough = new PassThrough();
@@ -515,12 +505,21 @@ ${config.version}
         archive.on("error", reject);
         passThrough.on("error", reject);
         
+        const replitEnv = {
+          REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN || null,
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS || null,
+          REPLIT_USER: process.env.REPLIT_USER || null,
+          REPLIT_USERID: process.env.REPLIT_USERID || null,
+          generatedAt: new Date().toISOString(),
+        };
+
         archive.glob("**/*", {
           cwd: practaDir,
-          ignore: ["metadata.json", "README.md"],
+          ignore: ["metadata.json", "README.md", "replit.json"],
         });
         archive.append(JSON.stringify(manifest, null, 2), { name: "metadata.json" });
         archive.append(readme, { name: "README.md" });
+        archive.append(JSON.stringify(replitEnv, null, 2), { name: "replit.json" });
         archive.finalize();
       });
 
