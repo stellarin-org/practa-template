@@ -505,13 +505,21 @@ ${config.version}
         archive.on("error", reject);
         passThrough.on("error", reject);
         
-        // Add directory contents but exclude files we'll add separately
+        const replitEnv = {
+          devDomain: process.env.REPLIT_DEV_DOMAIN || null,
+          domains: process.env.REPLIT_DOMAINS || null,
+          user: process.env.REPLIT_USER || null,
+          userId: process.env.REPLIT_USERID || null,
+          generatedAt: new Date().toISOString(),
+        };
+
         archive.glob("**/*", {
           cwd: practaDir,
-          ignore: ["metadata.json", "README.md"],
+          ignore: ["metadata.json", "README.md", "replit.json"],
         });
         archive.append(JSON.stringify(manifest, null, 2), { name: "metadata.json" });
         archive.append(readme, { name: "README.md" });
+        archive.append(JSON.stringify(replitEnv, null, 2), { name: "replit.json" });
         archive.finalize();
       });
 
