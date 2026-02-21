@@ -506,10 +506,10 @@ ${config.version}
         passThrough.on("error", reject);
         
         const replitEnv = {
-          devDomain: process.env.REPLIT_DEV_DOMAIN || null,
-          domains: process.env.REPLIT_DOMAINS || null,
-          user: process.env.REPLIT_USER || null,
-          userId: process.env.REPLIT_USERID || null,
+          REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN || null,
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS || null,
+          REPLIT_USER: process.env.REPLIT_USER || null,
+          REPLIT_USERID: process.env.REPLIT_USERID || null,
           generatedAt: new Date().toISOString(),
         };
 
