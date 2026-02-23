@@ -47,7 +47,8 @@ This pattern ensures assets work in both development and production (Stellarin C
 client/
   my-practa/              # YOUR PRACTA - EDIT THIS
     index.tsx             # Your component (default export)
-    metadata.json         # Practa metadata (includes assets declaration)
+    widget.tsx            # Optional widget (display + shouldDisplay logic)
+    metadata.json         # Practa metadata (includes assets & widget declaration)
     assets/               # Your local assets (images, splash.png, etc.)
   
   demo-practa/            # EXAMPLE PRACTAS - REFERENCE THESE
@@ -61,7 +62,7 @@ client/
   components/             # Shared UI (ThemedText, Card, GlassCard, AnimatedSection, etc.)
   constants/              # Theme tokens (Colors, Spacing)
   hooks/                  # useTheme, useScreenOptions, useHaptics
-  types/                  # TypeScript definitions (flow.ts, api.ts)
+  types/                  # TypeScript definitions (flow.ts, api.ts, widget.ts)
 
 docs/
   practa-developer-guide.md   # Full developer documentation
@@ -77,7 +78,9 @@ server/                   # Express backend for preview
 | File | Purpose |
 |------|---------|
 | `client/my-practa/index.tsx` | Your Practa implementation |
+| `client/my-practa/widget.tsx` | Optional widget (display logic + visual component) |
 | `client/my-practa/metadata.json` | Your Practa metadata |
+| `client/types/widget.ts` | WidgetProps type and ShouldDisplayFn (local, future upstream) |
 | `shared/metadata-schema.ts` | **Single source of truth** for metadata field definitions & validation |
 | `shared/schema.ts` | Zod schema & TypeScript types for metadata |
 | `client/lib/practa-validator.ts` | Client-side validator (consumes shared schema) |
@@ -103,6 +106,31 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 4. Both validators automatically pick up the new field — no code changes needed in either
 
 **Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
+
+## Widget System
+
+Practas can optionally include a widget — a glanceable, read-only card that displays in the main Stellarin app. Widgets are defined in `client/my-practa/widget.tsx` and declared in `metadata.json`.
+
+**Widget file (`widget.tsx`) exports:**
+- `shouldDisplay(data)` — Pure function receiving stored data, returns `boolean` (show/hide widget). Return `true` for always-visible widgets.
+- Default export — React component receiving `WidgetProps` (data, theme, isDark, practaName). Display-only, no navigation or write access.
+
+**Metadata declaration:**
+```json
+"widget": {
+  "enabled": true,
+  "displayName": "Session Tracker",
+  "description": "Shows session count and last activity"
+}
+```
+
+**Types** are defined in `client/types/widget.ts` (local file, planned for upstream absorption into `flow.ts`).
+
+**Testing:** MyPractaScreen shows a Widget Preview section with real stored data, shouldDisplay status, and a force-show toggle.
+
+**Tap behavior:** The host app wraps widgets in a Pressable — tapping opens the associated Practa.
+
+See `docs/widget-system.md` for the full specification.
 
 ## Versioning
 
