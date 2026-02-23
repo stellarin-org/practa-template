@@ -1,8 +1,8 @@
 import type { PractaStorage } from "@/lib/practa-storage";
-import { practaHasConfig, practaConfigIsRequired } from "@/lib/practa-config";
+import { practaHasConfig, practaConfigIsRequired, practaHasMeaningfulConfig } from "@/lib/practa-config";
 
 export type { PractaStorage };
-export { practaHasConfig, practaConfigIsRequired };
+export { practaHasConfig, practaConfigIsRequired, practaHasMeaningfulConfig };
 
 export type { JournalConfig, PractaPickerConfig } from "@/lib/practa-config";
 
@@ -158,6 +158,29 @@ export type FlowCompleteHandler = (state: FlowExecutionState) => void;
 export interface PractaProps {
   context: PractaContext;
   onComplete: PractaCompleteHandler;
+  onSkip?: () => void;
   showSettings?: boolean;
   onSettings?: () => void;
+}
+
+export type ThemeColors = (typeof import("@/constants/theme").Colors)["light"];
+
+export interface WidgetProps {
+  data: Record<string, unknown>;
+  theme: ThemeColors;
+  isDark: boolean;
+  practaName: string;
+}
+
+export type ShouldDisplayFn = (data: Record<string, unknown>) => boolean;
+
+export interface WidgetModule {
+  default: React.ComponentType<WidgetProps>;
+  shouldDisplay: ShouldDisplayFn;
+}
+
+export interface WidgetMetadata {
+  enabled: boolean;
+  displayName: string;
+  description?: string;
 }

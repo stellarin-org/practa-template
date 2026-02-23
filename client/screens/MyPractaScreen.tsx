@@ -58,7 +58,7 @@ function formatFullDateTime(dateString: string): string {
 }
 
 export default function MyPractaScreen() {
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<NavigationProp>();
@@ -244,17 +244,7 @@ export default function MyPractaScreen() {
           <View style={styles.headerRow}>
             <ThemedText style={styles.title}>Practa Starter</ThemedText>
             <View style={styles.headerActions}>
-              {toggleTheme ? (
-                <Pressable
-                  onPress={() => {
-                    haptics.light();
-                    toggleTheme();
-                  }}
-                  style={[styles.themeToggle, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}
-                >
-                  <Feather name={isDark ? "sun" : "moon"} size={18} color={theme.text} />
-                </Pressable>
-              ) : null}
+              
             </View>
           </View>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef, ReactNode } from "react";
 
 export type HeaderMode = "default" | "minimal" | "none";
 
@@ -30,6 +30,17 @@ const defaultConfig: PractaChromeConfig = {
   onCloseOverride: undefined,
 };
 
+const COMPARE_KEYS: (keyof PractaChromeConfig)[] = [
+  "headerMode", "title", "showSettings", "showProgressDots", "closeIcon",
+];
+
+function hasScalarChanged(prev: PractaChromeConfig, next: PractaChromeConfig): boolean {
+  for (const key of COMPARE_KEYS) {
+    if (prev[key] !== next[key]) return true;
+  }
+  return false;
+}
+
 const PractaChromeContext = createContext<PractaChromeContextValue | null>(null);
 
 interface PractaChromeProviderProps {
@@ -38,17 +49,30 @@ interface PractaChromeProviderProps {
 
 export function PractaChromeProvider({ children }: PractaChromeProviderProps) {
   const [config, setConfigState] = useState<PractaChromeConfig>(defaultConfig);
+  const configRef = useRef(config);
+  configRef.current = config;
 
   const setConfig = useCallback((newConfig: PractaChromeConfig) => {
-    setConfigState((prev) => ({ ...prev, ...newConfig }));
+    const merged = { ...configRef.current, ...newConfig };
+    if (hasScalarChanged(configRef.current, merged)) {
+      setConfigState(merged);
+    } else {
+      configRef.current = merged;
+    }
   }, []);
 
   const resetConfig = useCallback(() => {
-    setConfigState(defaultConfig);
+    if (hasScalarChanged(configRef.current, defaultConfig)) {
+      setConfigState(defaultConfig);
+    } else {
+      configRef.current = defaultConfig;
+    }
   }, []);
 
+  const value = useMemo(() => ({ config, setConfig, resetConfig }), [config, setConfig, resetConfig]);
+
   return (
-    <PractaChromeContext.Provider value={{ config, setConfig, resetConfig }}>
+    <PractaChromeContext.Provider value={value}>
       {children}
     </PractaChromeContext.Provider>
   );

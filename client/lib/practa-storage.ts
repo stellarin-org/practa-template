@@ -10,6 +10,7 @@ export interface PractaStorage {
   set<T = unknown>(key: string, value: T): Promise<void>;
   remove(key: string): Promise<void>;
   clear(): Promise<void>;
+  getAllData?(): Promise<Record<string, unknown>>;
 }
 
 export class PractaStorageManager implements PractaStorage {
@@ -103,6 +104,33 @@ export class PractaStorageManager implements PractaStorage {
       await AsyncStorage.setItem(this.quotaKey, "0");
     } catch (error) {
       console.warn("PractaStorage: Failed to clear storage", error);
+    }
+  }
+
+  async getAllData(): Promise<Record<string, unknown>> {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const practaKeys = allKeys.filter(
+        (k) => k.startsWith(this.prefix) && !k.endsWith(QUOTA_KEY_SUFFIX)
+      );
+      if (practaKeys.length === 0) return {};
+
+      const pairs = await AsyncStorage.multiGet(practaKeys);
+      const data: Record<string, unknown> = {};
+      for (const [fullKey, value] of pairs) {
+        const shortKey = fullKey.slice(this.prefix.length);
+        if (value !== null) {
+          try {
+            data[shortKey] = JSON.parse(value);
+          } catch {
+            data[shortKey] = value;
+          }
+        }
+      }
+      return data;
+    } catch (error) {
+      console.warn("PractaStorage: Failed to get all data", error);
+      return {};
     }
   }
 }

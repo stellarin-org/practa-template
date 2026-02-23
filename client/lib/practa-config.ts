@@ -45,6 +45,15 @@ export function practaHasConfig(practaType: string): boolean {
   return practaType in CONFIG_REGISTRY;
 }
 
+export function practaHasMeaningfulConfig(practaType: string): boolean {
+  const meta = CONFIG_REGISTRY[practaType];
+  if (!meta) return false;
+
+  const defaultKeys = Object.keys(meta.defaultConfig as Record<string, unknown>);
+  const nonAIKeys = defaultKeys.filter((k) => k !== "aiEnabled");
+  return nonAIKeys.length > 0;
+}
+
 export function practaConfigIsRequired(practaType: string): boolean {
   const meta = CONFIG_REGISTRY[practaType];
   return meta?.isRequired ?? false;
