@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Modal, Platform } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Modal, Platform, ScrollView } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { reloadAppAsync } from "expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -335,15 +335,17 @@ export default function DevScreen() {
   };
 
   return (
-    <GlassBackground
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top + Spacing.xl,
-          paddingBottom: tabBarHeight + Spacing.xl,
-        },
-      ]}
-    >
+    <GlassBackground style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + Spacing.xl,
+            paddingBottom: tabBarHeight + Spacing.xl,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.header}>
         <ThemedText style={styles.title}>Developer Options</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -597,6 +599,7 @@ export default function DevScreen() {
           Note: Your Practa files (my-practa folder) are preserved during updates.
         </ThemedText>
       </View>
+      </ScrollView>
 
       <ConfirmModal
         visible={showUpdateModal}
@@ -650,6 +653,8 @@ export default function DevScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: Spacing.lg,
   },
   header: {
