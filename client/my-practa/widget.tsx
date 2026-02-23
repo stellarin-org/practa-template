@@ -3,7 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import type { WidgetProps } from "@/types/widget";
+import type { WidgetProps } from "@/types/flow";
 
 export function shouldDisplay(data: Record<string, unknown>): boolean {
   return true;

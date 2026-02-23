@@ -62,7 +62,7 @@ client/
   components/             # Shared UI (ThemedText, Card, GlassCard, AnimatedSection, etc.)
   constants/              # Theme tokens (Colors, Spacing)
   hooks/                  # useTheme, useScreenOptions, useHaptics
-  types/                  # TypeScript definitions (flow.ts, api.ts, widget.ts)
+  types/                  # TypeScript definitions (flow.ts, api.ts)
 
 docs/
   practa-developer-guide.md   # Full developer documentation
@@ -80,7 +80,7 @@ server/                   # Express backend for preview
 | `client/my-practa/index.tsx` | Your Practa implementation |
 | `client/my-practa/widget.tsx` | Optional widget (display logic + visual component) |
 | `client/my-practa/metadata.json` | Your Practa metadata |
-| `client/types/widget.ts` | WidgetProps type and ShouldDisplayFn (local, future upstream) |
+| `client/types/flow.ts` | TypeScript types including WidgetProps, ShouldDisplayFn, WidgetModule |
 | `shared/metadata-schema.ts` | **Single source of truth** for metadata field definitions & validation |
 | `shared/schema.ts` | Zod schema & TypeScript types for metadata |
 | `client/lib/practa-validator.ts` | Client-side validator (consumes shared schema) |
@@ -124,7 +124,7 @@ Practas can optionally include a widget — a glanceable, read-only card that di
 }
 ```
 
-**Types** are defined in `client/types/widget.ts` (local file, planned for upstream absorption into `flow.ts`).
+**Types** are defined in `client/types/flow.ts` (upstream, synced via harness import).
 
 **Testing:** MyPractaScreen shows a Widget Preview section with real stored data, shouldDisplay status, and a force-show toggle.
 
