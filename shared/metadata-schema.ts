@@ -288,5 +288,22 @@ export function validateMetadataFields(
     }
   }
 
+  const widget = data.widget;
+  if (widget && typeof widget === "object" && (widget as Record<string, unknown>).enabled === true) {
+    const w = widget as Record<string, unknown>;
+    if (!w.displayName || typeof w.displayName !== "string" || (w.displayName as string).trim() === "") {
+      errors.push({
+        field: "widget.displayName",
+        label: "Widget display name",
+        message: "Widget is enabled but missing a displayName",
+      });
+    } else {
+      successes.push({ field: "widget.displayName", label: "Widget display name" });
+    }
+    if (w.description && typeof w.description === "string") {
+      successes.push({ field: "widget.description", label: "Widget description" });
+    }
+  }
+
   return { errors, successes, warnings };
 }

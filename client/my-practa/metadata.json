@@ -78,5 +78,10 @@
       }
     },
     "requiredConfig": false
+  },
+  "widget": {
+    "enabled": true,
+    "displayName": "Session Tracker",
+    "description": "Shows session count and last activity"
   }
 }
