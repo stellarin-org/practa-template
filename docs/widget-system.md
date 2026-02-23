@@ -63,10 +63,14 @@ A React component that renders the widget's visual content.
 | `practaName` | `string` | Display name of the Practa (from metadata) |
 
 **Constraints:**
-- Read-only — widgets cannot write to storage or trigger Practa flows.
-- No navigation — widgets don't navigate or open screens.
+- Read-only — widgets cannot write to storage.
+- No internal navigation — the widget component itself has no navigation logic. Tapping the widget to open the associated Practa is handled by the host app (see Tap-to-Open below).
 - Self-contained layout — the widget provides its own internal layout within the full-width card frame provided by the host.
 - No `onComplete`, no `context.flowId` — widgets are outside the flow execution model.
+
+### Tap-to-Open Behavior
+
+The entire widget card is tappable. When a user taps the widget, the host app navigates to the associated Practa. This is implemented by the host — it wraps the rendered widget component in a `Pressable` and uses the Practa's `id` from metadata to navigate. The widget component itself is not aware of this; it has no `onPress` or navigation props. This keeps the widget purely presentational while still allowing users to jump straight into the relevant Practa from the widget.
 
 ### Metadata Declaration
 
@@ -182,9 +186,10 @@ This section describes how Stellarin would consume widgets. This is not implemen
 
 1. **Discovery** — On app launch, scan installed Practas for `widget.enabled: true` in their metadata.
 2. **Evaluation** — For each widget-enabled Practa, load its storage data and call `shouldDisplay(data)`.
-3. **Rendering** — Render visible widgets in the home feed or dashboard as full-width cards.
-4. **Refresh** — Re-evaluate `shouldDisplay` on app foreground, after Practa completion, and on a configurable interval.
-5. **Widget management** — Users can hide/show widgets from a settings screen using the `displayName` from metadata.
+3. **Rendering** — Render visible widgets in the home feed or dashboard as full-width tappable cards.
+4. **Tap-to-open** — Wrap each widget card in a `Pressable`. On tap, navigate to the associated Practa using the `id` from the Practa's metadata.
+5. **Refresh** — Re-evaluate `shouldDisplay` on app foreground, after Practa completion, and on a configurable interval.
+6. **Widget management** — Users can hide/show widgets from a settings screen using the `displayName` from metadata.
 
 ## Edge Cases
 
@@ -198,7 +203,7 @@ This section describes how Stellarin would consume widgets. This is not implemen
 
 ## Non-Goals (Out of Scope)
 
-- **Interactive widgets** — Widgets are read-only in this version. No buttons, inputs, or navigation.
+- **Internal interactivity** — Widgets are visually read-only (no buttons, inputs, or forms inside the widget). The only interaction is the host-level tap-to-open, which launches the associated Practa.
 - **Multiple widgets per Practa** — One widget per Practa. Multiple could be explored later.
 - **Widget-to-widget communication** — Widgets are isolated; they only see their own Practa's data.
 - **Push/background refresh** — Display logic is evaluated on demand, not via background tasks.
