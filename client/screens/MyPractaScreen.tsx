@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, TextInput, Switch, Alert } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { reloadAppAsync } from "expo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,6 +26,7 @@ import { hasSplash, getSplashSource, resolveAssets } from "@/lib/practa-assets";
 import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
 import { SyncStatus, PractaSyncStatus } from "@/types/api";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import PractaWidget, { shouldDisplay as widgetShouldDisplay } from "@/my-practa/widget";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -65,6 +67,14 @@ export default function MyPractaScreen() {
   const transitionOpacity = useSharedValue(0);
   const haptics = useHaptics();
   const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
+  const [widgetData, setWidgetData] = useState<Record<string, unknown>>({});
+  const [widgetForceShow, setWidgetForceShow] = useState(false);
+  const [widgetDataLoaded, setWidgetDataLoaded] = useState(false);
+
+  const widgetMeta = (practaMetadataJson as Record<string, unknown>).widget as
+    | { enabled: boolean; displayName: string; description?: string }
+    | undefined;
+  const hasWidget = widgetMeta?.enabled === true;
 
   useEffect(() => {
     const timer = setTimeout(() => setEnableSyncCheck(true), 500);
@@ -75,6 +85,39 @@ export default function MyPractaScreen() {
     useCallback(() => {
       transitionOpacity.value = 0;
     }, [transitionOpacity])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasWidget) return;
+      const loadWidgetData = async () => {
+        try {
+          const prefix = `practa:dev-user:${practaMetadataJson.id}:`;
+          const allKeys = await AsyncStorage.getAllKeys();
+          const practaKeys = allKeys.filter(
+            (k) => k.startsWith(prefix) && !k.endsWith("__quota__")
+          );
+          const pairs = await AsyncStorage.multiGet(practaKeys);
+          const data: Record<string, unknown> = {};
+          for (const [fullKey, value] of pairs) {
+            const shortKey = fullKey.replace(prefix, "");
+            if (value !== null) {
+              try {
+                data[shortKey] = JSON.parse(value);
+              } catch {
+                data[shortKey] = value;
+              }
+            }
+          }
+          setWidgetData(data);
+          setWidgetDataLoaded(true);
+        } catch {
+          setWidgetData({});
+          setWidgetDataLoaded(true);
+        }
+      };
+      loadWidgetData();
+    }, [hasWidget])
   );
 
   const { data: savedMetadata } = useQuery<PractaFileMetadata>({
@@ -553,6 +596,107 @@ export default function MyPractaScreen() {
           </AnimatedSection>
         ) : null}
 
+        {hasWidget ? (
+          <AnimatedSection index={2}>
+          <GlassCard style={styles.widgetCard}>
+            <View style={styles.widgetHeader}>
+              <Feather name="layout" size={20} color={theme.primary} />
+              <ThemedText style={styles.widgetTitle}>Widget Preview</ThemedText>
+            </View>
+            {widgetMeta?.displayName ? (
+              <ThemedText style={[styles.widgetDisplayName, { color: theme.textSecondary }]}>
+                {widgetMeta.displayName}
+                {widgetMeta.description ? ` — ${widgetMeta.description}` : ""}
+              </ThemedText>
+            ) : null}
+
+            <View style={styles.widgetStatusRow}>
+              <View style={[
+                styles.widgetStatusBadge,
+                { backgroundColor: (widgetShouldDisplay(widgetData) ? theme.success : theme.textSecondary) + "20" },
+              ]}>
+                <Feather
+                  name={widgetShouldDisplay(widgetData) ? "eye" : "eye-off"}
+                  size={12}
+                  color={widgetShouldDisplay(widgetData) ? theme.success : theme.textSecondary}
+                />
+                <ThemedText style={[
+                  styles.widgetStatusText,
+                  { color: widgetShouldDisplay(widgetData) ? theme.success : theme.textSecondary },
+                ]}>
+                  {widgetShouldDisplay(widgetData) ? "shouldDisplay: visible" : "shouldDisplay: hidden"}
+                </ThemedText>
+              </View>
+              <View style={styles.widgetForceRow}>
+                <ThemedText style={[styles.widgetForceLabel, { color: theme.textSecondary }]}>
+                  Force show
+                </ThemedText>
+                <Switch
+                  value={widgetForceShow}
+                  onValueChange={setWidgetForceShow}
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                  thumbColor="white"
+                />
+              </View>
+            </View>
+
+            {(widgetShouldDisplay(widgetData) || widgetForceShow) ? (
+              <Pressable
+                style={[styles.widgetPreviewFrame, { borderColor: theme.border }]}
+                onPress={handlePreview}
+              >
+                <PractaWidget
+                  data={widgetData}
+                  theme={theme}
+                  isDark={isDark}
+                  practaName={practaMetadataJson.name}
+                />
+                <View style={styles.widgetTapHint}>
+                  <Feather name="arrow-up-right" size={12} color={theme.textSecondary} />
+                  <ThemedText style={[styles.widgetTapHintText, { color: theme.textSecondary }]}>
+                    Tap opens Practa
+                  </ThemedText>
+                </View>
+              </Pressable>
+            ) : (
+              <View style={[styles.widgetHiddenBox, { borderColor: theme.border }]}>
+                <Feather name="eye-off" size={24} color={theme.textSecondary} />
+                <ThemedText style={[styles.widgetHiddenText, { color: theme.textSecondary }]}>
+                  Widget hidden by shouldDisplay logic
+                </ThemedText>
+                <ThemedText style={[styles.widgetHiddenHint, { color: theme.textSecondary }]}>
+                  Toggle "Force show" to preview anyway
+                </ThemedText>
+              </View>
+            )}
+
+            {widgetDataLoaded ? (
+              <View style={styles.widgetDataSection}>
+                <ThemedText style={[styles.widgetDataLabel, { color: theme.textSecondary }]}>
+                  Storage data ({Object.keys(widgetData).length} key{Object.keys(widgetData).length !== 1 ? "s" : ""})
+                </ThemedText>
+                {Object.keys(widgetData).length > 0 ? (
+                  <View style={[styles.widgetDataBox, { backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }]}>
+                    {Object.entries(widgetData).map(([key, value]) => (
+                      <View key={key} style={styles.widgetDataRow}>
+                        <ThemedText style={[styles.widgetDataKey, { color: theme.primary }]}>{key}</ThemedText>
+                        <ThemedText style={[styles.widgetDataValue, { color: theme.textSecondary }]} numberOfLines={1}>
+                          {JSON.stringify(value)}
+                        </ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <ThemedText style={[styles.widgetDataEmpty, { color: theme.textSecondary }]}>
+                    No stored data yet. Run the Practa to generate data.
+                  </ThemedText>
+                )}
+              </View>
+            ) : null}
+          </GlassCard>
+          </AnimatedSection>
+        ) : null}
+
       </ScrollView>
       <Animated.View style={[styles.transitionOverlay, transitionStyle]} />
     </GlassBackground>
@@ -935,5 +1079,112 @@ const styles = StyleSheet.create({
   },
   selectLabel: {
     fontSize: 14,
+  },
+  widgetCard: {
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  widgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  widgetTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  widgetDisplayName: {
+    fontSize: 13,
+    marginBottom: Spacing.md,
+  },
+  widgetStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+  },
+  widgetStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  widgetStatusText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  widgetForceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  widgetForceLabel: {
+    fontSize: 12,
+  },
+  widgetPreviewFrame: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    marginBottom: Spacing.md,
+  },
+  widgetTapHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  widgetTapHintText: {
+    fontSize: 11,
+  },
+  widgetHiddenBox: {
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  widgetHiddenText: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  widgetHiddenHint: {
+    fontSize: 12,
+    textAlign: "center",
+  },
+  widgetDataSection: {
+    marginTop: Spacing.xs,
+  },
+  widgetDataLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: Spacing.xs,
+  },
+  widgetDataBox: {
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
+    gap: 4,
+  },
+  widgetDataRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  widgetDataKey: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  widgetDataValue: {
+    fontSize: 12,
+    flex: 1,
+  },
+  widgetDataEmpty: {
+    fontSize: 12,
+    fontStyle: "italic",
   },
 });
