@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { PractaTestHarness } from "@/components/PractaTestHarness";
 import { resolveAssets } from "@/lib/practa-assets";
+import { PractaStorageManager } from "@/lib/practa-storage";
+import { DEV_USER_ID } from "@/constants/dev";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import MyPracta from "@/my-practa";
+import practaMetadataJson from "@/my-practa/metadata.json";
 import { demoPractas } from "@/demo-practa";
 import { PractaOutput } from "@/types/flow";
 import { ThemedText } from "@/components/ThemedText";
@@ -28,6 +31,9 @@ export default function HarnessPreviewScreen() {
 
   const PractaComponent = PRACTA_COMPONENTS[practaId];
   const assets = resolveAssets(practaId);
+
+  const slug = practaId === "my-practa" ? practaMetadataJson.id : practaId;
+  const storage = useMemo(() => new PractaStorageManager(DEV_USER_ID, slug), [slug]);
 
   const handleComplete = useCallback((output: PractaOutput) => {
     console.log("Practa completed:", output);
@@ -58,6 +64,7 @@ export default function HarnessPreviewScreen() {
     <PractaTestHarness
       PractaComponent={PractaComponent}
       assets={assets}
+      storage={storage}
       onComplete={handleComplete}
       onClose={handleClose}
     />
