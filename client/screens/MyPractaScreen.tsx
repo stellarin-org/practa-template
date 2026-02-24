@@ -139,7 +139,10 @@ export default function MyPractaScreen() {
   const [copiedUpdateInstructions, setCopiedUpdateInstructions] = useState(false);
 
   const copyUpdateInstructions = useCallback(async () => {
-    const message = `My Practa template is out of date (${syncStatus?.localTemplateVersion || "?"} → ${syncStatus?.latestTemplateVersion || "?"}). Please update it by following the instructions in .agents/skills/update-practa-template/SKILL.md — then run the post-update review from .agents/skills/post-template-update/SKILL.md using the SHA values returned by the update.`;
+    const versionInfo = syncStatus?.hasNewerVersion 
+      ? ` (${syncStatus?.localTemplateVersion || "?"} → ${syncStatus?.latestTemplateVersion || "?"})` 
+      : "";
+    const message = `My Practa template has updates available${versionInfo}. Please update it by following the instructions in .agents/skills/update-practa-template/SKILL.md — then run the post-update review from .agents/skills/post-template-update/SKILL.md using the SHA values returned by the update.`;
     await Clipboard.setStringAsync(message);
     setCopiedUpdateInstructions(true);
     haptics.success();
@@ -252,7 +255,7 @@ export default function MyPractaScreen() {
           </ThemedText>
         </View>
 
-        {syncStatus && !syncStatus.isInSync && (syncStatus.isMasterTemplate || syncStatus.hasNewerVersion) ? (
+        {syncStatus && !syncStatus.isInSync ? (
           <View style={[
             styles.syncBanner, 
             syncStatus.isMasterTemplate && styles.syncBannerMaster
@@ -269,7 +272,7 @@ export default function MyPractaScreen() {
                     ? "Unpublished Changes" 
                     : syncStatus.hasNewerVersion
                       ? `Template Update: ${syncStatus.localTemplateVersion || "?"} → ${syncStatus.latestTemplateVersion || "?"}`
-                      : "Template Update Available"}
+                      : "Template Changes Available"}
                 </ThemedText>
                 <ThemedText style={[
                   styles.syncBannerMessage,
