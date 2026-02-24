@@ -60,7 +60,7 @@ export default function PublishScreen() {
     queryKey: ["/api/practa/metadata"],
   });
 
-  const { data: syncStatus, refetch: refetchSyncStatus } = useQuery<{ isMasterTemplate?: boolean; localVersion?: string }>({
+  const { data: syncStatus, refetch: refetchSyncStatus } = useQuery<{ isMasterTemplate?: boolean; localTemplateVersion?: string }>({
     queryKey: ["/api/template/sync-status"],
   });
 
@@ -162,8 +162,8 @@ export default function PublishScreen() {
   };
 
   const displayMetadata = (metadata || codeMetadata) as PractaFileMetadata;
-  const displayVersion = (isMasterTemplate && syncStatus?.localVersion
-    ? syncStatus.localVersion
+  const displayVersion = (isMasterTemplate && syncStatus?.localTemplateVersion
+    ? syncStatus.localTemplateVersion
     : displayMetadata.version) || "1.0.0";
   const canSubmit = !hasErrors && submitState !== "submitting";
 
