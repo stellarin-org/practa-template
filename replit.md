@@ -47,7 +47,7 @@ This pattern ensures assets work in both development and production (Stellarin C
 client/
   my-practa/              # YOUR PRACTA - EDIT THIS
     index.tsx             # Your component (default export)
-    widget.tsx            # Optional widget (display + shouldDisplay logic)
+    widget.tsx            # Widget component (required — display + shouldDisplay logic)
     metadata.json         # Practa metadata (includes assets & widget declaration)
     assets/               # Your local assets (images, splash.png, etc.)
   
@@ -105,11 +105,11 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 3. Update `shared/schema.ts` (Zod types) to match
 4. Both validators automatically pick up the new field — no code changes needed in either
 
-**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
+**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`, `widget` (with `enabled: true`, `displayName`, `description`)
 
 ## Widget System
 
-Practas can optionally include a widget — a glanceable, read-only card that displays in the main Stellarin app. Widgets are defined in `client/my-practa/widget.tsx` and declared in `metadata.json`.
+Every Practa must include a widget — a glanceable, read-only card that displays on the Stellarin home screen. Widgets are defined in `client/my-practa/widget.tsx` and declared in `metadata.json`.
 
 **Widget file (`widget.tsx`) exports:**
 - `shouldDisplay(data)` — Pure function receiving stored data, returns `boolean` (show/hide widget). Return `true` for always-visible widgets.
