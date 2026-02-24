@@ -162,9 +162,9 @@ export default function PublishScreen() {
   };
 
   const displayMetadata = (metadata || codeMetadata) as PractaFileMetadata;
-  const displayVersion = isMasterTemplate && syncStatus?.localVersion
+  const displayVersion = (isMasterTemplate && syncStatus?.localVersion
     ? syncStatus.localVersion
-    : displayMetadata.version;
+    : displayMetadata.version) || "1.0.0";
   const canSubmit = !hasErrors && submitState !== "submitting";
 
   return (
