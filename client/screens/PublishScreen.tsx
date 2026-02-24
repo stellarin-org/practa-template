@@ -60,7 +60,7 @@ export default function PublishScreen() {
     queryKey: ["/api/practa/metadata"],
   });
 
-  const { data: syncStatus } = useQuery<{ isMasterTemplate?: boolean }>({
+  const { data: syncStatus, refetch: refetchSyncStatus } = useQuery<{ isMasterTemplate?: boolean; localVersion?: string }>({
     queryKey: ["/api/template/sync-status"],
   });
 
@@ -110,6 +110,7 @@ export default function PublishScreen() {
       if (isMasterTemplate) {
         setBumpResult(data);
         refetchMetadata();
+        refetchSyncStatus();
       } else {
         setSubmitResult(data);
       }
@@ -161,6 +162,9 @@ export default function PublishScreen() {
   };
 
   const displayMetadata = (metadata || codeMetadata) as PractaFileMetadata;
+  const displayVersion = isMasterTemplate && syncStatus?.localVersion
+    ? syncStatus.localVersion
+    : displayMetadata.version;
   const canSubmit = !hasErrors && submitState !== "submitting";
 
   return (
@@ -173,7 +177,7 @@ export default function PublishScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <ThemedText style={styles.title}>{isMasterTemplate ? "Version" : "Publish"}</ThemedText>
+          <ThemedText style={styles.title}>{isMasterTemplate ? "Practa Template" : "Publish"}</ThemedText>
           <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
             {isMasterTemplate ? "Update the template version" : "Submit your Practa to Stellarin"}
           </ThemedText>
@@ -195,7 +199,7 @@ export default function PublishScreen() {
             <View style={styles.practaInfo}>
               <ThemedText style={styles.practaName}>{displayMetadata.name}</ThemedText>
               <ThemedText style={[styles.practaType, { color: theme.textSecondary }]}>
-                {String(displayMetadata.type || "practa")} v{displayMetadata.version}
+                {String(displayMetadata.type || "practa")} v{displayVersion}
               </ThemedText>
             </View>
           </View>
@@ -394,7 +398,7 @@ export default function PublishScreen() {
               </ThemedText>
               <View style={styles.releaseOptions}>
                 {(() => {
-                  const [maj, min, pat] = displayMetadata.version.split(".").map(Number);
+                  const [maj, min, pat] = displayVersion.split(".").map(Number);
                   return [
                     { type: "patch" as const, label: "Bug Fix", description: `${maj}.${min}.${pat} \u2192 ${maj}.${min}.${pat + 1}`, icon: "tool" as const },
                     { type: "minor" as const, label: "New Feature", description: `${maj}.${min}.${pat} \u2192 ${maj}.${min + 1}.0`, icon: "plus-circle" as const },
@@ -444,7 +448,7 @@ export default function PublishScreen() {
                 <Feather name="info" size={18} color={theme.textSecondary} />
                 <ThemedText style={[styles.infoText, { color: theme.textSecondary }]}>
                   {isMasterTemplate
-                    ? "This will update the version in metadata.json. Push to GitHub to publish."
+                    ? "This will update the version in app.json. Push to GitHub to publish."
                     : "Your Practa will be validated. After validation, continue to Stellarin to complete your submission."}
                 </ThemedText>
               </View>
