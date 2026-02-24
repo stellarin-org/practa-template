@@ -26,6 +26,7 @@ import { hasSplash, getSplashSource, resolveAssets } from "@/lib/practa-assets";
 import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField, BooleanField, SelectField } from "@/types/flow";
 import { SyncStatus, PractaSyncStatus } from "@/types/api";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { DEV_USER_ID } from "@/constants/dev";
 import PractaWidget, { shouldDisplay as widgetShouldDisplay } from "@/my-practa/widget";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -92,7 +93,7 @@ export default function MyPractaScreen() {
       if (!hasWidget) return;
       const loadWidgetData = async () => {
         try {
-          const prefix = `practa:dev-user:${practaMetadataJson.id}:`;
+          const prefix = `practa:${DEV_USER_ID}:${practaMetadataJson.id}:`;
           const allKeys = await AsyncStorage.getAllKeys();
           const practaKeys = allKeys.filter(
             (k) => k.startsWith(prefix) && !k.endsWith("__quota__")
@@ -393,6 +394,38 @@ export default function MyPractaScreen() {
           >
             <Feather name="play" size={20} color="white" />
             <ThemedText style={styles.previewButtonText}>Preview Practa</ThemedText>
+          </Pressable>
+
+          <Pressable
+            style={[styles.resetStorageButton, { borderColor: theme.error + "40" }]}
+            onPress={() => {
+              Alert.alert(
+                "Reset Practa Storage",
+                "This will clear all stored data for this Practa. Widget preview will also be reset.",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Reset",
+                    style: "destructive",
+                    onPress: async () => {
+                      const prefix = `practa:${DEV_USER_ID}:${practaMetadataJson.id}:`;
+                      const allKeys = await AsyncStorage.getAllKeys();
+                      const practaKeys = allKeys.filter((k) => k.startsWith(prefix));
+                      if (practaKeys.length > 0) {
+                        await AsyncStorage.multiRemove(practaKeys);
+                      }
+                      setWidgetData({});
+                      haptics.light();
+                    },
+                  },
+                ]
+              );
+            }}
+          >
+            <Feather name="trash-2" size={14} color={theme.error} />
+            <ThemedText style={[styles.resetStorageText, { color: theme.error }]}>
+              Reset Practa Storage
+            </ThemedText>
           </Pressable>
 
           {practaSyncLoading ? (
@@ -796,6 +829,21 @@ const styles = StyleSheet.create({
   previewButtonText: {
     color: "white",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  resetStorageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+    gap: Spacing.xs,
+  },
+  resetStorageText: {
+    fontSize: 13,
     fontWeight: "600",
   },
   publishedInfoContainer: {
