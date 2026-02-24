@@ -289,39 +289,18 @@ export function validateMetadataFields(
   }
 
   const widget = data.widget;
-  if (!widget || typeof widget !== "object") {
-    errors.push({
-      field: "widget",
-      label: "Widget",
-      message: "Missing required field: widget. Every Practa must include a widget for the home screen.",
-    });
-  } else {
+  if (widget && typeof widget === "object" && (widget as Record<string, unknown>).enabled === true) {
     const w = widget as Record<string, unknown>;
-    if (w.enabled !== true) {
-      errors.push({
-        field: "widget.enabled",
-        label: "Widget enabled",
-        message: "widget.enabled must be true. Every Practa must include an active widget.",
-      });
-    } else {
-      successes.push({ field: "widget.enabled", label: "Widget enabled" });
-    }
     if (!w.displayName || typeof w.displayName !== "string" || (w.displayName as string).trim() === "") {
       errors.push({
         field: "widget.displayName",
         label: "Widget display name",
-        message: "Missing required field: widget.displayName",
+        message: "Widget is enabled but missing a displayName",
       });
     } else {
       successes.push({ field: "widget.displayName", label: "Widget display name" });
     }
-    if (!w.description || typeof w.description !== "string" || (w.description as string).trim() === "") {
-      errors.push({
-        field: "widget.description",
-        label: "Widget description",
-        message: "Missing required field: widget.description",
-      });
-    } else {
+    if (w.description && typeof w.description === "string") {
       successes.push({ field: "widget.description", label: "Widget description" });
     }
   }
