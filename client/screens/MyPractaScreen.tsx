@@ -252,7 +252,7 @@ export default function MyPractaScreen() {
           </ThemedText>
         </View>
 
-        {syncStatus && !syncStatus.isInSync ? (
+        {syncStatus && !syncStatus.isInSync && (syncStatus.isMasterTemplate || syncStatus.hasNewerVersion) ? (
           <View style={[
             styles.syncBanner, 
             syncStatus.isMasterTemplate && styles.syncBannerMaster
