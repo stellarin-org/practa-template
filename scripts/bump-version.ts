@@ -3,6 +3,7 @@ import * as path from "node:path";
 import type { PractaFileMetadata } from "@shared/schema";
 
 const METADATA_PATH = path.resolve(process.cwd(), "client/my-practa/metadata.json");
+const APP_JSON_PATH = path.resolve(process.cwd(), "app.json");
 const PRACTA_INDEX_PATH = path.resolve(process.cwd(), "client/my-practa/index.tsx");
 
 const LOCAL_PREFIXES = ["./", "../", "@/", "@shared/"];
@@ -75,7 +76,7 @@ export function bumpVersion(version: string, releaseType: ReleaseType): string {
   }
 }
 
-export function bumpMetadataVersion(releaseType: ReleaseType): { success: boolean; oldVersion?: string; newVersion?: string; detectedDeps?: string[]; error?: string } {
+export function bumpMetadataVersion(releaseType: ReleaseType, isMasterTemplate: boolean = false): { success: boolean; oldVersion?: string; newVersion?: string; detectedDeps?: string[]; error?: string } {
   try {
     if (!fs.existsSync(METADATA_PATH)) {
       return { success: false, error: "metadata.json not found" };
@@ -84,6 +85,28 @@ export function bumpMetadataVersion(releaseType: ReleaseType): { success: boolea
     const content = fs.readFileSync(METADATA_PATH, "utf-8");
     const metadata: PractaFileMetadata = JSON.parse(content);
     
+    if (isMasterTemplate) {
+      if (!fs.existsSync(APP_JSON_PATH)) {
+        return { success: false, error: "app.json not found" };
+      }
+      const appJsonContent = fs.readFileSync(APP_JSON_PATH, "utf-8");
+      const appJson = JSON.parse(appJsonContent);
+      const oldVersion = appJson.expo?.version || "1.0.0";
+      const newVersion = bumpVersion(oldVersion, releaseType);
+      
+      if (appJson.expo) {
+        appJson.expo.version = newVersion;
+      }
+      fs.writeFileSync(APP_JSON_PATH, JSON.stringify(appJson, null, 2) + "\n");
+      
+      metadata.version = newVersion;
+      const jsonContent = JSON.stringify(metadata, null, 2) + "\n";
+      fs.writeFileSync(METADATA_PATH, jsonContent);
+      
+      console.log(`[Version Bump] Template ${releaseType}: ${oldVersion} -> ${newVersion} (app.json + metadata.json)`);
+      return { success: true, oldVersion, newVersion };
+    }
+
     const oldVersion = metadata.version;
     const newVersion = bumpVersion(oldVersion, releaseType);
     metadata.version = newVersion;

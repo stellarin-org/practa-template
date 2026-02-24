@@ -390,7 +390,7 @@ ${config.version}
         });
       }
 
-      const bumpResult = bumpMetadataVersion(releaseType as ReleaseType);
+      const bumpResult = bumpMetadataVersion(releaseType as ReleaseType, isMasterTemplate());
       if (!bumpResult.success) {
         return res.status(500).json({ error: `Version bump failed: ${bumpResult.error}` });
       }
