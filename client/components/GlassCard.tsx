@@ -41,7 +41,7 @@ export function GlassCard({
   const scale = useSharedValue(1);
 
   const resolvedTint = tint ?? (isDark ? "dark" : "light");
-  const resolvedIntensity = intensity ?? (isDark ? 40 : 30);
+  const resolvedIntensity = intensity ?? (isDark ? 60 : 50);
 
   const containerStyle: ViewStyle = {
     borderRadius: BorderRadius.lg,
