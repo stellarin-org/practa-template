@@ -97,9 +97,9 @@ Add a branded splash screen that displays before your Practa loads.
 
 | Document | Description |
 |----------|-------------|
-| [Developer Guide](docs/practa-developer-guide.md) | Complete API reference and examples |
-| [Storage System](docs/practa-storage-system.md) | Persistence API for saving state |
-| [Design Guidelines](design_guidelines.md) | Visual design system |
+| [Developer Guide](template-docs/practa-developer-guide.md) | Complete API reference and examples |
+| [Storage System](template-docs/practa-storage-system.md) | Persistence API for saving state |
+| [Design Guidelines](harness-docs/design_guidelines.md) | Visual design system |
 
 ## Tech Stack
 

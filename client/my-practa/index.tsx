@@ -12,7 +12,7 @@
  *   await context.storage?.get<string>("key")
  *   await context.storage?.set("key", value)
  * 
- * See docs/practa-storage-system.md for full storage documentation.
+ * See template-docs/practa-storage-system.md for full storage documentation.
  */
 
 import React, { useState, useEffect } from "react";

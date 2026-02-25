@@ -64,9 +64,11 @@ client/
   hooks/                  # useTheme, useScreenOptions, useHaptics
   types/                  # TypeScript definitions (flow.ts, api.ts)
 
-docs/
+template-docs/              # Template-managed documentation (editable)
   practa-developer-guide.md   # Full developer documentation
   practa-storage-system.md    # Storage API reference
+
+harness-docs/               # Upstream docs synced from Stellarin (do not edit)
 
 server/                   # Express backend for preview
   github-sync.ts          # Shared GitHub sync utilities (fetch repo info, download zip, etc.)
@@ -86,8 +88,8 @@ server/                   # Express backend for preview
 | `client/lib/practa-validator.ts` | Client-side validator (consumes shared schema) |
 | `client/lib/practa-config.ts` | Practa config types, Zod schemas, and config registry (imported from upstream) |
 | `client/types/flow.ts` | TypeScript types |
-| `docs/practa-developer-guide.md` | Full requirements & examples |
-| `docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
+| `template-docs/practa-developer-guide.md` | Full requirements & examples |
+| `template-docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
 | `server/github-sync.ts` | Shared GitHub sync utilities |
 
 ## Path Aliases
@@ -130,7 +132,7 @@ Practas can optionally include a widget — a glanceable, read-only card that di
 
 **Tap behavior:** The host app wraps widgets in a Pressable — tapping opens the associated Practa.
 
-See `docs/widget-system.md` for the full specification.
+See `template-docs/widget-system.md` for the full specification.
 
 ## Versioning
 
@@ -243,7 +245,7 @@ Every Practa must declare two AI-related values:
 
 ## Documentation
 
-See `docs/practa-developer-guide.md` for:
+See `template-docs/practa-developer-guide.md` for:
 - Component contract (props, onComplete, showSettings, onSettings)
 - Header configuration (usePractaChrome, useHeaderHeight)
 - Metadata schema (including `requiresAI` and `aiEnabled`)
@@ -254,6 +256,6 @@ See `docs/practa-developer-guide.md` for:
 ## Resources
 
 - [Expo Icons](https://icons.expo.fyi) - Browse available icons
-- `design_guidelines.md` - Visual design system
+- `harness-docs/design_guidelines.md` - Visual design system
 
 ---

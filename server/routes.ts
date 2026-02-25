@@ -1463,12 +1463,22 @@ ${config.version}
         return { items: config.syncItems, source: "local", error: "Invalid manifest format" };
       }
 
+      const remapDestination = (fromPath: string): string => {
+        if (fromPath.startsWith("docs/")) {
+          return "harness-docs/" + fromPath.slice("docs/".length);
+        }
+        if (fromPath.endsWith(".md") && !fromPath.includes("/")) {
+          return "harness-docs/" + fromPath;
+        }
+        return fromPath;
+      };
+
       const normalized: SyncItem[] = manifest.files.map((entry) => {
         if ("from" in entry && "to" in entry) {
-          return entry as SyncItem;
+          return { ...(entry as SyncItem), to: remapDestination((entry as SyncItem).to) };
         }
         const p = (entry as { path: string; category?: string });
-        return { from: p.path, to: p.path, description: p.category || "" };
+        return { from: p.path, to: remapDestination(p.path), description: p.category || "" };
       });
 
       console.log(`[Harness Import] Loaded ${normalized.length} files from remote manifest`);

@@ -151,13 +151,13 @@ const handleChange = (level: string) => {
 };
 ```
 
-See `docs/practa-storage-system.md` for full API reference.
+See `template-docs/practa-storage-system.md` for full API reference.
 
 ---
 
 ## Metadata Schema
 
-> Full standalone reference: [`docs/practa-metadata-schema.md`](./practa-metadata-schema.md)
+> Full standalone reference: [`template-docs/practa-metadata-schema.md`](./practa-metadata-schema.md)
 
 Update `client/my-practa/metadata.json` with your Practa info:
 
@@ -679,8 +679,8 @@ Each demo shows proper use of `usePractaChrome`, `useHeaderHeight`, and the comp
 
 ## Resources
 
-- Storage API: `docs/practa-storage-system.md`
-- Design system: `design_guidelines.md`
+- Storage API: `template-docs/practa-storage-system.md`
+- Design system: `harness-docs/design_guidelines.md`
 - Type definitions: `client/types/flow.ts`
 - Chrome context: `client/context/PractaChromeContext.tsx`
 - Header component: `client/components/PractaChromeHeader.tsx`
