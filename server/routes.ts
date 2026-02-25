@@ -1333,16 +1333,23 @@ ${config.version}
   
   const HARNESS_IMPORT_CONFIG_PATH = path.resolve(process.cwd(), ".config/harness-import.config.json");
   
+  interface SyncItem {
+    from: string;
+    to: string;
+    description: string;
+  }
+
   interface HarnessImportConfig {
     mainAppRepo: string;
     mainAppBranch: string;
     githubConnectionId?: string;
     deleteStaleFiles?: boolean;
-    syncItems: Array<{
-      from: string;
-      to: string;
-      description: string;
-    }>;
+    remoteManifestPath?: string;
+    syncItems: SyncItem[];
+  }
+
+  interface RemoteSyncManifest {
+    files: Array<SyncItem | { path: string; category?: string }>;
   }
   
   // Cache for Replit GitHub connector token
@@ -1423,6 +1430,59 @@ ${config.version}
     return null;
   }
 
+  async function fetchRemoteManifest(
+    config: HarnessImportConfig,
+    githubToken: string | null
+  ): Promise<{ items: SyncItem[]; source: "remote" | "local"; error?: string }> {
+    const manifestPath = config.remoteManifestPath || "client/practa/sync-manifest.json";
+
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.raw+json",
+      "Cache-Control": "no-cache",
+    };
+    if (githubToken) {
+      headers["Authorization"] = `Bearer ${githubToken}`;
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${config.mainAppRepo}/contents/${manifestPath}?ref=${config.mainAppBranch}`;
+      const response = await fetch(url, { headers });
+
+      if (!response.ok) {
+        console.log(
+          `[Harness Import] Remote manifest not found (HTTP ${response.status}), falling back to local config`
+        );
+        return { items: config.syncItems, source: "local", error: `HTTP ${response.status}` };
+      }
+
+      const text = await response.text();
+      const manifest: RemoteSyncManifest = JSON.parse(text);
+
+      if (!manifest.files || !Array.isArray(manifest.files)) {
+        console.warn("[Harness Import] Remote manifest has no 'files' array, falling back to local config");
+        return { items: config.syncItems, source: "local", error: "Invalid manifest format" };
+      }
+
+      const normalized: SyncItem[] = manifest.files.map((entry) => {
+        if ("from" in entry && "to" in entry) {
+          return entry as SyncItem;
+        }
+        const p = (entry as { path: string; category?: string });
+        return { from: p.path, to: p.path, description: p.category || "" };
+      });
+
+      console.log(`[Harness Import] Loaded ${normalized.length} files from remote manifest`);
+      return { items: normalized, source: "remote" };
+    } catch (error) {
+      console.error("[Harness Import] Failed to fetch remote manifest:", error);
+      return {
+        items: config.syncItems,
+        source: "local",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
   app.get("/api/harness-import/status", async (req, res) => {
     try {
       const masterKey = process.env.MASTER_TEMPLATE_KEY;
@@ -1465,6 +1525,8 @@ ${config.version}
         lastSync = fs.readFileSync(syncLogPath, "utf-8").trim();
       }
       
+      const manifest = await fetchRemoteManifest(config, githubToken);
+
       res.json({
         available: true,
         isMasterTemplate: true,
@@ -1472,7 +1534,9 @@ ${config.version}
         mainAppBranch: config.mainAppBranch,
         repoAccessible,
         hasGithubConnector,
-        syncItems: config.syncItems,
+        manifestSource: manifest.source,
+        manifestError: manifest.error || null,
+        syncItems: manifest.items,
         lastSync
       });
     } catch (error) {
@@ -1505,27 +1569,28 @@ ${config.version}
       const projectRoot = process.cwd();
       const results: Array<{ file: string; status: "success" | "failed" | "deleted"; error?: string }> = [];
       
-      // Helper to validate paths don't escape project root
       const isPathSafe = (filePath: string): boolean => {
         const resolved = path.resolve(projectRoot, filePath);
         return resolved.startsWith(projectRoot) && !filePath.includes('..');
       };
-      
-      // Load manifest of previously synced files
-      const manifestPath = path.resolve(projectRoot, ".config/.harness-import-manifest.json");
+
+      const githubToken = await getGitHubAccessToken(config.githubConnectionId);
+
+      const manifest = await fetchRemoteManifest(config, githubToken);
+      const syncItems = manifest.items;
+
+      const localManifestPath = path.resolve(projectRoot, ".config/.harness-import-manifest.json");
       let previouslySyncedFiles: string[] = [];
-      if (fs.existsSync(manifestPath)) {
+      if (fs.existsSync(localManifestPath)) {
         try {
-          previouslySyncedFiles = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+          previouslySyncedFiles = JSON.parse(fs.readFileSync(localManifestPath, "utf-8"));
         } catch {
           previouslySyncedFiles = [];
         }
       }
       
-      // Get current sync destinations
-      const currentSyncFiles = config.syncItems.map(item => item.to);
+      const currentSyncFiles = syncItems.map(item => item.to);
       
-      // Delete stale files (files that were synced before but are no longer in config)
       if (config.deleteStaleFiles) {
         const staleFiles = previouslySyncedFiles.filter(f => !currentSyncFiles.includes(f));
         for (const staleFile of staleFiles) {
@@ -1534,10 +1599,7 @@ ${config.version}
             const filePath = path.resolve(projectRoot, staleFile);
             if (fs.existsSync(filePath)) {
               fs.unlinkSync(filePath);
-              results.push({
-                file: staleFile,
-                status: "deleted"
-              });
+              results.push({ file: staleFile, status: "deleted" });
               console.log(`[Harness Import] Deleted stale file: ${staleFile}`);
             }
           } catch (deleteError) {
@@ -1546,23 +1608,15 @@ ${config.version}
         }
       }
       
-      // Track successfully synced files for manifest
       const syncedFiles: string[] = [];
       
-      for (const item of config.syncItems) {
+      for (const item of syncItems) {
         try {
-          // Validate paths to prevent directory traversal
           if (!isPathSafe(item.to)) {
-            results.push({
-              file: item.to,
-              status: "failed",
-              error: "Invalid destination path"
-            });
+            results.push({ file: item.to, status: "failed", error: "Invalid destination path" });
             continue;
           }
           
-          // Fetch file from GitHub (use Replit GitHub connector for private repos)
-          const githubToken = await getGitHubAccessToken(config.githubConnectionId);
           const fileUrl = `https://api.github.com/repos/${config.mainAppRepo}/contents/${item.from}?ref=${config.mainAppBranch}`;
           const fetchHeaders: Record<string, string> = {
             "Accept": "application/vnd.github.raw+json",
@@ -1584,21 +1638,16 @@ ${config.version}
           
           const content = await response.text();
           
-          // Ensure destination directory exists
           const destPath = path.resolve(projectRoot, item.to);
           const destDir = path.dirname(destPath);
           if (!fs.existsSync(destDir)) {
             fs.mkdirSync(destDir, { recursive: true });
           }
           
-          // Write the file
           fs.writeFileSync(destPath, content, "utf-8");
           syncedFiles.push(item.to);
           
-          results.push({
-            file: item.to,
-            status: "success"
-          });
+          results.push({ file: item.to, status: "success" });
         } catch (itemError) {
           results.push({
             file: item.from,
@@ -1608,18 +1657,17 @@ ${config.version}
         }
       }
       
-      // Save manifest of synced files for future stale detection
-      fs.writeFileSync(manifestPath, JSON.stringify(syncedFiles, null, 2), "utf-8");
+      fs.writeFileSync(localManifestPath, JSON.stringify(syncedFiles, null, 2), "utf-8");
       
-      // Log the sync
       const syncLogPath = path.resolve(process.cwd(), ".config/.harness-import-log");
       fs.writeFileSync(syncLogPath, new Date().toISOString(), "utf-8");
       
       const successCount = results.filter(r => r.status === "success").length;
       const failedCount = results.filter(r => r.status === "failed").length;
       const deletedCount = results.filter(r => r.status === "deleted").length;
+      const totalItems = syncItems.length;
       
-      let message = `Imported ${successCount}/${config.syncItems.length} files from main app`;
+      let message = `Imported ${successCount}/${totalItems} files from main app (manifest: ${manifest.source})`;
       if (deletedCount > 0) {
         message += `, deleted ${deletedCount} stale files`;
       }
@@ -1627,6 +1675,7 @@ ${config.version}
       res.json({
         success: failedCount === 0,
         message,
+        manifestSource: manifest.source,
         results,
         syncedAt: new Date().toISOString()
       });

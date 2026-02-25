@@ -41,7 +41,7 @@ export function GlassCard({
   const scale = useSharedValue(1);
 
   const resolvedTint = tint ?? (isDark ? "dark" : "light");
-  const resolvedIntensity = intensity ?? (isDark ? 60 : 50);
+  const resolvedIntensity = intensity ?? (isDark ? 40 : 30);
 
   const containerStyle: ViewStyle = {
     borderRadius: BorderRadius.lg,
@@ -91,7 +91,7 @@ export function GlassCard({
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={theme.glassOverlay as [string, string]}
+        colors={theme.glassOverlay}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}

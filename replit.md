@@ -152,24 +152,14 @@ This project has **three distinct sync systems**. Each pulls files from a differ
 | Detail | Value |
 |--------|-------|
 | Source repo | `stellarin-org/stellarin-app` |
-| Config file | `.config/harness-import.config.json` |
+| Remote manifest | `client/practa/sync-manifest.json` (in main app repo — source of truth for file list) |
+| Local config | `.config/harness-import.config.json` (fallback if remote manifest unavailable) |
 | Endpoints | `GET /api/harness-import/status`, `POST /api/harness-import/sync` |
 | Guard | Requires `MASTER_TEMPLATE_KEY` env var |
 | Auth | Uses Replit GitHub connector (private repo) |
-| Manifest | `.config/.harness-import-manifest.json` (tracks synced files for stale detection) |
+| Local manifest | `.config/.harness-import-manifest.json` (tracks synced files for stale detection) |
 
-**Files imported** (defined in `.config/harness-import.config.json`):
-- `client/types/flow.ts` — Practa contract types
-- `client/components/PractaTestHarness.tsx` — Test harness
-- `client/components/PractaSplashScreen.tsx` — Splash screen
-- `client/components/PractaChromeHeader.tsx` — Chrome header
-- `client/context/PractaChromeContext.tsx` — Chrome context
-- `client/lib/practa-storage.ts` — Storage API
-- `client/constants/theme.ts` — Design tokens
-- `client/hooks/useTheme.ts` — Theme hook
-- `client/components/ThemedText.tsx`, `ThemedView.tsx`, `Card.tsx` — UI primitives
-- `server/cdn_routes.ts` — CDN backend routes
-- `docs/practa-test-harness.md`, `design_guidelines.md` — Documentation
+**How it works:** On sync, the system first fetches `client/practa/sync-manifest.json` from the main Stellarin app repo. This remote manifest is the source of truth for which files to import. If the remote manifest is unavailable, it falls back to the `syncItems` list in the local config. The remote manifest format uses `{ path, category }` entries; the local fallback uses `{ from, to, description }` entries.
 
 **Flow:** `stellarin-app` → (Harness Import into master template) → master template commits to `practa-template` repo → (Template Update into user templates)
 
