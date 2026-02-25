@@ -7,9 +7,9 @@ description: Build, create, or scaffold a Practa (wellness/mindfulness component
 
 Before writing any code, read the full documentation to understand the contract:
 
-1. **Read `docs/practa-developer-guide.md`** — the complete Practa contract, props, header config, assets, storage, and validation checklist
-2. **Read `docs/practa-metadata-schema.md`** — dedicated metadata.json reference (required fields, assets, configSchema, AI flags)
-3. **Read `docs/practa-storage-system.md`** — if the Practa needs to persist user state across sessions
+1. **Read `template-docs/practa-developer-guide.md`** — the complete Practa contract, props, header config, assets, storage, and validation checklist
+2. **Read `template-docs/practa-metadata-schema.md`** — dedicated metadata.json reference (required fields, assets, configSchema, AI flags)
+3. **Read `template-docs/practa-storage-system.md`** — if the Practa needs to persist user state across sessions
 4. **Read `client/types/flow.ts`** — TypeScript types for PractaProps, PractaContext, PractaOutput
 5. **Browse `client/demo-practa/`** — working examples to reference for patterns
 

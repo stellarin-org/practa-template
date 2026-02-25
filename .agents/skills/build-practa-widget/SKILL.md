@@ -9,7 +9,7 @@ Widgets are optional, glanceable, read-only cards that appear on the Stellarin h
 
 ## Before You Start
 
-1. **Read `docs/widget-system.md`** — full feature spec covering architecture, data flow, edge cases, and constraints
+1. **Read `template-docs/widget-system.md`** — full feature spec covering architecture, data flow, edge cases, and constraints
 2. **Read `client/types/flow.ts`** — look at `WidgetProps`, `ShouldDisplayFn`, `WidgetModule`, and `WidgetMetadata` types
 3. **Reference `client/my-practa/widget.tsx`** — the existing example widget to see the pattern
 

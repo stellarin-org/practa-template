@@ -119,7 +119,7 @@ Compare this list against the `syncItems[].to` paths in the harness config (stri
 For each dependency that is **not** in the config and **does not** exist locally:
 
 1. **Evaluate whether it should be imported** — Is it a core utility the template needs? Or is it Stellarin-app-specific logic that doesn't belong in the template?
-2. **If it should be imported**: Add a request to `docs/harness-dev-change-requests.md` asking the harness dev to add it to the import config
+2. **If it should be imported**: Add a request to `template-docs/harness-dev-requests.md` asking the harness dev to add it to the import config
 3. **If a stub is appropriate**: Create a minimal stub locally with just the exports the imported file needs. Document the stub in the change requests file so the harness dev knows we're maintaining it
 4. **If it should be removed from the imported file**: Add a request asking the harness dev to remove the import or make it conditional
 
@@ -158,7 +158,7 @@ If any breaking changes were found in Step 3a:
 
 ## Step 5: Update Change Requests for Harness Developer
 
-After fixing breaking changes, update `docs/harness-dev-change-requests.md` to communicate issues back to the upstream harness developer. This file is the canonical list of things we want changed in `stellarin-org/stellarin-app` so future imports are cleaner.
+After fixing breaking changes, update `template-docs/harness-dev-requests.md` to communicate issues back to the upstream harness developer. This file is the canonical list of things we want changed in `stellarin-org/stellarin-app` so future imports are cleaner.
 
 ### When to add a request
 
@@ -239,7 +239,7 @@ For each new feature or enhancement:
 - Whether the user should consider adopting it
 
 ### Change Requests for Harness Developer
-Summarize any new or updated entries added to `docs/harness-dev-change-requests.md`. If no new requests were needed, say so.
+Summarize any new or updated entries added to `template-docs/harness-dev-requests.md`. If no new requests were needed, say so.
 
 If nothing changed (all files were identical), just say "All harness files are already up to date with the main app."
 
@@ -252,4 +252,4 @@ The full list of imported files is defined in `.config/harness-import.config.jso
 - This skill only works on the master template — it requires `MASTER_TEMPLATE_KEY`
 - Changes to these files should be made upstream in `stellarin-org/stellarin-app`, not locally
 - If local changes exist that haven't been pushed upstream, this import will overwrite them
-- `docs/harness-dev-change-requests.md` tracks requests for the upstream harness developer — review it before sharing with the dev team
+- `template-docs/harness-dev-requests.md` tracks requests for the upstream harness developer — review it before sharing with the dev team
