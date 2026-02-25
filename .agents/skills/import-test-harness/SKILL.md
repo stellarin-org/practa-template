@@ -30,7 +30,13 @@ If `MISSING`:
 
 Before running the import, save the current state of every harness-managed file so we can diff afterward.
 
-Read `.config/harness-import.config.json` to get the file list, then for each file in `syncItems[].to`:
+Get the current file list from the status API (which fetches the remote manifest as the source of truth, falling back to the local config):
+
+```bash
+curl -s http://localhost:5000/api/harness-import/status | jq -r '.syncItems[].to'
+```
+
+For each file in that list:
 
 ```bash
 mkdir -p /tmp/harness-pre-import
@@ -60,6 +66,7 @@ curl -s -X POST http://localhost:5000/api/harness-import/sync | jq .
 Check the response:
 - If `success` is `true`, continue to Step 3
 - If `success` is `false`, report the errors to the user and stop
+- Note `manifestSource` — `"remote"` means the file list came from `client/practa/sync-manifest.json` in the main app; `"local"` means it fell back to the local config
 - Note how many files succeeded, failed, or were deleted from the `results` array
 
 ## Step 3: Diff and Analyze Changes
@@ -93,7 +100,6 @@ Look for these categories of breaking changes:
 | `client/hooks/*.ts` | Changed hook signatures, return types |
 | `client/constants/theme.ts` | Removed color tokens, renamed keys, changed Spacing/Typography values |
 | `client/lib/practa-storage.ts` | Changed storage API methods, parameters |
-| `server/cdn_routes.ts` | Changed API routes, request/response shapes |
 
 For each breaking change found:
 1. Search the codebase for usages of the broken API
@@ -245,7 +251,7 @@ If nothing changed (all files were identical), just say "All harness files are a
 
 ## Files Managed by This Skill
 
-The full list of imported files is defined in `.config/harness-import.config.json` under the `syncItems` array. Always read that config to get the current file list — do not rely on a hardcoded list here.
+The file list is determined at sync time by fetching the remote manifest (`client/practa/sync-manifest.json`) from the main Stellarin app repo. If the remote manifest is unavailable, it falls back to the `syncItems` array in `.config/harness-import.config.json`. Always use the status API (`GET /api/harness-import/status`) to get the current file list — do not rely on a hardcoded list here. Doc files from the harness are remapped to `harness-docs/` on import.
 
 ## Important Notes
 
