@@ -27,7 +27,17 @@ import { PractaFileMetadata, ConfigField, ConfigSchema, StringField, NumberField
 import { SyncStatus, PractaSyncStatus } from "@/types/api";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { DEV_USER_ID } from "@/constants/dev";
-import PractaWidget, { shouldDisplay as widgetShouldDisplay } from "@/my-practa/widget";
+let PractaWidget: React.ComponentType<any> | null = null;
+let widgetShouldDisplay: (data: Record<string, unknown>) => boolean = () => true;
+try {
+  const widgetModule = require("@/my-practa/widget");
+  PractaWidget = widgetModule.default || null;
+  if (typeof widgetModule.shouldDisplay === "function") {
+    widgetShouldDisplay = widgetModule.shouldDisplay;
+  }
+} catch {
+  PractaWidget = null;
+}
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -75,7 +85,7 @@ export default function MyPractaScreen() {
   const widgetMeta = (practaMetadataJson as Record<string, unknown>).widget as
     | { enabled: boolean; displayName: string; description?: string }
     | undefined;
-  const hasWidget = widgetMeta?.enabled === true;
+  const hasWidget = widgetMeta?.enabled === true && PractaWidget !== null;
 
   useEffect(() => {
     const timer = setTimeout(() => setEnableSyncCheck(true), 500);
