@@ -12,6 +12,7 @@ export const practaFileMetadataSchema = z.object({
   assets: z.record(z.string()).optional(),
   dependencies: z.array(z.string()).optional(),
   requiresAI: z.boolean(),
+  offlineCapable: z.boolean(),
   configSchema: z.object({
     fields: z.record(z.unknown()),
     requiredConfig: z.boolean().optional(),

@@ -16,6 +16,7 @@ Location: `client/my-practa/metadata.json`
 | `description` | string | Short summary of the experience |
 | `author` | string | Creator name |
 | `requiresAI` | boolean | `true` if the Practa cannot function without AI, `false` if it works without AI. Every Practa must set this. |
+| `offlineCapable` | boolean | `true` if the Practa can function entirely on-device without an internet connection, `false` otherwise. Defaults to `false` if omitted — meaning the Practa will be hidden from users when the device is offline. Every Practa must set this. |
 
 ---
 
@@ -106,6 +107,7 @@ This is a user-facing toggle, separate from the top-level `requiresAI` flag:
 | Concept | Where | Purpose |
 |---------|-------|---------|
 | `requiresAI` | Top-level metadata | Fact: "Can this Practa work without AI?" |
+| `offlineCapable` | Top-level metadata | Fact: "Can this Practa work without a network?" |
 | `aiEnabled` | configSchema field | Preference: "Should AI be turned on right now?" |
 
 | `requiresAI` | `aiEnabled` | Behavior |
@@ -114,6 +116,23 @@ This is a user-facing toggle, separate from the top-level `requiresAI` flag:
 | `false` | `false` | Fully manual/static mode |
 | `true` | `true` | AI-powered experience (normal) |
 | `true` | `false` | Practa won't function properly — Stellarin should warn |
+
+### Offline Capability
+
+The `offlineCapable` flag tells Stellarin whether your Practa can function without an internet connection. When set to `false` (the default), your Practa is hidden from users and automatically skipped in flows whenever the device has no network connectivity.
+
+Set `offlineCapable: true` if your Practa works entirely on-device — no API calls, no streaming content. Note that even with this flag set, community Practas with CDN-hosted assets require a first-launch download. Until assets are cached locally via `cacheAssetsInBackground()`, the Practa is treated as unavailable offline.
+
+At runtime, your Practa receives `context.isOnline` as a boolean indicating real-time network status. Use this for graceful degradation — for example, showing cached content instead of fetching, or disabling sharing when offline. The value updates in real time as connectivity changes.
+
+The `requiresAI` and `offlineCapable` flags interact: if `requiresAI: true`, the Practa is skipped both when the user has disabled the global AI toggle and when the device is offline (since AI requires a network connection). For Practas with optional AI, set `requiresAI: false` and use `context.isOnline` to decide which path to take.
+
+| `offlineCapable` | `requiresAI` | Offline Behavior |
+|---|---|---|
+| `true` | `false` | Available offline after assets are cached |
+| `true` | `true` | Skipped offline (AI needs network) |
+| `false` | `false` | Hidden when offline |
+| `false` | `true` | Hidden when offline |
 
 ### Access at Runtime
 
@@ -137,6 +156,7 @@ export default function MyPracta({ context, onComplete }: PractaProps) {
   "author": "Stellarin",
   "estimatedDuration": 60,
   "requiresAI": false,
+  "offlineCapable": true,
   "category": "breathwork",
   "tags": ["breathing", "calm", "mindfulness"],
   "assets": {
@@ -202,6 +222,7 @@ The simplest valid metadata.json:
   "description": "A simple wellness experience",
   "author": "Your Name",
   "requiresAI": false,
+  "offlineCapable": true,
   "configSchema": {
     "fields": {
       "aiEnabled": {

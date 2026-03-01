@@ -171,6 +171,7 @@ Update `client/my-practa/metadata.json` with your Practa info:
 | `author` | string | `"Your Name"` | Creator name |
 | `version` | string | `"1.0.0"` | Semver version |
 | `requiresAI` | boolean | `false` | Whether this Practa **requires** AI to function at all. Set `true` if the Practa cannot work without AI (e.g., AI-generated content is the core experience). Set `false` if it can operate without AI. Every Practa must declare this. |
+| `offlineCapable` | boolean | `true` | Whether this Practa can function entirely on-device without an internet connection. Set `true` if your Practa makes no API calls and uses no streaming content. When `false`, the Practa is hidden from users when the device is offline. Every Practa must declare this. |
 
 ### Optional Fields
 

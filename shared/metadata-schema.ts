@@ -96,6 +96,13 @@ export const METADATA_FIELDS: FieldDefinition[] = [
     description: "Whether the Practa cannot function without AI",
   },
   {
+    key: "offlineCapable",
+    label: "Offline capable",
+    type: "boolean",
+    required: true,
+    description: "Whether the Practa can function without an internet connection",
+  },
+  {
     key: "estimatedDuration",
     label: "Estimated duration",
     type: "number",

@@ -6,6 +6,7 @@
   "author": "Stellarin",
   "estimatedDuration": 30,
   "requiresAI": false,
+  "offlineCapable": true,
   "category": "reflection",
   "tags": ["gratitude", "journaling", "reflection", "mindfulness"],
   "assets": {

@@ -33,7 +33,7 @@ Before writing any code, read the full documentation to understand the contract:
 
 1. Read the docs above
 2. Edit `client/my-practa/index.tsx` with the component
-3. Update `client/my-practa/metadata.json` (id, name, version, description, author, requiresAI, assets, configSchema with aiEnabled, dependencies)
+3. Update `client/my-practa/metadata.json` (id, name, version, description, author, requiresAI, offlineCapable, assets, configSchema with aiEnabled, dependencies)
 4. Place any asset files in `client/my-practa/assets/`
 5. Restart the app so assets regenerate
 6. Verify against the validation checklist in the developer guide

@@ -107,7 +107,7 @@ Metadata field definitions live in `shared/metadata-schema.ts` — the single so
 3. Update `shared/schema.ts` (Zod types) to match
 4. Both validators automatically pick up the new field — no code changes needed in either
 
-**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `configSchema.fields.aiEnabled`
+**Key required fields:** `id`, `name`, `description`, `author`, `version`, `requiresAI`, `offlineCapable`, `configSchema.fields.aiEnabled`
 
 ## Widget System
 
@@ -236,19 +236,20 @@ export default function MyPracta({ showSettings, onSettings }: PractaProps) {
 }
 ```
 
-## AI Metadata
+## AI & Offline Metadata
 
-Every Practa must declare two AI-related values:
+Every Practa must declare three capability-related values:
 
 1. **`requiresAI`** (top-level, required) — `true` if the Practa cannot function without AI, `false` otherwise. This is a factual declaration about the Practa.
-2. **`aiEnabled`** (in `configSchema.fields`, required) — A boolean toggle that lets users turn AI features on/off at runtime. Default `true`. Even Practas that don't require AI should include this so they can optionally leverage AI enhancements.
+2. **`offlineCapable`** (top-level, required) — `true` if the Practa can function entirely on-device without an internet connection, `false` otherwise. When `false`, the Practa is hidden from users when offline. Even with `true`, community Practas need a first-launch download to cache CDN-hosted assets. At runtime, `context.isOnline` provides real-time network status for graceful degradation.
+3. **`aiEnabled`** (in `configSchema.fields`, required) — A boolean toggle that lets users turn AI features on/off at runtime. Default `true`. Even Practas that don't require AI should include this so they can optionally leverage AI enhancements.
 
 ## Documentation
 
 See `template-docs/practa-developer-guide.md` for:
 - Component contract (props, onComplete, showSettings, onSettings)
 - Header configuration (usePractaChrome, useHeaderHeight)
-- Metadata schema (including `requiresAI` and `aiEnabled`)
+- Metadata schema (including `requiresAI`, `offlineCapable`, and `aiEnabled`)
 - Storage API
 - Best practices
 - Complete examples

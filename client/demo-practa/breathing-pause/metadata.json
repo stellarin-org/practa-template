@@ -6,6 +6,7 @@
   "author": "Stellarin",
   "estimatedDuration": 60,
   "requiresAI": false,
+  "offlineCapable": true,
   "category": "breathwork",
   "tags": ["breathing", "calm", "mindfulness", "relaxation"],
   "assets": {
