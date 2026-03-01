@@ -48,7 +48,7 @@ function runTestFile(testFile: string, projectRoot: string): TestResult {
 }
 
 function discoverDevTests(projectRoot: string): string[] {
-  const devTestDir = path.join(projectRoot, "client/my-practa/dev-build-tests");
+  const devTestDir = path.join(projectRoot, "client/my-practa/tests");
 
   if (!fs.existsSync(devTestDir)) {
     return [];

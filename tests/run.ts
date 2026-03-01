@@ -9,7 +9,7 @@ const projectRoot = path.resolve(__dirname, "..");
 
 const templateTest = path.join(__dirname, "metadata.test.ts");
 
-const devTestDir = path.join(projectRoot, "client/my-practa/dev-build-tests");
+const devTestDir = path.join(projectRoot, "client/my-practa/tests");
 const devTests: string[] = [];
 if (fs.existsSync(devTestDir)) {
   for (const f of fs.readdirSync(devTestDir)) {

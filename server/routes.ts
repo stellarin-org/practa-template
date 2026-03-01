@@ -350,7 +350,7 @@ ${config.version}
     // Add directory contents but exclude files we'll add separately
     archive.glob("**/*", {
       cwd: practaDir,
-      ignore: ["metadata.json", "README.md", "dev-build-tests/**"],
+      ignore: ["metadata.json", "README.md", "tests/**"],
     });
     
     if (manifest) {
@@ -515,7 +515,7 @@ ${config.version}
 
         archive.glob("**/*", {
           cwd: practaDir,
-          ignore: ["metadata.json", "README.md", "replit.json", "dev-build-tests/**"],
+          ignore: ["metadata.json", "README.md", "replit.json", "tests/**"],
         });
         archive.append(JSON.stringify(manifest, null, 2), { name: "metadata.json" });
         archive.append(readme, { name: "README.md" });
