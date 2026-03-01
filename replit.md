@@ -71,8 +71,12 @@ template-docs/              # Template-managed documentation (editable)
 
 harness-docs/               # Upstream docs synced from Stellarin (do not edit)
 
-tests/                      # Metadata validation tests
+tests/                      # Template validation tests (auto-run on server start)
   metadata.test.ts          # Validates metadata.json has required fields
+  component-contract.test.ts  # Checks index.tsx contract (exports, onComplete, assets)
+  widget-consistency.test.ts  # Validates widget.tsx matches metadata widget config
+  config-schema.test.ts     # Validates configSchema field types, labels, defaults
+  asset-sizes.test.ts       # Checks asset file sizes against submission limits
   run.ts                    # Test runner entry point
 
 server/                   # Express backend for preview

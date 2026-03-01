@@ -9,12 +9,14 @@ interface TestResult {
   failLines: string[];
 }
 
-function runTestFile(testFile: string, projectRoot: string): TestResult {
+function runTestFiles(testFiles: string[], projectRoot: string): TestResult {
+  const testArgs = testFiles.map((f) => `--test ${f}`).join(" ");
+
   try {
-    const output = execSync(`node --import tsx --test ${testFile}`, {
+    const output = execSync(`node --import tsx ${testArgs}`, {
       cwd: projectRoot,
       encoding: "utf-8",
-      timeout: 30000,
+      timeout: 60000,
     });
 
     const passMatch = output.match(/pass (\d+)/);
@@ -32,8 +34,9 @@ function runTestFile(testFile: string, projectRoot: string): TestResult {
 
     const failLines = combined
       .split("\n")
-      .filter((l: string) => l.includes("\u2716"))
-      .map((l: string) => l.trim());
+      .filter((l: string) => l.includes("\u2716") && !l.includes("failing tests"))
+      .map((l: string) => l.trim())
+      .filter((l: string) => l.length > 0);
 
     const passMatch = combined.match(/pass (\d+)/);
     const failMatch = combined.match(/fail (\d+)/);
@@ -47,18 +50,14 @@ function runTestFile(testFile: string, projectRoot: string): TestResult {
   }
 }
 
-function discoverDevTests(projectRoot: string): string[] {
-  const devTestDir = path.join(projectRoot, "client/my-practa/tests");
-
-  if (!fs.existsSync(devTestDir)) {
-    return [];
-  }
+function discoverTestFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
 
   try {
     return fs
-      .readdirSync(devTestDir)
+      .readdirSync(dir)
       .filter((f) => f.endsWith(".test.ts") || f.endsWith(".test.js"))
-      .map((f) => path.join(devTestDir, f))
+      .map((f) => path.join(dir, f))
       .sort();
   } catch {
     return [];
@@ -68,26 +67,37 @@ function discoverDevTests(projectRoot: string): string[] {
 export function runStartupTests(): { passed: boolean; summary: string } {
   const projectRoot = process.cwd();
 
-  const templateTestFile = path.join(projectRoot, "tests/metadata.test.ts");
-  const devTestFiles = discoverDevTests(projectRoot);
+  const templateTestDir = path.join(projectRoot, "tests");
+  const mandatoryTest = path.join(templateTestDir, "metadata.test.ts");
+  if (!fs.existsSync(mandatoryTest)) {
+    return { passed: false, summary: "0 passed, 1 failed\n[template] missing required tests/metadata.test.ts" };
+  }
 
-  const allTestFiles = [templateTestFile, ...devTestFiles];
-  let totalPass = 0;
-  let totalFail = 0;
+  const templateTests = discoverTestFiles(templateTestDir);
+  const practaTests = discoverTestFiles(path.join(projectRoot, "client/my-practa/tests"));
+  const allTestFiles = [...templateTests, ...practaTests];
+
+  if (allTestFiles.length === 0) {
+    return { passed: true, summary: "no test files found" };
+  }
+
+  const templateResult = templateTests.length > 0
+    ? runTestFiles(templateTests, projectRoot)
+    : { passed: true, passCount: 0, failCount: 0, failLines: [] };
+
+  const practaResult = practaTests.length > 0
+    ? runTestFiles(practaTests, projectRoot)
+    : { passed: true, passCount: 0, failCount: 0, failLines: [] };
+
+  const totalPass = templateResult.passCount + practaResult.passCount;
+  const totalFail = templateResult.failCount + practaResult.failCount;
   const allFailLines: string[] = [];
 
-  for (const testFile of allTestFiles) {
-    if (!fs.existsSync(testFile)) continue;
-
-    const label = testFile.includes("dev-build-tests") ? "practa" : "template";
-    const result = runTestFile(testFile, projectRoot);
-
-    totalPass += result.passCount;
-    totalFail += result.failCount;
-
-    if (!result.passed && result.failLines.length > 0) {
-      allFailLines.push(`[${label}] ${result.failLines.join(`, [${label}] `)}`);
-    }
+  if (templateResult.failLines.length > 0) {
+    allFailLines.push(...templateResult.failLines.map((l) => `[template] ${l}`));
+  }
+  if (practaResult.failLines.length > 0) {
+    allFailLines.push(...practaResult.failLines.map((l) => `[practa] ${l}`));
   }
 
   const summary = `${totalPass} passed, ${totalFail} failed${allFailLines.length > 0 ? "\n" + allFailLines.join("\n") : ""}`;

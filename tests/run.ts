@@ -7,26 +7,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 
-const templateTest = path.join(__dirname, "metadata.test.ts");
-
-const devTestDir = path.join(projectRoot, "client/my-practa/tests");
-const devTests: string[] = [];
-if (fs.existsSync(devTestDir)) {
-  for (const f of fs.readdirSync(devTestDir)) {
-    if (f.endsWith(".test.ts") || f.endsWith(".test.js")) {
-      devTests.push(path.join(devTestDir, f));
-    }
-  }
-  devTests.sort();
+function discoverTests(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".test.ts") || f.endsWith(".test.js"))
+    .map((f) => path.join(dir, f))
+    .sort();
 }
 
-const allTests = [templateTest, ...devTests];
+const templateTests = discoverTests(__dirname);
+const practaTestDir = path.join(projectRoot, "client/my-practa/tests");
+const practaTests = discoverTests(practaTestDir);
+const allTests = [...templateTests, ...practaTests];
+
 const testArgs = allTests.map((f) => `--test ${f}`).join(" ");
 
 console.log(`Running ${allTests.length} test file(s)...`);
-if (devTests.length > 0) {
-  console.log(`  Template tests: tests/metadata.test.ts`);
-  devTests.forEach((f) => console.log(`  Practa tests: ${path.relative(projectRoot, f)}`));
+console.log(`  Template: ${templateTests.length} file(s)`);
+templateTests.forEach((f) => console.log(`    ${path.relative(projectRoot, f)}`));
+if (practaTests.length > 0) {
+  console.log(`  Practa:   ${practaTests.length} file(s)`);
+  practaTests.forEach((f) => console.log(`    ${path.relative(projectRoot, f)}`));
 }
 
 try {
