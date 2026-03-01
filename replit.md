@@ -70,6 +70,10 @@ template-docs/              # Template-managed documentation (editable)
 
 harness-docs/               # Upstream docs synced from Stellarin (do not edit)
 
+tests/                      # Metadata validation tests
+  metadata.test.ts          # Validates metadata.json has required fields
+  run.ts                    # Test runner entry point
+
 server/                   # Express backend for preview
   github-sync.ts          # Shared GitHub sync utilities (fetch repo info, download zip, etc.)
   routes.ts               # API routes (template sync, practa sync, validation, submission)
@@ -91,6 +95,8 @@ server/                   # Express backend for preview
 | `template-docs/practa-developer-guide.md` | Full requirements & examples |
 | `template-docs/practa-metadata-schema.md` | Dedicated metadata.json reference |
 | `server/github-sync.ts` | Shared GitHub sync utilities |
+| `server/startup-tests.ts` | Runs metadata tests on server start |
+| `tests/metadata.test.ts` | Metadata validation test suite |
 
 ## Path Aliases
 

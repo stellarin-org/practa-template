@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
 import { TEMPLATE_SYNC_CONFIG } from "./template-sync-config";
+import { runStartupTests } from "./startup-tests";
 
 interface PractaAssetEntry {
   id: string;
@@ -523,6 +524,15 @@ function checkAndInstallDependencies(): void {
 (async () => {
   updatePractaAssets();
   checkAndInstallDependencies();
+
+  log("[Tests] Running metadata validation...");
+  const testResult = runStartupTests();
+  if (testResult.passed) {
+    log(`[Tests] All tests passed (${testResult.summary})`);
+  } else {
+    log(`[Tests] Some tests failed (${testResult.summary})`);
+  }
+
   
   setupCors(app);
   setupBodyParsing(app);
