@@ -50,6 +50,7 @@ client/
     widget.tsx            # Optional widget (display + shouldDisplay logic)
     metadata.json         # Practa metadata (includes assets & widget declaration)
     assets/               # Your local assets (images, splash.png, etc.)
+    dev-build-tests/      # Your dev tests (auto-run on server start, excluded from submission zip)
   
   demo-practa/            # EXAMPLE PRACTAS - REFERENCE THESE
     breathing-pause/      # Breathing exercise
