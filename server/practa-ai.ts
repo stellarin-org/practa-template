@@ -1,25 +1,62 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import OpenAI from "openai";
-import { GoogleGenAI } from "@google/genai";
-import Anthropic from "@anthropic-ai/sdk";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openaiClient: any = null;
+let geminiClient: any = null;
+let anthropicClient: any = null;
 
-const gemini = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-  },
-});
+function getOpenAI() {
+  if (!openaiClient) {
+    if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+      throw Object.assign(
+        new Error("OpenAI integration is not configured. Install the OpenAI Replit AI integration to use this provider."),
+        { status: 501, type: "not_configured" }
+      );
+    }
+    const { default: OpenAI } = require("openai");
+    openaiClient = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return openaiClient;
+}
 
-const anthropic = new Anthropic({
-  apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
-});
+function getGemini() {
+  if (!geminiClient) {
+    if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+      throw Object.assign(
+        new Error("Gemini integration is not configured. Install the Gemini Replit AI integration to use this provider."),
+        { status: 501, type: "not_configured" }
+      );
+    }
+    const { GoogleGenAI } = require("@google/genai");
+    geminiClient = new GoogleGenAI({
+      apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+      httpOptions: {
+        apiVersion: "",
+        baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+      },
+    });
+  }
+  return geminiClient;
+}
+
+function getAnthropic() {
+  if (!anthropicClient) {
+    if (!process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY) {
+      throw Object.assign(
+        new Error("Anthropic integration is not configured. Install the Anthropic Replit AI integration to use this provider."),
+        { status: 501, type: "not_configured" }
+      );
+    }
+    const { default: Anthropic } = require("@anthropic-ai/sdk");
+    anthropicClient = new Anthropic({
+      apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
+    });
+  }
+  return anthropicClient;
+}
 
 const rateLimitMap = new Map<string, number[]>();
 const RATE_LIMIT_WINDOW = 60_000;
@@ -57,6 +94,7 @@ export function registerPractaAIRoutes(app: Express) {
 
   app.post("/api/ai/openai", jsonLimit, rateLimit, async (req: Request, res: Response) => {
     try {
+      const openai = getOpenAI();
       const { messages, ...rest } = req.body;
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: "messages array is required and must be non-empty" });
@@ -80,6 +118,7 @@ export function registerPractaAIRoutes(app: Express) {
 
   app.post("/api/ai/gemini", jsonLimit, rateLimit, async (req: Request, res: Response) => {
     try {
+      const gemini = getGemini();
       const { model, contents, generationConfig, ...rest } = req.body;
       if (!contents) {
         return res.status(400).json({ error: "contents is required" });
@@ -110,6 +149,7 @@ export function registerPractaAIRoutes(app: Express) {
 
   app.post("/api/ai/anthropic", jsonLimit, rateLimit, async (req: Request, res: Response) => {
     try {
+      const anthropic = getAnthropic();
       const { messages, ...rest } = req.body;
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: "messages array is required and must be non-empty" });

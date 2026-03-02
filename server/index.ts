@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerPractaAIRoutes } from "./practa-ai";
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -541,6 +542,7 @@ function checkAndInstallDependencies(): void {
   configureExpoAndLanding(app);
 
   const server = await registerRoutes(app);
+  registerPractaAIRoutes(app);
 
   setupErrorHandler(app);
 
