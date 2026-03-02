@@ -77,6 +77,7 @@ export interface PractaFileMetadata {
   assets?: Record<string, string>;
   dependencies?: string[];
   requiresAI?: boolean;
+  offlineCapable?: boolean;
   configSchema?: ConfigSchema;
   [key: string]: unknown;
 }
@@ -99,6 +100,8 @@ export interface PractaContext {
   storage?: PractaStorage;
   assets?: PractaAssets;
   config?: Record<string, unknown>;
+  isOnline?: boolean;
+  ai?: import("@/lib/practa-ai").PractaAI;
 }
 
 export interface PractaOutput {
@@ -132,6 +135,7 @@ export interface PractaDefinition {
   name: string;
   description?: string;
   requiresAI?: boolean;
+  offlineCapable?: boolean;
   config?: AnyPractaConfig;
 }
 

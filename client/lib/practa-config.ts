@@ -6,6 +6,10 @@ export const JournalConfigSchema = z.object({
   aiEnabled: z.boolean().optional(),
 });
 
+export const IntegrationBreathConfigSchema = z.object({
+  cycles: z.number().int().min(1).max(10).default(3),
+});
+
 export const PractaPickerConfigSchema = z.object({
   title: z.string().optional(),
   eligiblePracta: z.array(z.string()).min(1, "Select at least one activity"),
@@ -14,6 +18,7 @@ export const PractaPickerConfigSchema = z.object({
 });
 
 export type JournalConfig = z.infer<typeof JournalConfigSchema>;
+export type IntegrationBreathConfig = z.infer<typeof IntegrationBreathConfigSchema>;
 export type PractaPickerConfig = z.infer<typeof PractaPickerConfigSchema>;
 
 export interface PractaConfigMeta<T = unknown> {

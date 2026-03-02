@@ -10,6 +10,7 @@ import type {
   PreviousPractaContext,
   PractaStorage,
 } from "@/types/flow";
+import { createPractaAI } from "@/lib/practa-ai";
 
 interface PractaTestHarnessProps {
   PractaComponent: React.ComponentType<PractaProps>;
@@ -55,12 +56,15 @@ export function PractaTestHarness({
   
   const shouldShowClose = showClose ?? (onClose != null);
 
+  const ai = useMemo(() => createPractaAI(), []);
+
   const context = useMemo<PractaContext>(() => {
     const ctx: PractaContext = {
       flowId: "practa-harness",
       practaIndex: 0,
       assets,
       storage,
+      ai,
     };
 
     if (previousContext) {
@@ -68,7 +72,7 @@ export function PractaTestHarness({
     }
 
     return ctx;
-  }, [assets, storage, previousContext]);
+  }, [assets, storage, previousContext, ai]);
 
   const handleComplete = (output: PractaOutput) => {
     onComplete?.(output);
