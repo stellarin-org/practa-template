@@ -284,6 +284,7 @@ interface PractaContext {
   assets?: Record<string, unknown>;
   storage?: PractaStorage;
   previous?: PreviousPractaContext;
+  ai?: PractaAI;
 }
 
 interface PreviousPractaContext {

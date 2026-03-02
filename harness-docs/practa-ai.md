@@ -118,3 +118,48 @@ The API allows 10 requests per minute per user across all providers. Design your
 ## How It Works
 
 The harness creates `context.ai` automatically. Under the hood, each function calls a server-side pass-through endpoint that forwards your request to the provider via Replit AI Integrations. You never need to think about endpoints, API keys, or server configuration.
+
+When your practa ships in the main Stellarin app, the server routes already exist. During local development in your template project, you need to set up the server routes yourself — see below.
+
+## Template Project Setup
+
+Your template project needs the server-side AI routes to handle `context.ai` calls locally.
+
+### 1. Copy the server file
+
+The sync manifest includes `server/practa-ai.ts`. Copy it into your template project's `server/` directory.
+
+### 2. Install the AI integrations
+
+In your template Repl, install the Replit AI integrations you want to use. Each one is a blueprint that auto-configures the env vars:
+
+- **OpenAI**: `javascript_openai_ai_integrations` — sets `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY`
+- **Gemini**: `javascript_gemini_ai_integrations` — sets `AI_INTEGRATIONS_GEMINI_BASE_URL` and `AI_INTEGRATIONS_GEMINI_API_KEY`
+- **Anthropic**: `javascript_anthropic_ai_integrations` — sets `AI_INTEGRATIONS_ANTHROPIC_BASE_URL` and `AI_INTEGRATIONS_ANTHROPIC_API_KEY`
+
+You only need to install the providers you actually use. The endpoints for missing providers will return an error — that's fine.
+
+### 3. Register the routes
+
+In your server's entry file (e.g., `server/index.ts`):
+
+```typescript
+import express from "express";
+import { registerPractaAIRoutes } from "./practa-ai";
+
+const app = express();
+app.use(express.json());
+registerPractaAIRoutes(app);
+
+app.listen(5000, () => console.log("Server running on port 5000"));
+```
+
+### 4. Install dependencies
+
+The AI routes depend on these packages:
+
+```bash
+npm install openai @google/genai @anthropic-ai/sdk
+```
+
+That's it. `context.ai` will now work in your local test harness.
