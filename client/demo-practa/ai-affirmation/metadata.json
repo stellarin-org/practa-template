@@ -1,0 +1,24 @@
+{
+  "id": "ai-affirmation",
+  "name": "AI Affirmation",
+  "version": "1.0.0",
+  "description": "Generates a personalized affirmation using AI based on how you're feeling",
+  "author": "Stellarin",
+  "estimatedDuration": 15,
+  "requiresAI": true,
+  "offlineCapable": false,
+  "category": "reflection",
+  "tags": ["ai", "affirmation", "mindfulness", "wellness"],
+  "assets": {},
+  "configSchema": {
+    "fields": {
+      "aiEnabled": {
+        "type": "boolean",
+        "label": "Enable AI Features",
+        "description": "Allow this Practa to use AI-powered enhancements when available",
+        "default": true
+      }
+    },
+    "requiredConfig": false
+  }
+}

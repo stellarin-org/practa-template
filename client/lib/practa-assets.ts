@@ -25,6 +25,7 @@ const assetRegistry: Record<string, Record<string, AssetSource>> = {
     wellnessBg: require("../my-practa/assets/wellness-bg.png"),
     content: require("../my-practa/assets/content.json"),
   },
+  "ai-affirmation": {},
   "breathing-pause": {
     breathingOrb: require("../demo-practa/breathing-pause/assets/breathing-orb.png"),
     chime: require("../demo-practa/breathing-pause/assets/chime.mp3"),
